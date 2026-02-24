@@ -48,9 +48,22 @@
 
     let rounds = [];
 
-    // Load from Firebase
+    // Load from Firebase, merge with localStorage, deduplicate
     fbLoadRounds(user.uid).then(fbRounds => {
-      rounds = fbRounds;
+      const localRounds = loadRounds();
+      // Merge: combine both sources and deduplicate by round ID
+      const allRounds = [...fbRounds];
+      const fbIds = new Set(fbRounds.map(r => r.id));
+      localRounds.forEach(r => {
+        if (!fbIds.has(r.id)) {
+          allRounds.push(r);
+          // Migrate this local-only round to Firebase
+          fbSaveRound(user.uid, r).catch(() => {});
+        }
+      });
+      rounds = allRounds;
+      // Sync localStorage to match merged set
+      saveRounds(rounds);
       renderHistory();
     }).catch(() => {
       // Fallback to localStorage

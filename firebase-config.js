@@ -234,7 +234,10 @@ function _notifyPathListeners(path) {
 // ==================== HYBRID DB (Firebase for shared, localStorage for private) ====================
 
 function isSharedPath(path) {
-  return path && (path === 'activeRounds' || path.startsWith('activeRounds/'));
+  return path && (
+    path === 'activeRounds' || path.startsWith('activeRounds/') ||
+    path === 'users' || path.startsWith('users/')
+  );
 }
 
 function makeLocalRef(path) {
