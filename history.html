@@ -79,15 +79,20 @@
       }
 
       const sorted = [...rounds].sort((a, b) => new Date(b.date) - new Date(a.date));
-      container.innerHTML = sorted.map(r => `
+      container.innerHTML = sorted.map(r => {
+        const isIncomplete = r.incomplete || r.players.some(p => r.scores[p].filter(s => s > 0).length < 18);
+        return `
         <div class="history-card">
-          <h3>${r.courseName}${r.groupCode ? ' <span style="font-size:11px;color:var(--gold);font-family:monospace;letter-spacing:1px">[' + r.groupCode + ']</span>' : ''}</h3>
+          <h3>${r.courseName}${r.groupCode ? ' <span style="font-size:11px;color:var(--gold);font-family:monospace;letter-spacing:1px">[' + r.groupCode + ']</span>' : ''}${isIncomplete ? ' <span style="font-size:10px;color:var(--bogey);font-weight:600;background:rgba(255,82,82,0.12);padding:2px 6px;border-radius:4px;vertical-align:middle">INCOMPLETE</span>' : ''}</h3>
           <div class="date">${formatDate(r.date)}  &bull;  ${r.teeLabel} Tees</div>
           <div class="history-scores">
             ${r.players.map(p => {
               const total = r.scores[p].reduce((a, b) => a + b, 0);
               const holesPlayed = r.scores[p].filter(s => s > 0).length;
-              const diffStr = formatDiff(total, r.par);
+              // Calculate to-par based only on holes actually played
+              const parPlayed = r.holePars ? r.holePars.filter((hp, i) => r.scores[p][i] > 0).reduce((a, b) => a + b, 0) : r.par;
+              const diffStr = holesPlayed > 0 ? formatDiff(total, parPlayed) : '—';
+              const playerIncomplete = holesPlayed < 18;
               let trackSummary = '';
               if (r.tracking && r.tracking[p]) {
                 const t = r.tracking[p];
@@ -102,15 +107,7 @@
                 if (totalMulligans > 0) parts.push(totalMulligans + ' mull.');
                 if (parts.length) trackSummary = '<span style="font-size:11px;color:var(--text-muted);display:block;margin-top:2px">' + parts.join(' &bull; ') + '</span>';
               }
-              return `
-                <div class="history-score-row">
-                  <div>
-                    <span>${p}</span>
-                    ${trackSummary}
-                  </div>
-                  <span><strong>${total}</strong> (${diffStr}) &bull; ${holesPlayed}/18</span>
-                </div>
-              `;
+              return '<div class="history-score-row"><div><span>' + p + '</span>' + (playerIncomplete ? '<span style="font-size:10px;color:var(--bogey);margin-left:6px">(' + holesPlayed + '/18)</span>' : '') + trackSummary + '</div><span><strong>' + total + '</strong> (' + diffStr + ') &bull; ' + holesPlayed + '/18</span></div>';
             }).join('')}
           </div>
           <div class="history-actions">
@@ -118,25 +115,35 @@
             <button class="btn-danger" onclick="deleteRound('${r.id}')">Delete</button>
           </div>
         </div>
-      `).join('');
+      `}).join('');
     }
 
     window.showDetail = function(roundId) {
       const round = rounds.find(r => r.id === roundId);
       if (!round) return;
+
+      const isIncomplete = round.incomplete || round.players.some(p => round.scores[p].filter(s => s > 0).length < 18);
       document.getElementById('detailTitle').textContent = `${round.courseName} — ${formatDate(round.date)}`;
 
-      let html = '<table class="detail-table"><tr><th class="hole-col">Hole</th><th>Par</th>';
-      round.players.forEach(p => html += `<th>${p}</th>`);
+      let html = '';
+      if (isIncomplete) {
+        html += '<div style="background:rgba(255,82,82,0.1);border:1px solid rgba(255,82,82,0.25);border-radius:8px;padding:8px 12px;margin-bottom:12px;font-size:12px;color:var(--bogey);text-align:center;font-weight:600">Incomplete Round — stats reflect only holes played</div>';
+      }
+
+      html += '<table class="detail-table"><tr><th class="hole-col">Hole</th><th>Par</th>';
+      round.players.forEach(p => {
+        const hp = round.scores[p].filter(s => s > 0).length;
+        html += '<th>' + p + (hp < 18 ? ' <span style="font-size:9px;color:var(--bogey)">(' + hp + 'h)</span>' : '') + '</th>';
+      });
       html += '</tr>';
 
       for (let i = 0; i < 18; i++) {
         if (i === 9) {
-          html += `<tr class="nine-total"><td class="hole-col">OUT</td><td>${round.holePars.slice(0,9).reduce((a,b)=>a+b,0)}</td>`;
-          round.players.forEach(p => html += `<td>${round.scores[p].slice(0,9).reduce((a,b)=>a+b,0)||'-'}</td>`);
+          html += '<tr class="nine-total"><td class="hole-col">OUT</td><td>' + round.holePars.slice(0,9).reduce((a,b)=>a+b,0) + '</td>';
+          round.players.forEach(p => html += '<td>' + (round.scores[p].slice(0,9).reduce((a,b)=>a+b,0)||'-') + '</td>');
           html += '</tr>';
         }
-        html += `<tr><td class="hole-col">${i+1}</td><td>${round.holePars[i]}</td>`;
+        html += '<tr><td class="hole-col">' + (i+1) + '</td><td>' + round.holePars[i] + '</td>';
         round.players.forEach(p => {
           const s = round.scores[p][i];
           const diff = s - round.holePars[i];
@@ -147,16 +154,27 @@
             else if (diff === 0) style = 'color:var(--par-color)';
             else if (diff === 1) style = 'color:var(--bogey)';
             else style = 'color:var(--double);font-weight:700';
+          } else {
+            style = 'color:var(--text-muted);opacity:0.4';
           }
-          html += `<td style="${style}">${s || '-'}</td>`;
+          html += '<td style="' + style + '">' + (s > 0 ? s : '—') + '</td>';
         });
         html += '</tr>';
       }
-      html += `<tr class="nine-total"><td class="hole-col">IN</td><td>${round.holePars.slice(9).reduce((a,b)=>a+b,0)}</td>`;
-      round.players.forEach(p => html += `<td>${round.scores[p].slice(9).reduce((a,b)=>a+b,0)||'-'}</td>`);
+      html += '<tr class="nine-total"><td class="hole-col">IN</td><td>' + round.holePars.slice(9).reduce((a,b)=>a+b,0) + '</td>';
+      round.players.forEach(p => html += '<td>' + (round.scores[p].slice(9).reduce((a,b)=>a+b,0)||'-') + '</td>');
       html += '</tr>';
-      html += `<tr class="grand-total"><td class="hole-col">TOT</td><td>${round.par}</td>`;
-      round.players.forEach(p => html += `<td>${round.scores[p].reduce((a,b)=>a+b,0)}</td>`);
+
+      // Total row — show actual par played for incomplete rounds
+      html += '<tr class="grand-total"><td class="hole-col">TOT</td><td>' + round.par + '</td>';
+      round.players.forEach(p => {
+        const total = round.scores[p].reduce((a,b)=>a+b,0);
+        const holesPlayed = round.scores[p].filter(s => s > 0).length;
+        const parPlayed = round.holePars.filter((hp, i) => round.scores[p][i] > 0).reduce((a, b) => a + b, 0);
+        const diff = total - parPlayed;
+        const diffStr = holesPlayed === 0 ? '—' : (diff === 0 ? 'E' : (diff > 0 ? '+' + diff : diff.toString()));
+        html += '<td>' + total + ' <span style="font-size:11px;color:var(--text-muted)">(' + diffStr + ')</span></td>';
+      });
       html += '</tr></table>';
 
       document.getElementById('detailContent').innerHTML = html;

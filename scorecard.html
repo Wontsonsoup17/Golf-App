@@ -270,7 +270,19 @@
     window.finishRound = function() {
       const anyScored = R.players.some(p => R.scores[p].some(s => s > 0));
       if (!anyScored) { alert('No scores entered yet.'); return; }
-      if (!confirm('Finish and save this round?')) return;
+
+      // Check if any player has incomplete holes
+      const anyIncomplete = R.players.some(p => R.scores[p].filter(s => s > 0).length < 18);
+      const confirmMsg = anyIncomplete
+        ? 'Some holes are incomplete. Save as incomplete round?'
+        : 'Finish and save this round?';
+      if (!confirm(confirmMsg)) return;
+
+      // Build holesCompleted per player
+      const holesCompleted = {};
+      R.players.forEach(function(p) {
+        holesCompleted[p] = R.scores[p].filter(s => s > 0).length;
+      });
 
       const round = {
         id: Date.now().toString(),
@@ -283,7 +295,9 @@
         players: [...R.players],
         scores: JSON.parse(JSON.stringify(R.scores)),
         tracking: JSON.parse(JSON.stringify(R.tracking)),
-        holePars: course.holes.map(h => h.par)
+        holePars: course.holes.map(h => h.par),
+        holesCompleted: holesCompleted,
+        incomplete: anyIncomplete
       };
 
       // Save to localStorage
@@ -713,11 +727,23 @@
       if (!myName) return;
       const myScored = R.scores[myName].some(s => s > 0);
       if (!myScored) { alert('No scores entered yet.'); return; }
-      if (!confirm('Save your round and finish?')) return;
+
+      const myHolesPlayed = R.scores[myName].filter(s => s > 0).length;
+      const isIncomplete = myHolesPlayed < 18;
+      const confirmMsg = isIncomplete
+        ? 'You only played ' + myHolesPlayed + '/18 holes. Save as incomplete round?'
+        : 'Save your round and finish?';
+      if (!confirm(confirmMsg)) return;
 
       // Save a personal copy — does NOT end the round for others
       const course = course_ref.current;
       if (course) {
+        // Build holesCompleted per player
+        const holesCompleted = {};
+        R.players.forEach(function(p) {
+          holesCompleted[p] = R.scores[p].filter(s => s > 0).length;
+        });
+
         const round = {
           id: Date.now().toString(),
           courseId: course.id,
@@ -730,7 +756,9 @@
           scores: JSON.parse(JSON.stringify(R.scores)),
           tracking: JSON.parse(JSON.stringify(R.tracking)),
           holePars: course.holes.map(h => h.par),
-          groupCode: groupCode
+          groupCode: groupCode,
+          holesCompleted: holesCompleted,
+          incomplete: isIncomplete
         };
 
         // Save to Firebase cloud
