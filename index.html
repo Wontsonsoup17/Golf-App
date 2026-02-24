@@ -142,11 +142,21 @@
 
       var displayName = user.displayName || user.email.split('@')[0];
 
+      // Timeout safety: reset button after 15s if nothing happens
+      var joinTimeout = setTimeout(function() {
+        btn.disabled = false;
+        btn.textContent = 'Join';
+        errorEl.textContent = 'Connection timed out. Please try again.';
+        errorEl.style.display = 'block';
+      }, 15000);
+
       joinGroupRound(user.uid, displayName, code)
         .then(function() {
+          clearTimeout(joinTimeout);
           window.location.href = 'scorecard.html?group=' + code;
         })
         .catch(function(err) {
+          clearTimeout(joinTimeout);
           btn.disabled = false;
           btn.textContent = 'Join';
           errorEl.textContent = err.message || 'Could not join round.';
@@ -179,12 +189,21 @@
       var teeLabel = course.tees[teeKey].label;
       var date = new Date().toISOString().split('T')[0];
 
+      var createTimeout = setTimeout(function() {
+        btn.disabled = false;
+        btn.textContent = 'Create Round';
+        errorEl.textContent = 'Connection timed out. Please try again.';
+        errorEl.style.display = 'block';
+      }, 15000);
+
       createGroupRoundWithCode(user.uid, displayName, course.id, teeKey, teeLabel, date, code)
         .then(function(createdCode) {
+          clearTimeout(createTimeout);
           localStorage.setItem('active-group-code', createdCode);
           window.location.href = 'scorecard.html?group=' + createdCode;
         })
         .catch(function(err) {
+          clearTimeout(createTimeout);
           btn.disabled = false;
           btn.textContent = 'Create Round';
           errorEl.textContent = err.message || 'Could not create round.';

@@ -125,8 +125,15 @@ const auth = {
 
 var _firebaseDB = null;
 var _firebaseReady = false;
+var _firebaseLoadPromise = null;
+var _firebaseLoadResolve = null;
 
-// *** FIREBASE CONFIG — Replace with your own Firebase project config ***
+// Promise that resolves when Firebase SDK is loaded and initialized
+_firebaseLoadPromise = new Promise(function(resolve) {
+  _firebaseLoadResolve = resolve;
+});
+
+// *** FIREBASE CONFIG ***
 var FIREBASE_CONFIG = {
   databaseURL: "https://westchester-golf-app-default-rtdb.firebaseio.com"
 };
@@ -135,7 +142,6 @@ var FIREBASE_CONFIG = {
   var s1 = document.createElement('script');
   s1.src = 'https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js';
   s1.onload = function() {
-    // Save real firebase SDK before our const firebase overwrites window.firebase
     window._fbSDK = window.firebase;
     var s2 = document.createElement('script');
     s2.src = 'https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js';
@@ -148,13 +154,34 @@ var FIREBASE_CONFIG = {
       } catch(e) {
         console.warn('[Firebase] Init failed:', e.message);
       }
+      _firebaseLoadResolve();
     };
-    s2.onerror = function() { console.warn('[Firebase] DB SDK load failed'); };
+    s2.onerror = function() {
+      console.warn('[Firebase] DB SDK load failed');
+      _firebaseLoadResolve();
+    };
     document.head.appendChild(s2);
   };
-  s1.onerror = function() { console.warn('[Firebase] App SDK load failed'); };
+  s1.onerror = function() {
+    console.warn('[Firebase] App SDK load failed');
+    _firebaseLoadResolve();
+  };
   document.head.appendChild(s1);
 })();
+
+// Helper: wait for Firebase to be ready, then run a callback with the real DB ref
+function _waitForFirebase(path, action) {
+  if (_firebaseReady && _firebaseDB) {
+    return action(_firebaseDB.ref(path));
+  }
+  return _firebaseLoadPromise.then(function() {
+    if (_firebaseReady && _firebaseDB) {
+      return action(_firebaseDB.ref(path));
+    }
+    // Firebase failed to load — fall back to local
+    return action(null);
+  });
+}
 
 // ==================== LOCAL DATABASE ====================
 const LOCAL_DB_KEY = 'wg-db';
@@ -267,28 +294,47 @@ function makeFirebaseRef(path) {
   return {
     _path: path,
     set: function(value) {
-      if (!_firebaseReady) return makeLocalRef(path).set(value);
-      return _firebaseDB.ref(path).set(value);
+      return _waitForFirebase(path, function(ref) {
+        if (!ref) return makeLocalRef(path).set(value);
+        return ref.set(value);
+      });
     },
     update: function(updates) {
-      if (!_firebaseReady) return makeLocalRef(path).update(updates);
-      return _firebaseDB.ref(path).update(updates);
+      return _waitForFirebase(path, function(ref) {
+        if (!ref) return makeLocalRef(path).update(updates);
+        return ref.update(updates);
+      });
     },
     remove: function() {
-      if (!_firebaseReady) return makeLocalRef(path).remove();
-      return _firebaseDB.ref(path).remove();
+      return _waitForFirebase(path, function(ref) {
+        if (!ref) return makeLocalRef(path).remove();
+        return ref.remove();
+      });
     },
     once: function(eventType) {
-      if (!_firebaseReady) return makeLocalRef(path).once(eventType);
-      return _firebaseDB.ref(path).once(eventType);
+      return _waitForFirebase(path, function(ref) {
+        if (!ref) return makeLocalRef(path).once(eventType);
+        return ref.once(eventType);
+      });
     },
     on: function(eventType, callback) {
-      if (!_firebaseReady) return makeLocalRef(path).on(eventType, callback);
-      return _firebaseDB.ref(path).on(eventType, callback);
+      if (_firebaseReady && _firebaseDB) {
+        return _firebaseDB.ref(path).on(eventType, callback);
+      }
+      // For .on() listeners: set up after Firebase loads
+      _firebaseLoadPromise.then(function() {
+        if (_firebaseReady && _firebaseDB) {
+          _firebaseDB.ref(path).on(eventType, callback);
+        } else {
+          makeLocalRef(path).on(eventType, callback);
+        }
+      });
+      return callback;
     },
     off: function(eventType, callback) {
-      if (!_firebaseReady) return makeLocalRef(path).off(eventType, callback);
-      _firebaseDB.ref(path).off(eventType, callback);
+      if (_firebaseReady && _firebaseDB) {
+        _firebaseDB.ref(path).off(eventType, callback);
+      }
     },
     child: function(childPath) { return db.ref(path ? path + '/' + childPath : childPath); },
     keepSynced: function() {}
