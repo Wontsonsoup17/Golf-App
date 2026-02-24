@@ -262,7 +262,15 @@ function groupDataToRound(data, code) {
 // ==================== CONNECTION STATUS ====================
 
 function listenConnectionStatus(callback) {
-  // For local mode, always report as connected
-  setTimeout(() => callback(true), 0);
-  return () => {}; // no-op unsubscribe
+  // Check if real Firebase is connected
+  if (_firebaseReady && _firebaseDB) {
+    var connRef = _firebaseDB.ref('.info/connected');
+    connRef.on('value', function(snap) {
+      callback(snap.val() === true);
+    });
+    return function() { connRef.off(); };
+  }
+  // Fallback: always connected for local mode
+  setTimeout(function() { callback(true); }, 0);
+  return function() {};
 }

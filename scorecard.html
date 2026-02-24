@@ -382,15 +382,18 @@
 
       let html = '';
 
-      // Group bar with code and connection status
+      // Group bar with code, connection status, and refresh
       html += `
         <div class="group-bar">
           <div>
             <span class="group-bar-code">${groupCode}</span>
             <span class="group-players-count">&bull; ${R.players.length} player${R.players.length !== 1 ? 's' : ''}</span>
           </div>
-          <div class="connection-status ${isConnected ? 'online' : 'offline'}" id="connStatus">
-            <span class="connection-dot"></span>${isConnected ? 'Live' : 'Offline'}
+          <div style="display:flex;align-items:center;gap:8px">
+            <button onclick="refreshGroup()" style="background:none;border:1px solid var(--border);border-radius:6px;color:var(--text-muted);padding:4px 10px;font-size:12px;cursor:pointer" title="Refresh">&#128260; Sync</button>
+            <div class="connection-status ${isConnected ? 'online' : 'offline'}" id="connStatus">
+              <span class="connection-dot"></span>${isConnected ? 'Live' : 'Offline'}
+            </div>
           </div>
         </div>
       `;
@@ -640,6 +643,19 @@
       if (!myName) return;
       const current = R.tracking[myName].penalties[currentHole];
       updateGroupTracking(groupCode, user.uid, 'penalties', currentHole, (current + 1) % 4);
+    };
+
+    window.refreshGroup = function() {
+      // Force re-read from Firebase
+      db.ref('activeRounds/' + groupCode).once('value').then(function(snap) {
+        var data = snap.val();
+        if (data) {
+          R = groupDataToRound(data, groupCode);
+          var course = getCourse(R.courseId);
+          course_ref.current = course;
+          renderGroup();
+        }
+      });
     };
 
     window.copyCode = function() {
