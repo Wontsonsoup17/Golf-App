@@ -1,0 +1,542 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#0a0f0d">
+<title>Live Game - Westchester Golf</title>
+<link rel="stylesheet" href="shared.css?v=10">
+<style>
+  .live-back-btn {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    background: var(--green-accent);
+    color: #0a0f0d;
+    border: none;
+    padding: 13px 20px;
+    border-radius: var(--radius-sm);
+    font-size: 14px;
+    font-weight: 700;
+    cursor: pointer;
+    width: 100%;
+    justify-content: center;
+    margin-bottom: 16px;
+    box-shadow: 0 2px 12px rgba(0,230,118,0.2);
+    transition: all 0.15s ease;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .live-back-btn:active { transform: scale(0.97); opacity: 0.9; }
+
+  .leaderboard {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    overflow: hidden;
+    margin-bottom: 16px;
+    box-shadow: var(--shadow);
+  }
+  .lb-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 14px 16px;
+    border-bottom: 1px solid var(--border);
+    background: linear-gradient(180deg, rgba(0,230,118,0.04) 0%, transparent 100%);
+  }
+  .lb-title {
+    font-size: 15px;
+    font-weight: 800;
+    color: var(--text);
+    letter-spacing: 0.3px;
+  }
+  .lb-round-info {
+    font-size: 11px;
+    color: var(--text-muted);
+    font-weight: 600;
+  }
+
+  .lb-player {
+    border-bottom: 1px solid var(--border);
+  }
+  .lb-player:last-child { border-bottom: none; }
+
+  .lb-player-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 14px 16px;
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+    transition: background 0.1s ease;
+  }
+  .lb-player-header:active { background: rgba(255,255,255,0.03); }
+
+  .lb-rank {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    background: var(--bg-elevated);
+    border: 1px solid var(--border-light);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+    font-weight: 800;
+    color: var(--text-muted);
+    flex-shrink: 0;
+  }
+  .lb-rank.rank-1 { background: rgba(255,213,79,0.18); color: var(--gold); border-color: rgba(255,213,79,0.35); box-shadow: 0 0 8px rgba(255,213,79,0.15); }
+  .lb-rank.rank-2 { background: rgba(180,180,190,0.12); color: #b0b0b8; border-color: rgba(180,180,190,0.25); }
+  .lb-rank.rank-3 { background: rgba(205,127,50,0.12); color: #cd7f32; border-color: rgba(205,127,50,0.25); }
+
+  .lb-player-name {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text);
+    flex: 1;
+    margin-left: 10px;
+  }
+  .lb-player-name .you-tag {
+    font-size: 9px;
+    font-weight: 800;
+    color: var(--green-accent);
+    background: var(--green-glow);
+    border: 1px solid rgba(0,230,118,0.3);
+    padding: 1px 6px;
+    border-radius: 8px;
+    margin-left: 6px;
+    letter-spacing: 1px;
+    vertical-align: middle;
+  }
+
+  .lb-player-score {
+    text-align: right;
+    flex-shrink: 0;
+  }
+  .lb-total {
+    font-size: 18px;
+    font-weight: 800;
+    color: var(--text);
+  }
+  .lb-diff {
+    font-size: 11px;
+    font-weight: 700;
+    margin-top: 1px;
+  }
+  .lb-diff.under { color: var(--green-accent); }
+  .lb-diff.over { color: var(--red); }
+  .lb-diff.even { color: var(--blue); }
+
+  .lb-holes-played {
+    font-size: 10px;
+    color: var(--text-muted);
+    margin-top: 1px;
+  }
+
+  .lb-expand-icon {
+    margin-left: 8px;
+    font-size: 12px;
+    color: var(--text-muted);
+    transition: transform 0.2s;
+    flex-shrink: 0;
+  }
+  .lb-player.expanded .lb-expand-icon { transform: rotate(90deg); }
+
+  .lb-detail {
+    display: none;
+    padding: 0 16px 14px;
+    background: rgba(0,0,0,0.1);
+  }
+  .lb-player.expanded .lb-detail { display: block; }
+
+  .lb-scorecard {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 11px;
+  }
+  .lb-scorecard th {
+    padding: 4px 3px;
+    font-weight: 700;
+    color: var(--text-muted);
+    text-align: center;
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+  }
+  .lb-scorecard td {
+    padding: 5px 3px;
+    text-align: center;
+    font-weight: 600;
+    color: var(--text);
+    border-top: 1px solid var(--border);
+  }
+  .lb-scorecard .hole-num { color: var(--text-muted); font-weight: 700; }
+  .lb-scorecard .par-row td { color: var(--text-muted); font-size: 10px; }
+  .lb-scorecard .total-cell {
+    font-weight: 800;
+    border-top: 2px solid var(--border-light);
+  }
+
+  .lb-scorecard .sc-eagle { color: var(--eagle); }
+  .lb-scorecard .sc-birdie { color: var(--birdie); }
+  .lb-scorecard .sc-par { color: var(--text-muted); }
+  .lb-scorecard .sc-bogey { color: var(--bogey); }
+  .lb-scorecard .sc-double { color: var(--double); }
+
+  .lb-tracking-summary {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+    margin-top: 10px;
+    padding-top: 8px;
+    border-top: 1px solid var(--border);
+  }
+  .lb-track-stat {
+    font-size: 11px;
+    color: var(--text-muted);
+    font-weight: 600;
+  }
+  .lb-track-stat span { color: var(--text); font-weight: 700; }
+
+  .lb-group-code {
+    display: inline-block;
+    font-family: monospace;
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--green-accent);
+    letter-spacing: 2px;
+    background: var(--green-glow);
+    padding: 2px 8px;
+    border-radius: 6px;
+  }
+</style>
+</head>
+<body>
+
+<div class="header" id="pageHeader">
+  <h1 id="courseName">Live Game</h1>
+  <div class="subtitle" id="courseSub"></div>
+</div>
+
+<div class="main" id="mainContent">
+  <div class="empty-state">
+    <div class="icon">&#127948;</div>
+    <p>Loading...</p>
+  </div>
+</div>
+
+<nav class="bottom-nav" id="bottomNav"></nav>
+
+<script src="firebase-config.js?v=10"></script>
+<script src="shared.js?v=10"></script>
+<script src="firebase-sync.js?v=10"></script>
+<script>
+  requireAuth(function(user) {
+    renderBottomNav('live');
+
+    var urlParams = new URLSearchParams(window.location.search);
+    var groupCode = urlParams.get('group');
+
+    // If no group code in URL, check localStorage for active group
+    if (!groupCode) {
+      var storedCode = localStorage.getItem('active-group-code');
+      if (storedCode) groupCode = storedCode;
+    }
+
+    if (groupCode) {
+      initGroupLive(user, groupCode);
+    } else {
+      initSoloLive(user);
+    }
+  });
+
+  // ============================
+  // SOLO LIVE VIEW
+  // ============================
+  function initSoloLive(user) {
+    var R = getActiveRound();
+
+    if (!R) {
+      document.getElementById('mainContent').innerHTML =
+        '<div class="empty-state">' +
+          '<div class="icon">&#127948;</div>' +
+          '<p>No active round.<br><a href="index.html">Choose a course</a> to start playing.</p>' +
+        '</div>';
+      return;
+    }
+
+    var course = getCourse(R.courseId);
+    if (!course) return;
+
+    document.getElementById('courseName').textContent = course.name;
+    document.getElementById('courseSub').textContent = R.teeLabel + ' Tees  |  Par ' + course.par + '  |  ' + formatDate(R.date);
+
+    renderLeaderboard(R, course, user, null);
+  }
+
+  // ============================
+  // GROUP LIVE VIEW
+  // ============================
+  function initGroupLive(user, groupCode) {
+    var gotData = false;
+    listenToGroupRound(groupCode, function(data) {
+      gotData = true;
+      if (data.meta && data.meta.status === 'finished') {
+        document.getElementById('mainContent').innerHTML =
+          '<div class="empty-state">' +
+            '<div class="icon">&#127948;</div>' +
+            '<p>This round has finished.<br><a href="history.html">View history</a></p>' +
+          '</div>';
+        return;
+      }
+
+      var R = groupDataToRound(data, groupCode);
+      var course = getCourse(R.courseId);
+      if (!course) {
+        document.getElementById('mainContent').innerHTML =
+          '<div class="empty-state">' +
+            '<div class="icon">&#127948;</div>' +
+            '<p>Course not found.<br><a href="index.html">Back to home</a></p>' +
+          '</div>';
+        return;
+      }
+
+      document.getElementById('courseName').textContent = course.name;
+      document.getElementById('courseSub').textContent = R.teeLabel + ' Tees  |  Par ' + course.par + '  |  ' + formatDate(R.date);
+
+      renderLeaderboard(R, course, user, groupCode);
+    });
+
+    // If no data after a short delay, show error
+    setTimeout(function() {
+      if (!gotData) {
+        document.getElementById('mainContent').innerHTML =
+          '<div class="empty-state">' +
+            '<div class="icon">&#127948;</div>' +
+            '<p>Round not found.<br><a href="scorecard.html?group=' + groupCode + '">Back to scorecard</a> or <a href="index.html">home</a></p>' +
+          '</div>';
+      }
+    }, 500);
+  }
+
+  // ============================
+  // RENDER LEADERBOARD
+  // ============================
+  function renderLeaderboard(R, course, user, groupCode) {
+    var content = document.getElementById('mainContent');
+    var scorecardUrl = groupCode ? 'scorecard.html?group=' + groupCode : 'scorecard.html';
+
+    // Build player stats
+    var playerStats = R.players.map(function(name) {
+      var scores = R.scores[name];
+      var tracking = R.tracking[name];
+      var totalScore = 0;
+      var holesPlayed = 0;
+      var parPlayed = 0;
+
+      for (var i = 0; i < 18; i++) {
+        if (scores[i] > 0) {
+          totalScore += scores[i];
+          holesPlayed++;
+          parPlayed += course.holes[i].par;
+        }
+      }
+
+      var diff = totalScore - parPlayed;
+
+      // Tracking stats
+      var fwHit = 0, fwTotal = 0, girHit = 0, totalPutts = 0, totalMulligans = 0, totalPenalties = 0;
+      for (var j = 0; j < 18; j++) {
+        if (scores[j] > 0) {
+          if (course.holes[j].par >= 4) {
+            fwTotal++;
+            if (tracking.fairway[j]) fwHit++;
+          }
+          if (tracking.gir[j]) girHit++;
+          totalPutts += tracking.putts[j];
+          totalMulligans += tracking.mulligans[j];
+          totalPenalties += tracking.penalties[j];
+        }
+      }
+
+      return {
+        name: name,
+        scores: scores,
+        tracking: tracking,
+        totalScore: totalScore,
+        holesPlayed: holesPlayed,
+        parPlayed: parPlayed,
+        diff: diff,
+        fwHit: fwHit,
+        fwTotal: fwTotal,
+        girHit: girHit,
+        girTotal: holesPlayed,
+        totalPutts: totalPutts,
+        totalMulligans: totalMulligans,
+        totalPenalties: totalPenalties
+      };
+    });
+
+    // Sort by: most holes played first, then lowest score
+    playerStats.sort(function(a, b) {
+      if (b.holesPlayed !== a.holesPlayed) return b.holesPlayed - a.holesPlayed;
+      if (a.holesPlayed === 0) return 0;
+      return a.diff - b.diff;
+    });
+
+    // Assign ranks
+    for (var r = 0; r < playerStats.length; r++) {
+      if (playerStats[r].holesPlayed === 0) {
+        playerStats[r].rank = '-';
+      } else if (r > 0 && playerStats[r].diff === playerStats[r-1].diff && playerStats[r].holesPlayed === playerStats[r-1].holesPlayed) {
+        playerStats[r].rank = playerStats[r-1].rank;
+      } else {
+        playerStats[r].rank = r + 1;
+      }
+    }
+
+    // Determine current user's name
+    var myName = '';
+    if (groupCode && R._uidToName) {
+      myName = R._uidToName[user.uid] || '';
+    } else {
+      var displayName = user.displayName || user.email.split('@')[0];
+      if (R.players.indexOf(displayName) !== -1) myName = displayName;
+    }
+
+    // Get expanded state
+    var expandedPlayers = window._expandedPlayers || {};
+
+    // Build HTML
+    var html = '';
+
+    // Back to scorecard button
+    html += '<button class="live-back-btn" onclick="window.location.href=\'' + scorecardUrl + '\'">&#127948; Back to Scorecard</button>';
+
+    // Leaderboard card
+    html += '<div class="leaderboard">';
+    html += '<div class="lb-header">';
+    html += '<div class="lb-title">Leaderboard</div>';
+    html += '<div class="lb-round-info">';
+    if (groupCode) {
+      html += '<span class="lb-group-code">' + groupCode + '</span> &bull; ';
+    }
+    html += R.players.length + ' player' + (R.players.length !== 1 ? 's' : '');
+    html += '</div>';
+    html += '</div>';
+
+    playerStats.forEach(function(ps) {
+      var isMe = ps.name === myName;
+      var expanded = expandedPlayers[ps.name] || false;
+      var rankClass = '';
+      if (ps.rank === 1) rankClass = 'rank-1';
+      else if (ps.rank === 2) rankClass = 'rank-2';
+      else if (ps.rank === 3) rankClass = 'rank-3';
+
+      var diffClass = 'even', diffText = 'E';
+      if (ps.holesPlayed === 0) { diffText = '-'; }
+      else if (ps.diff < 0) { diffClass = 'under'; diffText = ps.diff.toString(); }
+      else if (ps.diff > 0) { diffClass = 'over'; diffText = '+' + ps.diff; }
+
+      html += '<div class="lb-player' + (expanded ? ' expanded' : '') + '" data-player="' + ps.name + '">';
+
+      // Header row
+      html += '<div class="lb-player-header" onclick="togglePlayer(\'' + ps.name.replace(/'/g, "\\'") + '\')">';
+      html += '<div class="lb-rank ' + rankClass + '">' + ps.rank + '</div>';
+      html += '<div class="lb-player-name">' + ps.name + (isMe ? '<span class="you-tag">YOU</span>' : '') + '</div>';
+      html += '<div class="lb-player-score">';
+      html += '<div class="lb-total">' + (ps.holesPlayed > 0 ? ps.totalScore : '-') + '</div>';
+      html += '<div class="lb-diff ' + diffClass + '">' + diffText + '</div>';
+      html += '<div class="lb-holes-played">' + ps.holesPlayed + '/18 holes</div>';
+      html += '</div>';
+      html += '<div class="lb-expand-icon">&rsaquo;</div>';
+      html += '</div>';
+
+      // Detail section (hole-by-hole scorecard)
+      html += '<div class="lb-detail">';
+
+      // Front 9 table
+      html += buildNineTable(ps, course, 0, 9, 'OUT');
+      // Back 9 table
+      html += buildNineTable(ps, course, 9, 18, 'IN');
+
+      // Tracking summary
+      html += '<div class="lb-tracking-summary">';
+      if (ps.fwTotal > 0) html += '<div class="lb-track-stat">FW: <span>' + ps.fwHit + '/' + ps.fwTotal + '</span></div>';
+      if (ps.holesPlayed > 0) html += '<div class="lb-track-stat">GIR: <span>' + ps.girHit + '/' + ps.holesPlayed + '</span></div>';
+      if (ps.totalPutts > 0) html += '<div class="lb-track-stat">Putts: <span>' + ps.totalPutts + '</span></div>';
+      if (ps.totalMulligans > 0) html += '<div class="lb-track-stat">Mulligans: <span>' + ps.totalMulligans + '</span></div>';
+      if (ps.totalPenalties > 0) html += '<div class="lb-track-stat">Penalties: <span>' + ps.totalPenalties + '</span></div>';
+      html += '</div>';
+
+      html += '</div>'; // lb-detail
+      html += '</div>'; // lb-player
+    });
+
+    html += '</div>'; // leaderboard
+
+    // Back to scorecard again at bottom
+    html += '<button class="live-back-btn" onclick="window.location.href=\'' + scorecardUrl + '\'">&#127948; Back to Scorecard</button>';
+
+    content.innerHTML = html;
+  }
+
+  function buildNineTable(ps, course, startHole, endHole, label) {
+    var html = '<div style="overflow-x:auto;margin-bottom:8px">';
+    html += '<table class="lb-scorecard">';
+
+    // Hole numbers row
+    html += '<tr><th>' + label + '</th>';
+    for (var i = startHole; i < endHole; i++) {
+      html += '<th class="hole-num">' + (i + 1) + '</th>';
+    }
+    html += '<th>TOT</th></tr>';
+
+    // Par row
+    html += '<tr class="par-row"><td>Par</td>';
+    var parTotal = 0;
+    for (var j = startHole; j < endHole; j++) {
+      html += '<td>' + course.holes[j].par + '</td>';
+      parTotal += course.holes[j].par;
+    }
+    html += '<td>' + parTotal + '</td></tr>';
+
+    // Score row
+    html += '<tr><td style="font-weight:800;color:var(--text)">Score</td>';
+    var scoreTotal = 0;
+    for (var k = startHole; k < endHole; k++) {
+      var s = ps.scores[k];
+      var colorClass = '';
+      if (s > 0) {
+        scoreTotal += s;
+        var d = s - course.holes[k].par;
+        if (d <= -2) colorClass = 'sc-eagle';
+        else if (d === -1) colorClass = 'sc-birdie';
+        else if (d === 0) colorClass = 'sc-par';
+        else if (d === 1) colorClass = 'sc-bogey';
+        else colorClass = 'sc-double';
+      }
+      html += '<td class="' + colorClass + '">' + (s > 0 ? s : '-') + '</td>';
+    }
+    html += '<td class="total-cell">' + (scoreTotal > 0 ? scoreTotal : '-') + '</td></tr>';
+
+    html += '</table></div>';
+    return html;
+  }
+
+  // Toggle expand/collapse player detail
+  window._expandedPlayers = {};
+  window.togglePlayer = function(name) {
+    window._expandedPlayers[name] = !window._expandedPlayers[name];
+    var els = document.querySelectorAll('.lb-player');
+    els.forEach(function(el) {
+      if (el.getAttribute('data-player') === name) {
+        el.classList.toggle('expanded');
+      }
+    });
+  };
+</script>
+</body>
+</html>

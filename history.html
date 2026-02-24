@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#0a0f0d">
+<title>History - Westchester Golf</title>
+<link rel="stylesheet" href="shared.css?v=10">
+</head>
+<body>
+
+<div class="header">
+  <h1>Round History</h1>
+  <div class="subtitle">All your saved rounds</div>
+</div>
+
+<div id="activeRoundBanner"></div>
+
+<div class="main">
+  <div id="historyList">
+    <div class="waiting-players"><span class="spinner"></span> Loading rounds...</div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="detailModal">
+  <div class="modal">
+    <h3 id="detailTitle"></h3>
+    <div id="detailContent" style="overflow-x:auto"></div>
+    <div class="modal-actions">
+      <button class="btn-secondary" onclick="closeModal()">Close</button>
+    </div>
+  </div>
+</div>
+
+<nav class="bottom-nav" id="bottomNav"></nav>
+
+<script src="firebase-config.js?v=10"></script>
+<script src="shared.js?v=10"></script>
+<script src="firebase-sync.js?v=10"></script>
+<script>
+  requireAuth(function(user) {
+    renderBottomNav('history');
+    renderActiveRoundBanner();
+
+    let rounds = [];
+
+    // Load from Firebase
+    fbLoadRounds(user.uid).then(fbRounds => {
+      rounds = fbRounds;
+      renderHistory();
+    }).catch(() => {
+      // Fallback to localStorage
+      rounds = loadRounds();
+      renderHistory();
+    });
+
+    function renderHistory() {
+      const container = document.getElementById('historyList');
+      if (!rounds.length) {
+        container.innerHTML = `<div class="empty-state"><div class="icon">&#128203;</div><p>No rounds yet.<br><a href="index.html">Start playing</a> to build your history.</p></div>`;
+        return;
+      }
+
+      const sorted = [...rounds].sort((a, b) => new Date(b.date) - new Date(a.date));
+      container.innerHTML = sorted.map(r => `
+        <div class="history-card">
+          <h3>${r.courseName}${r.groupCode ? ' <span style="font-size:11px;color:var(--gold);font-family:monospace;letter-spacing:1px">[' + r.groupCode + ']</span>' : ''}</h3>
+          <div class="date">${formatDate(r.date)}  &bull;  ${r.teeLabel} Tees</div>
+          <div class="history-scores">
+            ${r.players.map(p => {
+              const total = r.scores[p].reduce((a, b) => a + b, 0);
+              const holesPlayed = r.scores[p].filter(s => s > 0).length;
+              const diffStr = formatDiff(total, r.par);
+              let trackSummary = '';
+              if (r.tracking && r.tracking[p]) {
+                const t = r.tracking[p];
+                const totalPutts = t.putts.reduce((a,b)=>a+b,0);
+                const totalMulligans = t.mulligans.reduce((a,b)=>a+b,0);
+                const fwHit = t.fairway.filter(Boolean).length;
+                const girHit = t.gir.filter(Boolean).length;
+                const parts = [];
+                if (totalPutts > 0) parts.push(totalPutts + ' putts');
+                if (fwHit > 0) parts.push(fwHit + ' FW');
+                if (girHit > 0) parts.push(girHit + ' GIR');
+                if (totalMulligans > 0) parts.push(totalMulligans + ' mull.');
+                if (parts.length) trackSummary = '<span style="font-size:11px;color:var(--text-muted);display:block;margin-top:2px">' + parts.join(' &bull; ') + '</span>';
+              }
+              return `
+                <div class="history-score-row">
+                  <div>
+                    <span>${p}</span>
+                    ${trackSummary}
+                  </div>
+                  <span><strong>${total}</strong> (${diffStr}) &bull; ${holesPlayed}/18</span>
+                </div>
+              `;
+            }).join('')}
+          </div>
+          <div class="history-actions">
+            <button class="btn-outline" onclick="showDetail('${r.id}')">Scorecard</button>
+            <button class="btn-danger" onclick="deleteRound('${r.id}')">Delete</button>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    window.showDetail = function(roundId) {
+      const round = rounds.find(r => r.id === roundId);
+      if (!round) return;
+      document.getElementById('detailTitle').textContent = `${round.courseName} — ${formatDate(round.date)}`;
+
+      let html = '<table class="detail-table"><tr><th class="hole-col">Hole</th><th>Par</th>';
+      round.players.forEach(p => html += `<th>${p}</th>`);
+      html += '</tr>';
+
+      for (let i = 0; i < 18; i++) {
+        if (i === 9) {
+          html += `<tr class="nine-total"><td class="hole-col">OUT</td><td>${round.holePars.slice(0,9).reduce((a,b)=>a+b,0)}</td>`;
+          round.players.forEach(p => html += `<td>${round.scores[p].slice(0,9).reduce((a,b)=>a+b,0)||'-'}</td>`);
+          html += '</tr>';
+        }
+        html += `<tr><td class="hole-col">${i+1}</td><td>${round.holePars[i]}</td>`;
+        round.players.forEach(p => {
+          const s = round.scores[p][i];
+          const diff = s - round.holePars[i];
+          let style = '';
+          if (s > 0) {
+            if (diff <= -2) style = 'color:var(--eagle);font-weight:700';
+            else if (diff === -1) style = 'color:var(--birdie);font-weight:700';
+            else if (diff === 0) style = 'color:var(--par-color)';
+            else if (diff === 1) style = 'color:var(--bogey)';
+            else style = 'color:var(--double);font-weight:700';
+          }
+          html += `<td style="${style}">${s || '-'}</td>`;
+        });
+        html += '</tr>';
+      }
+      html += `<tr class="nine-total"><td class="hole-col">IN</td><td>${round.holePars.slice(9).reduce((a,b)=>a+b,0)}</td>`;
+      round.players.forEach(p => html += `<td>${round.scores[p].slice(9).reduce((a,b)=>a+b,0)||'-'}</td>`);
+      html += '</tr>';
+      html += `<tr class="grand-total"><td class="hole-col">TOT</td><td>${round.par}</td>`;
+      round.players.forEach(p => html += `<td>${round.scores[p].reduce((a,b)=>a+b,0)}</td>`);
+      html += '</tr></table>';
+
+      document.getElementById('detailContent').innerHTML = html;
+      document.getElementById('detailModal').classList.add('show');
+    };
+
+    window.deleteRound = function(id) {
+      if (confirm('Delete this round permanently?')) {
+        // Delete from Firebase
+        fbDeleteRound(user.uid, id).catch(() => {});
+
+        // Also remove from local
+        rounds = rounds.filter(r => r.id !== id);
+        saveRounds(rounds);
+        renderHistory();
+      }
+    };
+
+    window.closeModal = function() {
+      document.getElementById('detailModal').classList.remove('show');
+    };
+  });
+</script>
+</body>
+</html>

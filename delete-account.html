@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#0a0f0d">
+<title>Delete Test Accounts - Westchester Golf</title>
+<link rel="stylesheet" href="shared.css?v=10">
+</head>
+<body>
+
+<div class="header">
+  <h1>Delete Test Accounts</h1>
+  <div class="subtitle">Auto-removes any account with "test" in the username</div>
+</div>
+
+<div class="main">
+  <div class="auth-card">
+    <div id="result" style="text-align:center;padding:12px;font-weight:600"></div>
+    <div style="text-align:center;margin-top:16px">
+      <a href="index.html" style="color:var(--text-muted);font-size:13px">Back to app</a>
+    </div>
+  </div>
+</div>
+
+<script src="firebase-config.js?v=10"></script>
+<script>
+  (function() {
+    const users = getLocalUsers();
+    const dbData = getLocalDB();
+    const deleted = [];
+
+    Object.keys(users).forEach(username => {
+      if (username.includes('test')) {
+        const uid = users[username].uid;
+
+        // Remove from users registry
+        delete users[username];
+
+        // Remove from database
+        if (dbData.usernames) delete dbData.usernames[username];
+        if (dbData.users) delete dbData.users[uid];
+        if (dbData.rounds) delete dbData.rounds[uid];
+
+        // Remove avatar
+        localStorage.removeItem('wg-avatar-' + uid);
+
+        deleted.push(username);
+      }
+    });
+
+    saveLocalUsers(users);
+    saveLocalDB(dbData);
+
+    // Clear session if current user was a test account
+    const session = getSession();
+    if (session && session.username && session.username.toLowerCase().includes('test')) {
+      clearSession();
+    }
+
+    // Clear round storage
+    localStorage.removeItem('westchester-golf-v2');
+    localStorage.removeItem('active-round-v2');
+    localStorage.removeItem('active-group-code');
+
+    const resultEl = document.getElementById('result');
+    if (deleted.length) {
+      resultEl.style.color = 'var(--accent)';
+      resultEl.textContent = 'Deleted ' + deleted.length + ' account' + (deleted.length > 1 ? 's' : '') + ': ' + deleted.join(', ');
+    } else {
+      resultEl.style.color = 'var(--text-muted)';
+      resultEl.textContent = 'No test accounts found.';
+    }
+  })();
+</script>
+</body>
+</html>

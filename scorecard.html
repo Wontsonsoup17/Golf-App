@@ -1,0 +1,706 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#0a0f0d">
+<title>Live Round - Westchester Golf</title>
+<link rel="stylesheet" href="shared.css?v=10">
+</head>
+<body>
+
+<div class="header" id="pageHeader">
+  <h1 id="courseName">Live Round</h1>
+  <div class="subtitle" id="courseSub"></div>
+</div>
+
+<div class="main" id="mainContent"></div>
+
+<nav class="bottom-nav" id="bottomNav"></nav>
+
+<script src="firebase-config.js?v=10"></script>
+<script src="shared.js?v=10"></script>
+<script src="firebase-sync.js?v=10"></script>
+<script>
+  requireAuth(function(user) {
+    renderBottomNav('play');
+
+    const urlParams = new URLSearchParams(window.location.search);
+    let groupCode = urlParams.get('group');
+
+    // If no group code in URL, check localStorage for active group
+    if (!groupCode) {
+      const storedCode = localStorage.getItem('active-group-code');
+      if (storedCode) groupCode = storedCode;
+    }
+
+    if (groupCode) {
+      initGroupRound(user, groupCode);
+    } else {
+      initSoloRound(user);
+    }
+  });
+
+  // ===================================================================
+  // SOLO MODE — existing localStorage-based play (mostly unchanged)
+  // ===================================================================
+  function initSoloRound(user) {
+    let R = getActiveRound();
+
+    if (!R) {
+      document.getElementById('mainContent').innerHTML = `
+        <div class="empty-state">
+          <div class="icon">&#127948;</div>
+          <p>No active round.<br><a href="index.html">Choose a course</a> to start playing.</p>
+        </div>
+      `;
+      return;
+    }
+
+    const course = getCourse(R.courseId);
+    let currentHole = R.currentHole || 0;
+
+    if (!R.tracking) {
+      R.tracking = {};
+      R.players.forEach(p => R.tracking[p] = createPlayerTracking());
+      save();
+    }
+
+    document.getElementById('courseName').textContent = course.name;
+    document.getElementById('courseSub').textContent = `${R.teeLabel} Tees  |  Par ${course.par}  |  ${formatDate(R.date)}`;
+
+    // Auto-set current hole to par if unscored on initial load
+    const initHole = course.holes[currentHole];
+    R.players.forEach(p => {
+      if (R.scores[p][currentHole] === 0) {
+        R.scores[p][currentHole] = initHole.par;
+      }
+    });
+
+    function save() {
+      R.currentHole = currentHole;
+      setActiveRound(R);
+    }
+
+    // Determine the current playable hole — the first hole with no score for any player
+    function getPlayableHole() {
+      for (let i = 0; i < 18; i++) {
+        const allScored = R.players.every(p => R.scores[p][i] > 0);
+        if (!allScored) return i;
+      }
+      return 17; // all holes scored
+    }
+
+    function render() {
+      const hole = course.holes[currentHole];
+      const teeKey = R.tee;
+      const yardage = hole[teeKey] || '—';
+      const playableHole = getPlayableHole();
+      const isFutureHole = currentHole > playableHole;
+
+      let html = '';
+
+      // Leaderboard link
+      html += '<a href="live-game.html" class="leaderboard-link">&#127942; View Leaderboard</a>';
+
+      // Hole strip
+      html += '<div class="hole-strip" id="holeStrip">';
+      for (let i = 0; i < 18; i++) {
+        const anyScored = R.players.some(p => R.scores[p][i] > 0);
+        let cls = i === currentHole ? 'active' : (anyScored ? 'scored' : '');
+        if (i > playableHole && i !== currentHole) cls += ' future';
+        html += `<div class="hole-pip ${cls}" onclick="goToHole(${i})">${i+1}</div>`;
+      }
+      html += '</div>';
+
+      // Hole display
+      html += `
+        <div class="hole-display">
+          <div class="hole-number">${isFutureHole ? 'Preview — ' : ''}Hole ${hole.num}</div>
+          <div class="hole-info-chips">
+            <span class="info-chip par-chip">Par ${hole.par}</span>
+            <span class="info-chip">${yardage} yds</span>
+            <span class="info-chip">HCP ${hole.hcp}</span>
+          </div>
+        </div>
+      `;
+
+      // Future hole preview banner
+      if (isFutureHole) {
+        html += `<div class="preview-banner">
+          <span class="preview-banner-icon">&#128065;</span>
+          <div>
+            <div class="preview-banner-title">Hole Preview</div>
+            <div class="preview-banner-sub">You're previewing a future hole. Score input is available when you reach this hole.</div>
+          </div>
+          <button class="preview-back-btn" onclick="goToHole(${playableHole})">Go to Hole ${playableHole + 1} &#8594;</button>
+        </div>`;
+      }
+
+      // Hole layout image
+      if (hole.img) {
+        html += `<div class="hole-layout-container" id="layoutContainer">
+          <div class="hole-layout-toggle" onclick="document.getElementById('layoutContainer').classList.toggle('expanded')">
+            <span class="layout-icon">🗺️</span>
+            <span class="layout-label">View Hole Layout</span>
+            <span class="layout-chevron">▼</span>
+          </div>
+          <div class="hole-layout-img-wrap">
+            <img src="${hole.img}" alt="Hole ${hole.num} layout" loading="lazy">
+          </div>
+        </div>`;
+      }
+
+      // Player cards — only show if NOT a future hole
+      if (!isFutureHole) {
+        R.players.forEach(p => {
+          const score = R.scores[p][currentHole];
+          const scoreClass = getScoreClass(score, hole.par);
+          const label = getScoreLabel(score, hole.par);
+          const t = R.tracking[p];
+
+          const totalScore = R.scores[p].reduce((a, b) => a + b, 0);
+          const holesPlayed = R.scores[p].filter(s => s > 0).length;
+          const parPlayed = course.holes.filter((h, i) => R.scores[p][i] > 0).reduce((a, h) => a + h.par, 0);
+          const diff = totalScore - parPlayed;
+          let badgeClass = 'even', badgeText = 'E';
+          if (holesPlayed === 0) { badgeText = '—'; }
+          else if (diff < 0) { badgeClass = 'under'; badgeText = diff.toString(); }
+          else if (diff > 0) { badgeClass = 'over'; badgeText = '+' + diff; }
+
+          const pSafe = p.replace(/'/g, "\\'");
+
+          html += `
+            <div class="player-score-card">
+              <div class="player-score-header">
+                <span class="player-score-name">${p}</span>
+                <span class="player-total-badge ${badgeClass}">${holesPlayed > 0 ? totalScore + ' (' + badgeText + ')' : '—'}</span>
+              </div>
+              <div class="score-stepper">
+                <button class="step-btn minus" onclick="adj('${pSafe}', -1)">&minus;</button>
+                <div class="score-big ${scoreClass}">${score || '—'}</div>
+                <button class="step-btn plus" onclick="adj('${pSafe}', 1)">+</button>
+              </div>
+              <div class="score-label ${scoreClass}">${label}</div>
+              <div class="track-row">
+                <button class="track-toggle ${t.fairway[currentHole] ? 'active' : ''}" onclick="toggleFairway('${pSafe}')">
+                  <span class="track-icon">&#127963;</span>Fairway
+                </button>
+                <button class="track-toggle ${t.gir[currentHole] ? 'active' : ''}" onclick="toggleGIR('${pSafe}')">
+                  <span class="track-icon">&#9971;</span>GIR
+                </button>
+                <button class="track-toggle ${t.mulligans[currentHole] > 0 ? 'mulligan-active' : ''}" onclick="addMulligan('${pSafe}')">
+                  <span class="track-icon">&#128260;</span>Mulligan${t.mulligans[currentHole] > 0 ? ' (' + t.mulligans[currentHole] + ')' : ''}
+                </button>
+                <button class="track-toggle ${t.penalties[currentHole] > 0 ? 'penalty-active' : ''}" onclick="addPenalty('${pSafe}')">
+                  <span class="track-icon">&#9888;</span>Penalty${t.penalties[currentHole] > 0 ? ' (' + t.penalties[currentHole] + ')' : ''}
+                </button>
+              </div>
+              <div class="putts-row">
+                <span class="putts-label">Putts</span>
+                <div class="putt-stepper">
+                  <button class="putt-btn p-minus" onclick="adjPutt('${pSafe}', -1)">&minus;</button>
+                  <div class="putt-val">${t.putts[currentHole]}</div>
+                  <button class="putt-btn p-plus" onclick="adjPutt('${pSafe}', 1)">+</button>
+                </div>
+              </div>
+            </div>
+          `;
+        });
+      }
+
+      // Hole nav
+      html += '<div class="hole-nav-row">';
+      if (currentHole > 0) {
+        html += `<button class="hole-nav-btn prev" onclick="goToHole(${currentHole - 1})">&larr; Hole ${currentHole}</button>`;
+      } else {
+        html += '<div></div>';
+      }
+      if (currentHole < 17) {
+        html += `<button class="hole-nav-btn next" onclick="goToHole(${currentHole + 1})">Hole ${currentHole + 2} &rarr;</button>`;
+      } else {
+        html += `<button class="hole-nav-btn next" onclick="finishRound()" style="background:var(--gold);color:#1a1a1a;">Finish Round</button>`;
+      }
+      html += '</div>';
+
+      if (!isFutureHole) {
+        html += `
+          <div class="finish-section">
+            <button class="btn-gold" onclick="finishRound()">Save & Finish</button>
+            <button class="btn-secondary" onclick="cancelRound()">Cancel</button>
+          </div>
+        `;
+      }
+
+      document.getElementById('mainContent').innerHTML = html;
+
+      setTimeout(() => {
+        const strip = document.getElementById('holeStrip');
+        const activePip = strip?.querySelector('.hole-pip.active');
+        if (activePip && strip) {
+          activePip.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
+        }
+      }, 50);
+    }
+
+    window.goToHole = function(idx) {
+      currentHole = idx;
+      // Auto-set score to par for any player who hasn't scored this hole yet
+      const hole = course.holes[currentHole];
+      R.players.forEach(p => {
+        if (R.scores[p][currentHole] === 0) {
+          R.scores[p][currentHole] = hole.par;
+        }
+      });
+      save(); render(); window.scrollTo({ top: 0, behavior: 'smooth' });
+    };
+    window.adj = function(player, delta) { R.scores[player][currentHole] = Math.max(1, Math.min(15, R.scores[player][currentHole] + delta)); save(); render(); };
+    window.adjPutt = function(player, delta) { R.tracking[player].putts[currentHole] = Math.max(0, Math.min(10, R.tracking[player].putts[currentHole] + delta)); save(); render(); };
+    window.toggleFairway = function(player) { R.tracking[player].fairway[currentHole] = !R.tracking[player].fairway[currentHole]; save(); render(); };
+    window.toggleGIR = function(player) { R.tracking[player].gir[currentHole] = !R.tracking[player].gir[currentHole]; save(); render(); };
+    window.addMulligan = function(player) { R.tracking[player].mulligans[currentHole] = (R.tracking[player].mulligans[currentHole] + 1) % 3; save(); render(); };
+    window.addPenalty = function(player) { R.tracking[player].penalties[currentHole] = (R.tracking[player].penalties[currentHole] + 1) % 4; save(); render(); };
+
+    window.finishRound = function() {
+      const anyScored = R.players.some(p => R.scores[p].some(s => s > 0));
+      if (!anyScored) { alert('No scores entered yet.'); return; }
+      if (!confirm('Finish and save this round?')) return;
+
+      const round = {
+        id: Date.now().toString(),
+        courseId: course.id,
+        courseName: course.name,
+        tee: R.tee,
+        teeLabel: R.teeLabel,
+        par: course.par,
+        date: R.date,
+        players: [...R.players],
+        scores: JSON.parse(JSON.stringify(R.scores)),
+        tracking: JSON.parse(JSON.stringify(R.tracking)),
+        holePars: course.holes.map(h => h.par)
+      };
+
+      // Save to localStorage
+      const rounds = loadRounds();
+      rounds.push(round);
+      saveRounds(rounds);
+
+      // Also save to Firebase
+      const currentUser = getCurrentUser();
+      if (currentUser) {
+        fbSaveRound(currentUser.uid, round).catch(() => {});
+      }
+
+      clearActiveRound();
+      window.location.href = 'history.html';
+    };
+
+    window.cancelRound = function() {
+      if (confirm('Cancel this round? All data will be lost.')) {
+        clearActiveRound();
+        window.location.href = 'index.html';
+      }
+    };
+
+    render();
+  }
+
+  // ===================================================================
+  // GROUP MODE — Firebase real-time play
+  // ===================================================================
+  function initGroupRound(user, groupCode) {
+    const course_ref = { current: null }; // populated from meta
+    let currentHole = 0;
+    let R = null; // round data built from Firebase
+    let unsubscribe = null;
+    let unsubConn = null;
+    let isConnected = true;
+
+    // Store group code locally for resume
+    localStorage.setItem('active-group-code', groupCode);
+
+    // Connection status
+    unsubConn = listenConnectionStatus(connected => {
+      isConnected = connected;
+      const el = document.getElementById('connStatus');
+      if (el) {
+        el.className = 'connection-status ' + (connected ? 'online' : 'offline');
+        el.innerHTML = `<span class="connection-dot"></span>${connected ? 'Live' : 'Offline'}`;
+      }
+    });
+
+    // Listen for real-time updates
+    unsubscribe = listenToGroupRound(groupCode, function(data) {
+      // Check if round was finished by creator
+      if (data.meta && data.meta.status === 'finished') {
+        handleGroupFinished(data);
+        return;
+      }
+
+      R = groupDataToRound(data, groupCode);
+      const course = getCourse(R.courseId);
+      course_ref.current = course;
+
+      if (!course) {
+        document.getElementById('mainContent').innerHTML = '<div class="empty-state"><p>Course not found.</p></div>';
+        return;
+      }
+
+      // Update header
+      document.getElementById('courseName').textContent = course.name;
+      document.getElementById('courseSub').textContent = `${R.teeLabel} Tees  |  Par ${course.par}  |  ${formatDate(R.date)}`;
+
+      renderGroup();
+    });
+
+    // Determine the current playable hole for the current user
+    function getGroupPlayableHole() {
+      const myName = R._uidToName[user.uid];
+      if (!myName) return 0;
+      const course = course_ref.current;
+      if (!course) return 0;
+      for (let i = 0; i < 18; i++) {
+        if (!(R.scores[myName][i] > 0)) return i;
+      }
+      return 17;
+    }
+
+    function renderGroup() {
+      if (!R || !course_ref.current) return;
+      const course = course_ref.current;
+      const hole = course.holes[currentHole];
+      const teeKey = R.tee;
+      const yardage = hole[teeKey] || '—';
+      const myName = R._uidToName[user.uid];
+      const isCreator = R._createdBy === user.uid;
+      const playableHole = getGroupPlayableHole();
+      const isFutureHole = currentHole > playableHole;
+
+      let html = '';
+
+      // Group bar with code and connection status
+      html += `
+        <div class="group-bar">
+          <div>
+            <span class="group-bar-code">${groupCode}</span>
+            <span class="group-players-count">&bull; ${R.players.length} player${R.players.length !== 1 ? 's' : ''}</span>
+          </div>
+          <div class="connection-status ${isConnected ? 'online' : 'offline'}" id="connStatus">
+            <span class="connection-dot"></span>${isConnected ? 'Live' : 'Offline'}
+          </div>
+        </div>
+      `;
+
+      // Share code button
+      html += `
+        <div class="group-code-display" style="padding:12px; margin-bottom:12px;">
+          <div class="group-code-label">Share Code</div>
+          <div class="group-code" style="font-size:28px">${groupCode}</div>
+          <div class="group-code-actions">
+            <button class="copy-code-btn" onclick="copyCode()">Copy Code</button>
+          </div>
+        </div>
+      `;
+
+      // Leaderboard link
+      html += `<a href="live-game.html?group=${groupCode}" class="leaderboard-link">&#127942; View Leaderboard</a>`;
+
+      // Hole strip
+      html += '<div class="hole-strip" id="holeStrip">';
+      for (let i = 0; i < 18; i++) {
+        const anyScored = R.players.some(p => R.scores[p][i] > 0);
+        let cls = i === currentHole ? 'active' : (anyScored ? 'scored' : '');
+        if (i > playableHole && i !== currentHole) cls += ' future';
+        html += `<div class="hole-pip ${cls}" onclick="goToHole(${i})">${i+1}</div>`;
+      }
+      html += '</div>';
+
+      // Hole display
+      html += `
+        <div class="hole-display">
+          <div class="hole-number">${isFutureHole ? 'Preview — ' : ''}Hole ${hole.num}</div>
+          <div class="hole-info-chips">
+            <span class="info-chip par-chip">Par ${hole.par}</span>
+            <span class="info-chip">${yardage} yds</span>
+            <span class="info-chip">HCP ${hole.hcp}</span>
+          </div>
+        </div>
+      `;
+
+      // Future hole preview banner
+      if (isFutureHole) {
+        html += `<div class="preview-banner">
+          <span class="preview-banner-icon">&#128065;</span>
+          <div>
+            <div class="preview-banner-title">Hole Preview</div>
+            <div class="preview-banner-sub">You're previewing a future hole. Score input is available when you reach this hole.</div>
+          </div>
+          <button class="preview-back-btn" onclick="goToHole(${playableHole})">Go to Hole ${playableHole + 1} &#8594;</button>
+        </div>`;
+      }
+
+      // Hole layout image
+      if (hole.img) {
+        html += `<div class="hole-layout-container" id="layoutContainerGroup">
+          <div class="hole-layout-toggle" onclick="document.getElementById('layoutContainerGroup').classList.toggle('expanded')">
+            <span class="layout-icon">🗺️</span>
+            <span class="layout-label">View Hole Layout</span>
+            <span class="layout-chevron">▼</span>
+          </div>
+          <div class="hole-layout-img-wrap">
+            <img src="${hole.img}" alt="Hole ${hole.num} layout" loading="lazy">
+          </div>
+        </div>`;
+      }
+
+      // Player cards — only show if NOT a future hole
+      if (!isFutureHole) {
+        const orderedPlayers = [];
+        if (myName) orderedPlayers.push(myName);
+        R.players.forEach(p => { if (p !== myName) orderedPlayers.push(p); });
+
+        orderedPlayers.forEach(p => {
+          const isMe = p === myName;
+          const score = R.scores[p][currentHole];
+          const scoreClass = getScoreClass(score, hole.par);
+          const label = getScoreLabel(score, hole.par);
+          const t = R.tracking[p];
+
+          const totalScore = R.scores[p].reduce((a, b) => a + b, 0);
+          const holesPlayed = R.scores[p].filter(s => s > 0).length;
+          const parPlayed = course.holes.filter((h, i) => R.scores[p][i] > 0).reduce((a, h) => a + h.par, 0);
+          const diff = totalScore - parPlayed;
+          let badgeClass = 'even', badgeText = 'E';
+          if (holesPlayed === 0) { badgeText = '—'; }
+          else if (diff < 0) { badgeClass = 'under'; badgeText = diff.toString(); }
+          else if (diff > 0) { badgeClass = 'over'; badgeText = '+' + diff; }
+
+          const cardClass = isMe ? 'player-score-card you-badge' : 'player-score-card readonly';
+
+          html += `<div class="${cardClass}">`;
+          html += `
+            <div class="player-score-header">
+              <span class="player-score-name">${p}</span>
+              <span class="player-total-badge ${badgeClass}">${holesPlayed > 0 ? totalScore + ' (' + badgeText + ')' : '—'}</span>
+            </div>
+          `;
+
+          // Score stepper (interactive for me, display-only for others)
+          html += '<div class="score-stepper">';
+          if (isMe) {
+            html += `<button class="step-btn minus" onclick="adj(-1)">&minus;</button>`;
+          }
+          html += `<div class="score-big ${scoreClass}">${score || '—'}</div>`;
+          if (isMe) {
+            html += `<button class="step-btn plus" onclick="adj(1)">+</button>`;
+          }
+          html += '</div>';
+          html += `<div class="score-label ${scoreClass}">${label}</div>`;
+
+          // Tracking toggles
+          html += '<div class="track-row">';
+          if (isMe) {
+            html += `
+              <button class="track-toggle ${t.fairway[currentHole] ? 'active' : ''}" onclick="toggleTrack('fairway')">
+                <span class="track-icon">&#127963;</span>Fairway
+              </button>
+              <button class="track-toggle ${t.gir[currentHole] ? 'active' : ''}" onclick="toggleTrack('gir')">
+                <span class="track-icon">&#9971;</span>GIR
+              </button>
+              <button class="track-toggle ${t.mulligans[currentHole] > 0 ? 'mulligan-active' : ''}" onclick="cycleMulligan()">
+                <span class="track-icon">&#128260;</span>Mulligan${t.mulligans[currentHole] > 0 ? ' (' + t.mulligans[currentHole] + ')' : ''}
+              </button>
+              <button class="track-toggle ${t.penalties[currentHole] > 0 ? 'penalty-active' : ''}" onclick="cyclePenalty()">
+                <span class="track-icon">&#9888;</span>Penalty${t.penalties[currentHole] > 0 ? ' (' + t.penalties[currentHole] + ')' : ''}
+              </button>
+            `;
+          } else {
+            html += `
+              <button class="track-toggle ${t.fairway[currentHole] ? 'active' : ''}"><span class="track-icon">&#127963;</span>FW</button>
+              <button class="track-toggle ${t.gir[currentHole] ? 'active' : ''}"><span class="track-icon">&#9971;</span>GIR</button>
+              ${t.mulligans[currentHole] > 0 ? `<button class="track-toggle mulligan-active"><span class="track-icon">&#128260;</span>${t.mulligans[currentHole]}</button>` : ''}
+              ${t.penalties[currentHole] > 0 ? `<button class="track-toggle penalty-active"><span class="track-icon">&#9888;</span>${t.penalties[currentHole]}</button>` : ''}
+            `;
+          }
+          html += '</div>';
+
+          // Putts
+          html += '<div class="putts-row">';
+          html += '<span class="putts-label">Putts</span>';
+          html += '<div class="putt-stepper">';
+          if (isMe) {
+            html += `<button class="putt-btn p-minus" onclick="adjPutt(-1)">&minus;</button>`;
+          }
+          html += `<div class="putt-val">${t.putts[currentHole]}</div>`;
+          if (isMe) {
+            html += `<button class="putt-btn p-plus" onclick="adjPutt(1)">+</button>`;
+          }
+          html += '</div></div>';
+
+          html += '</div>'; // close player card
+        });
+      }
+
+      // Hole navigation
+      html += '<div class="hole-nav-row">';
+      if (currentHole > 0) {
+        html += `<button class="hole-nav-btn prev" onclick="goToHole(${currentHole - 1})">&larr; Hole ${currentHole}</button>`;
+      } else {
+        html += '<div></div>';
+      }
+      if (currentHole < 17) {
+        html += `<button class="hole-nav-btn next" onclick="goToHole(${currentHole + 1})">Hole ${currentHole + 2} &rarr;</button>`;
+      } else if (isCreator) {
+        html += `<button class="hole-nav-btn next" onclick="finishGroupRoundAction()" style="background:var(--gold);color:#1a1a1a;">Finish Round</button>`;
+      } else {
+        html += '<div style="font-size:12px;color:var(--text-muted);text-align:center;padding:14px">Waiting for host to finish</div>';
+      }
+      html += '</div>';
+
+      // Finish / Cancel — only show if not previewing
+      if (!isFutureHole) {
+        html += '<div class="finish-section">';
+        if (isCreator) {
+          html += '<button class="btn-gold" onclick="finishGroupRoundAction()">Save & Finish</button>';
+        } else {
+          html += '<div style="flex:2;font-size:12px;color:var(--text-muted);text-align:center;padding:14px">Only the host can finish the round</div>';
+        }
+        html += '<button class="btn-secondary" onclick="leaveGroupRound()">Leave</button>';
+        html += '</div>';
+      }
+
+      document.getElementById('mainContent').innerHTML = html;
+
+      setTimeout(() => {
+        const strip = document.getElementById('holeStrip');
+        const activePip = strip?.querySelector('.hole-pip.active');
+        if (activePip && strip) {
+          activePip.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
+        }
+      }, 50);
+    }
+
+    // ===== Group actions (write to Firebase per-UID) =====
+    window.goToHole = function(idx) {
+      currentHole = idx;
+      // Auto-set score to par if unscored on this hole
+      if (R && course_ref.current) {
+        const myName = R._uidToName[user.uid];
+        const hole = course_ref.current.holes[currentHole];
+        if (myName && R.scores[myName][currentHole] === 0) {
+          updateGroupScore(groupCode, user.uid, currentHole, hole.par);
+        }
+      }
+      updateGroupCurrentHole(groupCode, user.uid, idx);
+      renderGroup();
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    };
+
+    window.adj = function(delta) {
+      if (!R) return;
+      const myName = R._uidToName[user.uid];
+      if (!myName) return;
+      const current = R.scores[myName][currentHole];
+      const next = Math.max(1, Math.min(15, current + delta));
+      updateGroupScore(groupCode, user.uid, currentHole, next);
+    };
+
+    window.adjPutt = function(delta) {
+      if (!R) return;
+      const myName = R._uidToName[user.uid];
+      if (!myName) return;
+      const current = R.tracking[myName].putts[currentHole];
+      const next = Math.max(0, Math.min(10, current + delta));
+      updateGroupTracking(groupCode, user.uid, 'putts', currentHole, next);
+    };
+
+    window.toggleTrack = function(type) {
+      if (!R) return;
+      const myName = R._uidToName[user.uid];
+      if (!myName) return;
+      const current = R.tracking[myName][type][currentHole];
+      updateGroupTracking(groupCode, user.uid, type, currentHole, !current);
+    };
+
+    window.cycleMulligan = function() {
+      if (!R) return;
+      const myName = R._uidToName[user.uid];
+      if (!myName) return;
+      const current = R.tracking[myName].mulligans[currentHole];
+      updateGroupTracking(groupCode, user.uid, 'mulligans', currentHole, (current + 1) % 3);
+    };
+
+    window.cyclePenalty = function() {
+      if (!R) return;
+      const myName = R._uidToName[user.uid];
+      if (!myName) return;
+      const current = R.tracking[myName].penalties[currentHole];
+      updateGroupTracking(groupCode, user.uid, 'penalties', currentHole, (current + 1) % 4);
+    };
+
+    window.copyCode = function() {
+      navigator.clipboard.writeText(groupCode).then(() => {
+        const btn = document.querySelector('.copy-code-btn');
+        if (btn) { btn.textContent = 'Copied!'; setTimeout(() => btn.textContent = 'Copy Code', 2000); }
+      }).catch(() => {
+        prompt('Copy this code:', groupCode);
+      });
+    };
+
+    window.finishGroupRoundAction = function() {
+      if (!R) return;
+      const anyScored = R.players.some(p => R.scores[p].some(s => s > 0));
+      if (!anyScored) { alert('No scores entered yet.'); return; }
+      if (!confirm('Finish this round for all players?')) return;
+      finishGroupRound(groupCode);
+    };
+
+    window.leaveGroupRound = function() {
+      if (confirm('Leave this group round?')) {
+        if (unsubscribe) unsubscribe();
+        if (unsubConn) unsubConn();
+        localStorage.removeItem('active-group-code');
+        window.location.href = 'index.html';
+      }
+    };
+
+    function handleGroupFinished(data) {
+      if (unsubscribe) unsubscribe();
+      if (unsubConn) unsubConn();
+      localStorage.removeItem('active-group-code');
+
+      // Save a personal copy of the finished round
+      const finishedRound = groupDataToRound(data, groupCode);
+      const course = getCourse(finishedRound.courseId);
+      if (course) {
+        const round = {
+          id: Date.now().toString(),
+          courseId: finishedRound.courseId,
+          courseName: course.name,
+          tee: finishedRound.tee,
+          teeLabel: finishedRound.teeLabel,
+          par: course.par,
+          date: finishedRound.date,
+          players: [...finishedRound.players],
+          scores: JSON.parse(JSON.stringify(finishedRound.scores)),
+          tracking: JSON.parse(JSON.stringify(finishedRound.tracking)),
+          holePars: course.holes.map(h => h.par),
+          groupCode: groupCode
+        };
+
+        // Save to Firebase
+        fbSaveRound(user.uid, round).catch(() => {});
+
+        // Also save to localStorage as backup
+        const rounds = loadRounds();
+        rounds.push(round);
+        saveRounds(rounds);
+      }
+
+      window.location.href = 'history.html';
+    }
+  }
+</script>
+</body>
+</html>

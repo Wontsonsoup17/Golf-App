@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#0a0f0d">
+<title>Course Setup - Westchester Golf</title>
+<link rel="stylesheet" href="shared.css?v=10">
+</head>
+<body>
+
+<div class="header">
+  <a href="index.html" class="back-link">&larr; All Courses</a>
+  <h1 id="courseName"></h1>
+  <div class="subtitle" id="courseSub"></div>
+</div>
+
+<div class="main">
+  <!-- Course Info -->
+  <div class="card">
+    <div style="display:flex; justify-content:space-between; align-items:start; flex-wrap:wrap; gap:10px;">
+      <div>
+        <div class="course-meta" id="courseInfo" style="padding-left:0"></div>
+        <div class="course-address" id="courseAddr" style="padding-left:0; margin-top:6px;"></div>
+      </div>
+      <a id="courseLink" class="course-link" target="_blank" rel="noopener">Course Layout &rarr;</a>
+    </div>
+  </div>
+
+  <!-- Scorecard preview -->
+  <div class="card">
+    <div class="section-title" style="margin:0 0 10px">Scorecard</div>
+    <div style="overflow-x:auto">
+      <table class="detail-table" id="courseTable"></table>
+    </div>
+  </div>
+
+  <!-- Round Setup -->
+  <div class="card" style="border-color: rgba(0,230,118,0.15);">
+    <div class="section-title" style="margin:0 0 16px; color:var(--green-accent);">Start a Round</div>
+
+    <!-- Group Play Toggle -->
+    <div class="group-toggle">
+      <div>
+        <div class="group-toggle-label">Group Play</div>
+        <div class="group-toggle-sub">Real-time scoring with friends</div>
+      </div>
+      <label class="toggle-switch">
+        <input type="checkbox" id="groupToggle" onchange="toggleGroupMode()">
+        <span class="toggle-slider"></span>
+      </label>
+    </div>
+
+    <!-- Solo mode: manual player inputs -->
+    <div id="soloSection">
+      <div class="form-group">
+        <label>Players</label>
+        <div id="playerInputs"></div>
+        <button class="add-player-btn" onclick="addPlayer()">+ Add Player</button>
+      </div>
+    </div>
+
+    <!-- Group mode: shows your name + custom code input -->
+    <div id="groupSection" style="display:none">
+      <div class="form-group">
+        <label>Your Name</label>
+        <div style="padding:12px 16px; background:var(--bg); border:1px solid var(--border-light); border-radius:var(--radius-sm); color:var(--text); font-size:15px;" id="groupPlayerName"></div>
+      </div>
+      <div class="form-group">
+        <label>Round Code</label>
+        <div style="display:flex;gap:8px;align-items:center">
+          <input type="text" id="customCodeInput" placeholder="Enter a code or generate one" maxlength="15" autocapitalize="characters" style="flex:1;text-transform:uppercase;font-family:monospace;letter-spacing:2px">
+          <button class="btn-outline" type="button" onclick="generateCode()" style="white-space:nowrap;padding:10px 14px">Generate</button>
+        </div>
+        <div style="font-size:11px; color:var(--text-muted); margin-top:6px;">
+          3-15 characters. Share this code so others can join your round.
+        </div>
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label>Tee Selection</label>
+      <div class="tee-selector" id="teeSelector"></div>
+    </div>
+
+    <div class="form-group">
+      <label>Date</label>
+      <input type="date" id="roundDate">
+    </div>
+
+    <button class="btn-gold" id="startBtn" onclick="startRound()">Start Round</button>
+  </div>
+</div>
+
+<nav class="bottom-nav" id="bottomNav"></nav>
+
+<script src="firebase-config.js?v=10"></script>
+<script src="shared.js?v=10"></script>
+<script src="firebase-sync.js?v=10"></script>
+<script>
+  requireAuth(function(user) {
+    renderBottomNav('courses');
+
+    const params = new URLSearchParams(window.location.search);
+    const courseId = params.get('id');
+    const course = getCourse(courseId);
+    if (!course) { window.location.href = 'index.html'; return; }
+
+    let selectedTee = Object.keys(course.tees)[0];
+    const displayName = user.displayName || user.email.split('@')[0];
+
+    document.getElementById('courseName').textContent = course.name;
+    document.getElementById('courseSub').textContent = `Par ${course.par}  |  ${course.phone}`;
+    document.getElementById('courseInfo').innerHTML = `
+      <span class="pill">Par ${course.par}</span>
+      <span>${Object.values(course.tees)[0].yards} yds</span>
+      <span>Slope ${Object.values(course.tees)[0].slope}</span>
+      <span>Rating ${Object.values(course.tees)[0].rating}</span>
+    `;
+    document.getElementById('courseAddr').textContent = course.address;
+    document.getElementById('courseLink').href = course.link;
+    document.getElementById('groupPlayerName').textContent = displayName;
+
+    // Scorecard table
+    const teeKeys = Object.keys(course.tees);
+    let thtml = '<tr><th class="hole-col">Hole</th><th>Par</th>';
+    teeKeys.forEach(k => thtml += `<th>${course.tees[k].label}</th>`);
+    thtml += '<th>HCP</th></tr>';
+    for (let i = 0; i < 18; i++) {
+      if (i === 9) {
+        thtml += `<tr class="nine-total"><td class="hole-col">OUT</td><td>${course.holes.slice(0,9).reduce((a,h)=>a+h.par,0)}</td>`;
+        teeKeys.forEach(k => thtml += `<td>${course.holes.slice(0,9).reduce((a,h)=>a+(h[k]||0),0)}</td>`);
+        thtml += '<td></td></tr>';
+      }
+      const h = course.holes[i];
+      thtml += `<tr><td class="hole-col">${h.num}</td><td>${h.par}</td>`;
+      teeKeys.forEach(k => thtml += `<td>${h[k] || '—'}</td>`);
+      thtml += `<td>${h.hcp}</td></tr>`;
+    }
+    thtml += `<tr class="nine-total"><td class="hole-col">IN</td><td>${course.holes.slice(9).reduce((a,h)=>a+h.par,0)}</td>`;
+    teeKeys.forEach(k => thtml += `<td>${course.holes.slice(9).reduce((a,h)=>a+(h[k]||0),0)}</td>`);
+    thtml += '<td></td></tr>';
+    thtml += `<tr class="grand-total"><td class="hole-col">TOT</td><td>${course.par}</td>`;
+    teeKeys.forEach(k => thtml += `<td>${course.tees[k].yards}</td>`);
+    thtml += '<td></td></tr>';
+    document.getElementById('courseTable').innerHTML = thtml;
+
+    // Tee selector
+    document.getElementById('teeSelector').innerHTML = Object.keys(course.tees).map((key, i) => {
+      const t = course.tees[key];
+      return `<button class="tee-btn tee-${key} ${i===0?'active':''}" data-tee="${key}" onclick="selectTee('${key}')">${t.label} (${t.yards})</button>`;
+    }).join('');
+
+    window.selectTee = function(teeKey) {
+      selectedTee = teeKey;
+      document.querySelectorAll('.tee-btn').forEach(b => b.classList.remove('active'));
+      document.querySelector(`.tee-btn[data-tee="${teeKey}"]`).classList.add('active');
+    };
+
+    // Players (solo mode)
+    addPlayer(displayName);
+    document.getElementById('roundDate').value = new Date().toISOString().split('T')[0];
+
+    window.addPlayer = function(name) {
+      const c = document.getElementById('playerInputs');
+      const idx = c.children.length;
+      const row = document.createElement('div');
+      row.className = 'player-row';
+      row.innerHTML = `
+        <input type="text" placeholder="Player name" value="${name || ''}" maxlength="20">
+        ${idx > 0 ? '<button class="remove-player" onclick="this.parentElement.remove()">&times;</button>' : '<div style="width:34px"></div>'}
+      `;
+      c.appendChild(row);
+    };
+
+    // Group play toggle
+    window.toggleGroupMode = function() {
+      const isGroup = document.getElementById('groupToggle').checked;
+      document.getElementById('soloSection').style.display = isGroup ? 'none' : '';
+      document.getElementById('groupSection').style.display = isGroup ? '' : 'none';
+    };
+
+    // Auto-uppercase code input
+    const codeInput = document.getElementById('customCodeInput');
+    codeInput.addEventListener('input', function() {
+      this.value = this.value.toUpperCase().replace(/[^A-Z0-9]/g, '');
+    });
+
+    // Generate a random code
+    window.generateCode = function() {
+      const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+      let code = '';
+      for (let i = 0; i < 6; i++) {
+        code += chars.charAt(Math.floor(Math.random() * chars.length));
+      }
+      document.getElementById('customCodeInput').value = code;
+    };
+
+    // Start Round
+    window.startRound = function() {
+      const isGroup = document.getElementById('groupToggle').checked;
+      const date = document.getElementById('roundDate').value;
+
+      if (isGroup) {
+        const customCode = document.getElementById('customCodeInput').value.trim().toUpperCase().replace(/[^A-Z0-9]/g, '');
+        if (customCode.length < 3 || customCode.length > 15) {
+          alert('Round code must be 3-15 characters.');
+          return;
+        }
+
+        // Group mode: create round in Firebase
+        const btn = document.getElementById('startBtn');
+        btn.disabled = true;
+        btn.textContent = 'Creating...';
+
+        createGroupRoundWithCode(user.uid, displayName, course.id, selectedTee, course.tees[selectedTee].label, date, customCode)
+          .then(code => {
+            localStorage.setItem('active-group-code', code);
+            window.location.href = 'scorecard.html?group=' + code;
+          })
+          .catch(err => {
+            btn.disabled = false;
+            btn.textContent = 'Start Round';
+            alert(err.message || 'Could not create group round.');
+          });
+      } else {
+        // Solo mode: same as before (localStorage)
+        const inputs = document.querySelectorAll('#playerInputs input');
+        const players = [];
+        inputs.forEach(inp => { const n = inp.value.trim(); if (n) players.push(n); });
+        if (!players.length) { alert('Add at least one player.'); return; }
+
+        const scores = {};
+        const tracking = {};
+        players.forEach(p => {
+          scores[p] = new Array(18).fill(0);
+          tracking[p] = createPlayerTracking();
+        });
+
+        setActiveRound({
+          courseId: course.id,
+          tee: selectedTee,
+          teeLabel: course.tees[selectedTee].label,
+          date: date,
+          players,
+          scores,
+          tracking,
+          currentHole: 0
+        });
+        window.location.href = 'scorecard.html';
+      }
+    };
+  });
+</script>
+</body>
+</html>

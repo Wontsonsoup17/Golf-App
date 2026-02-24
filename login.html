@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#0a0f0d">
+<title>Sign In - Westchester Golf</title>
+<link rel="stylesheet" href="shared.css?v=10">
+</head>
+<body>
+
+<div class="hero" style="padding-bottom:20px">
+  <div class="hero-logo">&#9971;</div>
+  <h1>Westchester Golf</h1>
+  <p>Sign in to track your rounds</p>
+</div>
+
+<div class="main" style="padding-top:0">
+  <div class="auth-card">
+    <!-- Tab toggle -->
+    <div class="auth-tabs">
+      <button class="auth-tab active" onclick="switchTab('signin')">Sign In</button>
+      <button class="auth-tab" onclick="switchTab('signup')">Sign Up</button>
+    </div>
+
+    <!-- Error display -->
+    <div class="auth-error" id="authError"></div>
+
+    <!-- Sign In Form -->
+    <div id="signinForm">
+      <div class="form-group">
+        <label>Username</label>
+        <input type="text" id="signinUsername" placeholder="Your username" maxlength="20" autocomplete="username" autocapitalize="none">
+      </div>
+      <div class="form-group">
+        <label>Password</label>
+        <input type="password" id="signinPassword" placeholder="Your password" autocomplete="current-password">
+      </div>
+      <button class="btn-gold" id="signinBtn" onclick="handleSignIn()">Sign In</button>
+    </div>
+
+    <!-- Sign Up Form -->
+    <div id="signupForm" style="display:none">
+      <div class="form-group">
+        <label>Username</label>
+        <input type="text" id="signupUsername" placeholder="Choose a username" maxlength="20" autocomplete="username" autocapitalize="none">
+        <div style="font-size:11px; color:var(--text-muted); margin-top:4px;">Letters, numbers, and underscores only</div>
+      </div>
+      <div class="form-group">
+        <label>Password</label>
+        <input type="password" id="signupPassword" placeholder="At least 6 characters" autocomplete="new-password">
+      </div>
+      <div class="form-group">
+        <label>Confirm Password</label>
+        <input type="password" id="signupConfirm" placeholder="Confirm your password" autocomplete="new-password">
+      </div>
+      <!-- Optional profile photo -->
+      <div class="form-group" style="text-align:center">
+        <label>Profile Photo <span style="color:var(--text-muted);font-weight:400">(optional)</span></label>
+        <div id="signupAvatarPreview" class="signup-avatar-preview" onclick="document.getElementById('signupAvatarInput').click()">
+          <span class="signup-avatar-placeholder">&#128247; Tap to add</span>
+        </div>
+        <input type="file" id="signupAvatarInput" accept="image/*" style="display:none" onchange="previewSignupAvatar(this)">
+      </div>
+
+      <button class="btn-gold" id="signupBtn" onclick="handleSignUp()">Create Account</button>
+    </div>
+  </div>
+</div>
+
+<script src="firebase-config.js?v=10"></script>
+<script src="shared.js?v=10"></script>
+<script>
+  let signingUp = false;
+  let pendingAvatarData = null;
+
+  function previewSignupAvatar(input) {
+    var file = input.files && input.files[0];
+    if (!file) return;
+    processProfileImage(file).then(function(dataUrl) {
+      pendingAvatarData = dataUrl;
+      var preview = document.getElementById('signupAvatarPreview');
+      preview.innerHTML = '<img src="' + dataUrl + '">';
+      preview.classList.add('has-image');
+    }).catch(function(err) {
+      alert(err.message || 'Could not process image.');
+    });
+    input.value = '';
+  }
+
+  // If already signed in, redirect to home
+  onAuthReady(user => {
+    if (user && !signingUp) window.location.href = 'index.html';
+  });
+
+  // Convert username to a fake email for Firebase Auth
+  function usernameToEmail(username) {
+    return username.toLowerCase().trim() + '@westchestergolf.app';
+  }
+
+  function switchTab(tab) {
+    document.getElementById('signinForm').style.display = tab === 'signin' ? '' : 'none';
+    document.getElementById('signupForm').style.display = tab === 'signup' ? '' : 'none';
+    document.querySelectorAll('.auth-tab').forEach((btn, i) => {
+      btn.classList.toggle('active', (tab === 'signin' && i === 0) || (tab === 'signup' && i === 1));
+    });
+    clearError();
+  }
+
+  function showError(msg) {
+    const el = document.getElementById('authError');
+    el.textContent = msg;
+    el.style.display = 'block';
+  }
+
+  function clearError() {
+    const el = document.getElementById('authError');
+    el.textContent = '';
+    el.style.display = 'none';
+  }
+
+  function setLoading(btn, loading) {
+    btn.disabled = loading;
+    btn.style.opacity = loading ? '0.6' : '1';
+  }
+
+  function isValidUsername(name) {
+    return /^[a-zA-Z0-9_]{2,20}$/.test(name);
+  }
+
+  function handleSignIn() {
+    clearError();
+    const username = document.getElementById('signinUsername').value.trim();
+    const password = document.getElementById('signinPassword').value;
+    if (!username || !password) { showError('Please fill in all fields.'); return; }
+
+    const btn = document.getElementById('signinBtn');
+    setLoading(btn, true);
+
+    const email = usernameToEmail(username);
+
+    auth.signInWithEmailAndPassword(email, password)
+      .then(() => {
+        window.location.href = 'index.html';
+      })
+      .catch(err => {
+        setLoading(btn, false);
+        if (err.code === 'auth/user-not-found' || err.code === 'auth/wrong-password' || err.code === 'auth/invalid-credential') {
+          showError('Invalid username or password.');
+        } else if (err.code === 'auth/too-many-requests') {
+          showError('Too many attempts. Please try again later.');
+        } else {
+          showError('Invalid username or password.');
+        }
+      });
+  }
+
+  function handleSignUp() {
+    clearError();
+    const username = document.getElementById('signupUsername').value.trim();
+    const password = document.getElementById('signupPassword').value;
+    const confirm = document.getElementById('signupConfirm').value;
+
+    if (!username) { showError('Please choose a username.'); return; }
+    if (!isValidUsername(username)) { showError('Username must be 2-20 characters: letters, numbers, underscores only.'); return; }
+    if (password.length < 6) { showError('Password must be at least 6 characters.'); return; }
+    if (password !== confirm) { showError('Passwords do not match.'); return; }
+
+    const btn = document.getElementById('signupBtn');
+    setLoading(btn, true);
+    signingUp = true;
+
+    const email = usernameToEmail(username);
+
+    // Check if username is already taken
+    db.ref('usernames/' + username.toLowerCase()).once('value').then(snap => {
+      if (snap.exists()) {
+        setLoading(btn, false);
+        showError('That username is already taken.');
+        return;
+      }
+
+      return auth.createUserWithEmailAndPassword(email, password)
+        .then(cred => {
+          // Set display name on Firebase Auth profile
+          return cred.user.updateProfile({ displayName: username }).then(() => {
+            // Reserve username and save profile
+            const updates = {};
+            updates['usernames/' + username.toLowerCase()] = cred.user.uid;
+            updates['users/' + cred.user.uid + '/profile'] = {
+              username: username,
+              createdAt: Date.now()
+            };
+            return db.ref().update(updates);
+          });
+        })
+        .then(() => {
+          // Save optional profile photo
+          if (pendingAvatarData) {
+            setUserAvatar(auth.currentUser.uid, pendingAvatarData);
+          }
+          window.location.href = 'index.html';
+        });
+    }).catch(err => {
+      setLoading(btn, false);
+      if (err.code === 'auth/email-already-in-use') {
+        showError('That username is already taken.');
+      } else if (err.code === 'auth/weak-password') {
+        showError('Password must be at least 6 characters.');
+      } else {
+        showError(err.message || 'Could not create account.');
+      }
+    });
+  }
+
+  // Enter key triggers submit
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Enter') {
+      if (document.getElementById('signinForm').style.display !== 'none') {
+        handleSignIn();
+      } else {
+        handleSignUp();
+      }
+    }
+  });
+</script>
+</body>
+</html>

@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#0a0f0d">
+<title>Westchester Golf</title>
+<link rel="stylesheet" href="shared.css?v=10">
+</head>
+<body>
+
+<div class="user-header" id="userHeader"></div>
+
+<div class="hero">
+  <div class="hero-logo">&#9971;</div>
+  <h1>Westchester Golf</h1>
+  <p>6 Public Courses &bull; Live Scoring &bull; Stats</p>
+</div>
+
+<div id="activeRoundBanner"></div>
+
+<div class="main" style="padding-top:0">
+  <!-- Join Existing Round -->
+  <div class="join-card">
+    <h3>&#128279; Join a Round</h3>
+    <div class="join-input-row">
+      <input type="text" id="joinCodeInput" placeholder="Enter round code" maxlength="15" autocomplete="off">
+      <button class="join-btn" id="joinBtn" onclick="handleJoinRound()">Join</button>
+    </div>
+    <div class="join-error" id="joinError"></div>
+    <div style="font-size:10px;color:var(--text-muted);margin-top:6px;opacity:0.6">All players must use this same browser to share a round.</div>
+  </div>
+
+  <!-- Create New Group Round -->
+  <div class="join-card" style="border-color:rgba(0,230,118,0.15)">
+    <h3 style="color:var(--green-accent);border-bottom-color:rgba(0,230,118,0.1)">&#127760; Create a Group Round</h3>
+    <div style="margin-bottom:8px">
+      <select id="createCourseSelect" style="width:100%;padding:10px 12px;background:var(--bg);border:1px solid var(--border-light);border-radius:var(--radius-sm);color:var(--text);font-size:14px;-webkit-appearance:none;appearance:none">
+      </select>
+    </div>
+    <div style="margin-bottom:8px">
+      <input type="text" id="createCodeInput" placeholder="Enter a round code" maxlength="15" autocomplete="off" style="width:100%;font-family:monospace;font-size:16px;font-weight:700;letter-spacing:3px;text-transform:uppercase;text-align:center;padding:10px">
+    </div>
+    <div style="font-size:11px;color:var(--text-muted);margin-bottom:10px">3-15 characters. Share this code so friends can join on this browser.</div>
+    <button class="btn-primary" id="createBtn" onclick="handleCreateRound()">Create Round</button>
+    <div class="join-error" id="createError"></div>
+  </div>
+
+  <div class="section-title">Choose Your Course</div>
+  <div id="courseGrid"></div>
+</div>
+
+<nav class="bottom-nav" id="bottomNav"></nav>
+
+<script src="firebase-config.js?v=10"></script>
+<script src="shared.js?v=10"></script>
+<script src="firebase-sync.js?v=10"></script>
+<script>
+  requireAuth(function(user) {
+    renderBottomNav('courses');
+    renderUserHeader(user);
+    renderActiveRoundBanner();
+
+    // Render courses immediately
+    renderCourseGrid([]);
+
+    // Populate course dropdown
+    var courseSelect = document.getElementById('createCourseSelect');
+    courseSelect.innerHTML = COURSES.map(function(c) {
+      return '<option value="' + c.id + '">' + c.name + ' (Par ' + c.par + ')</option>';
+    }).join('');
+
+    // Migrate localStorage rounds to Firebase (one-time)
+    migrateLocalRounds(user.uid);
+
+    // Load rounds for badge counts, then re-render with badges
+    fbLoadRounds(user.uid).then(function(rounds) {
+      if (rounds.length) renderCourseGrid(rounds);
+    }).catch(function() {
+      var local = loadRounds();
+      if (local.length) renderCourseGrid(local);
+    });
+
+    function renderCourseGrid(rounds) {
+      var grid = document.getElementById('courseGrid');
+      grid.innerHTML = COURSES.map(function(c) {
+        var roundCount = rounds.filter(function(r) { return r.courseId === c.id; }).length;
+        return '<a href="course.html?id=' + c.id + '" class="course-card">' +
+          '<h3>' + c.name + '</h3>' +
+          '<div class="course-meta">' +
+            '<span class="pill">Par ' + c.par + '</span>' +
+            '<span>' + Object.values(c.tees)[0].yards + ' yds</span>' +
+            '<span>' + c.phone + '</span>' +
+          '</div>' +
+          '<div class="course-address">' + c.address + '</div>' +
+          (roundCount > 0 ? '<div class="rounds-badge">' + roundCount + ' round' + (roundCount !== 1 ? 's' : '') + ' played</div>' : '') +
+          '<span class="arrow">&rsaquo;</span>' +
+        '</a>';
+      }).join('');
+    }
+
+    // Join code input: auto-uppercase
+    var joinInput = document.getElementById('joinCodeInput');
+    joinInput.addEventListener('input', function() {
+      this.value = this.value.toUpperCase().replace(/[^A-Z0-9]/g, '');
+    });
+
+    // Create code input: auto-uppercase
+    var createInput = document.getElementById('createCodeInput');
+    createInput.addEventListener('input', function() {
+      this.value = this.value.toUpperCase().replace(/[^A-Z0-9]/g, '');
+    });
+
+    // Generate random code
+    window.handleGenerateCode = function() {
+      var chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+      var code = '';
+      for (var i = 0; i < 6; i++) {
+        code += chars.charAt(Math.floor(Math.random() * chars.length));
+      }
+      document.getElementById('createCodeInput').value = code;
+    };
+
+    // Join existing round
+    window.handleJoinRound = function() {
+      var code = document.getElementById('joinCodeInput').value.trim().toUpperCase().replace(/[^A-Z0-9]/g, '');
+      var errorEl = document.getElementById('joinError');
+      errorEl.style.display = 'none';
+
+      if (code.length < 3 || code.length > 15) {
+        errorEl.textContent = 'Code must be 3-15 characters.';
+        errorEl.style.display = 'block';
+        return;
+      }
+
+      var btn = document.getElementById('joinBtn');
+      btn.disabled = true;
+      btn.textContent = 'Joining...';
+
+      var displayName = user.displayName || user.email.split('@')[0];
+
+      joinGroupRound(user.uid, displayName, code)
+        .then(function() {
+          window.location.href = 'scorecard.html?group=' + code;
+        })
+        .catch(function(err) {
+          btn.disabled = false;
+          btn.textContent = 'Join';
+          errorEl.textContent = err.message || 'Could not join round.';
+          errorEl.style.display = 'block';
+        });
+    };
+
+    // Create new group round
+    window.handleCreateRound = function() {
+      var code = document.getElementById('createCodeInput').value.trim().toUpperCase().replace(/[^A-Z0-9]/g, '');
+      var errorEl = document.getElementById('createError');
+      errorEl.style.display = 'none';
+
+      if (code.length < 3 || code.length > 15) {
+        errorEl.textContent = 'Code must be 3-15 characters.';
+        errorEl.style.display = 'block';
+        return;
+      }
+
+      var courseId = document.getElementById('createCourseSelect').value;
+      var course = getCourse(courseId);
+      if (!course) return;
+
+      var btn = document.getElementById('createBtn');
+      btn.disabled = true;
+      btn.textContent = 'Creating...';
+
+      var displayName = user.displayName || user.email.split('@')[0];
+      var teeKey = Object.keys(course.tees)[0];
+      var teeLabel = course.tees[teeKey].label;
+      var date = new Date().toISOString().split('T')[0];
+
+      createGroupRoundWithCode(user.uid, displayName, course.id, teeKey, teeLabel, date, code)
+        .then(function(createdCode) {
+          localStorage.setItem('active-group-code', createdCode);
+          window.location.href = 'scorecard.html?group=' + createdCode;
+        })
+        .catch(function(err) {
+          btn.disabled = false;
+          btn.textContent = 'Create Round';
+          errorEl.textContent = err.message || 'Could not create round.';
+          errorEl.style.display = 'block';
+        });
+    };
+  });
+</script>
+</body>
+</html>

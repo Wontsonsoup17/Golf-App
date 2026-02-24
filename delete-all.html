@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#0a0f0d">
+<title>Delete All Accounts - Westchester Golf</title>
+<link rel="stylesheet" href="shared.css?v=10">
+</head>
+<body>
+
+<div class="header">
+  <h1>Delete All Accounts</h1>
+  <div class="subtitle">Wipes every account and all data</div>
+</div>
+
+<div class="main">
+  <div class="auth-card">
+    <div id="result" style="text-align:center;padding:12px;font-weight:600"></div>
+    <div style="text-align:center;margin-top:16px">
+      <a href="login.html" style="color:var(--text-muted);font-size:13px">Back to login</a>
+    </div>
+  </div>
+</div>
+
+<script src="firebase-config.js?v=10"></script>
+<script>
+  (function() {
+    var users = getLocalUsers();
+    var names = Object.keys(users);
+    var count = names.length;
+
+    // Remove avatars for every user
+    names.forEach(function(username) {
+      var uid = users[username].uid;
+      localStorage.removeItem('wg-avatar-' + uid);
+    });
+
+    // Wipe all users
+    localStorage.removeItem('wg-users');
+
+    // Wipe entire database (profiles, usernames, rounds, active rounds)
+    localStorage.removeItem('wg-db');
+
+    // Clear current session
+    clearSession();
+
+    // Clear round storage
+    localStorage.removeItem('westchester-golf-v2');
+    localStorage.removeItem('westchester-golf-tracker');
+    localStorage.removeItem('active-round-v2');
+    localStorage.removeItem('active-group-code');
+
+    var resultEl = document.getElementById('result');
+    if (count > 0) {
+      resultEl.style.color = 'var(--accent)';
+      resultEl.textContent = 'Deleted ' + count + ' account' + (count > 1 ? 's' : '') + ': ' + names.join(', ') + '. All data wiped.';
+    } else {
+      resultEl.style.color = 'var(--text-muted)';
+      resultEl.textContent = 'No accounts found. All data wiped.';
+    }
+  })();
+</script>
+</body>
+</html>
