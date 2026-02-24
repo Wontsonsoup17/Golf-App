@@ -123,6 +123,11 @@ function joinGroupRound(uid, displayName, code) {
     if (!meta) throw new Error('Round data is corrupted. Please create a new round.');
     if (meta.status !== 'active') throw new Error('This round has already finished');
 
+    // Check if this player already finished this round
+    if (roundData.finishedPlayers && roundData.finishedPlayers[uid]) {
+      throw new Error('You already finished this round. Your scores have been saved.');
+    }
+
     // Check if player is already in the round
     if (roundData.players && roundData.players[uid]) {
       return Promise.resolve();
@@ -171,6 +176,36 @@ function updateGroupCurrentHole(code, uid, holeIndex) {
 // Finish a group round (only creator should call this)
 function finishGroupRound(code) {
   return db.ref('activeRounds/' + code + '/meta/status').set('finished');
+}
+
+// Mark a player as finished in the active round
+function markPlayerFinished(code, uid) {
+  return db.ref('activeRounds/' + code + '/finishedPlayers/' + uid).set(true);
+}
+
+// Check if a specific player has already finished this round
+function isPlayerFinished(code, uid) {
+  return db.ref('activeRounds/' + code + '/finishedPlayers/' + uid).once('value').then(function(snap) {
+    return snap.val() === true;
+  });
+}
+
+// Check if all players have finished — if so, delete the round to free the code
+function checkAndCleanupRound(code) {
+  return db.ref('activeRounds/' + code).once('value').then(function(snap) {
+    if (!snap.exists()) return;
+    var data = snap.val();
+    var players = data.players || {};
+    var finished = data.finishedPlayers || {};
+    var allUids = Object.keys(players);
+    var allDone = allUids.length > 0 && allUids.every(function(uid) {
+      return finished[uid] === true;
+    });
+    if (allDone) {
+      // Everyone finished — delete the round so the code can be reused
+      return db.ref('activeRounds/' + code).remove();
+    }
+  });
 }
 
 // Clean up: remove a finished group round from Firebase

@@ -351,6 +351,28 @@
 
     let initialRenderDone = false;
 
+    // First check if this player already finished this round
+    isPlayerFinished(groupCode, user.uid).then(function(finished) {
+      if (finished) {
+        // Player already finished — don't let them back in
+        localStorage.removeItem('active-group-code');
+        document.getElementById('mainContent').innerHTML =
+          '<div class="empty-state">' +
+            '<div class="icon">&#9989;</div>' +
+            '<p>You already finished this round.<br>Your scores have been saved.</p>' +
+            '<a href="history.html" style="display:inline-block;margin-top:14px;padding:12px 24px;background:var(--green-accent);color:#0a0f0d;border-radius:10px;font-weight:700;text-decoration:none">View History</a>' +
+          '</div>';
+        return;
+      }
+
+      // Not finished — proceed with normal real-time listener
+      startGroupListener();
+    }).catch(function() {
+      // If check fails (e.g. round deleted), proceed normally — listener will handle it
+      startGroupListener();
+    });
+
+    function startGroupListener() {
     // Listen for real-time updates
     unsubscribe = listenToGroupRound(groupCode, function(data) {
       if (!data || !data.meta) return;
@@ -377,6 +399,7 @@
         updatePlayersLeaderboard();
       }
     });
+    } // end startGroupListener
 
     // Determine the current playable hole for the current user
     function getGroupPlayableHole() {
@@ -770,11 +793,16 @@
         saveRounds(rounds);
       }
 
-      // Clean up listeners and leave
-      if (unsubscribe) unsubscribe();
-      if (unsubConn) unsubConn();
-      localStorage.removeItem('active-group-code');
-      window.location.href = 'history.html';
+      // Mark this player as finished in Firebase, then check if everyone is done
+      markPlayerFinished(groupCode, user.uid).then(function() {
+        return checkAndCleanupRound(groupCode);
+      }).catch(function() {}).then(function() {
+        // Clean up listeners and leave
+        if (unsubscribe) unsubscribe();
+        if (unsubConn) unsubConn();
+        localStorage.removeItem('active-group-code');
+        window.location.href = 'history.html';
+      });
     };
 
     window.leaveGroupRound = function() {
