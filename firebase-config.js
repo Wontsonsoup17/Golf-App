@@ -106,6 +106,8 @@ const auth = {
         // Update stored user
         const u = getLocalUsers();
         if (u[username]) { u[username].displayName = profile.displayName; saveLocalUsers(u); }
+        // Update session so the name persists across reloads
+        setSession({ uid: uid, username: profile.displayName });
       }
       return Promise.resolve();
     };
