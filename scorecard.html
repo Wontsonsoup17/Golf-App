@@ -339,11 +339,7 @@
 
     // Listen for real-time updates
     unsubscribe = listenToGroupRound(groupCode, function(data) {
-      // Check if round was finished by creator
-      if (data.meta && data.meta.status === 'finished') {
-        handleGroupFinished(data);
-        return;
-      }
+      if (!data || !data.meta) return;
 
       R = groupDataToRound(data, groupCode);
       const course = getCourse(R.courseId);
@@ -599,10 +595,8 @@
         }
         if (currentHole < 17) {
           html += `<button class="hole-nav-btn next" onclick="goToHole(${currentHole + 1})">Hole ${currentHole + 2} &rarr;</button>`;
-        } else if (isCreator) {
-          html += `<button class="hole-nav-btn next" onclick="finishGroupRoundAction()" style="background:var(--gold);color:#1a1a1a;">Finish Round</button>`;
         } else {
-          html += '<div style="font-size:12px;color:var(--text-muted);text-align:center;padding:14px">Waiting for host to finish</div>';
+          html += `<button class="hole-nav-btn next" onclick="finishGroupRoundAction()" style="background:var(--gold);color:#1a1a1a;">Finish Round</button>`;
         }
         html += '</div>';
       }
@@ -622,14 +616,10 @@
         </div>
       `;
 
-      // Finish / Cancel — only show if not previewing
+      // Finish / Leave — every player can save their own round
       if (!isFutureHole) {
         html += '<div class="finish-section">';
-        if (isCreator) {
-          html += '<button class="btn-gold" onclick="finishGroupRoundAction()">Save & Finish</button>';
-        } else {
-          html += '<div style="flex:2;font-size:12px;color:var(--text-muted);text-align:center;padding:14px">Only the host can finish the round</div>';
-        }
+        html += '<button class="btn-gold" onclick="finishGroupRoundAction()">Save & Finish</button>';
         html += '<button class="btn-secondary" onclick="leaveGroupRound()">Leave</button>';
         html += '</div>';
       }
@@ -719,46 +709,31 @@
 
     window.finishGroupRoundAction = function() {
       if (!R) return;
-      const anyScored = R.players.some(p => R.scores[p].some(s => s > 0));
-      if (!anyScored) { alert('No scores entered yet.'); return; }
-      if (!confirm('Finish this round for all players?')) return;
-      finishGroupRound(groupCode);
-    };
+      const myName = R._uidToName[user.uid];
+      if (!myName) return;
+      const myScored = R.scores[myName].some(s => s > 0);
+      if (!myScored) { alert('No scores entered yet.'); return; }
+      if (!confirm('Save your round and finish?')) return;
 
-    window.leaveGroupRound = function() {
-      if (confirm('Leave this group round?')) {
-        if (unsubscribe) unsubscribe();
-        if (unsubConn) unsubConn();
-        localStorage.removeItem('active-group-code');
-        window.location.href = 'index.html';
-      }
-    };
-
-    function handleGroupFinished(data) {
-      if (unsubscribe) unsubscribe();
-      if (unsubConn) unsubConn();
-      localStorage.removeItem('active-group-code');
-
-      // Save a personal copy of the finished round
-      const finishedRound = groupDataToRound(data, groupCode);
-      const course = getCourse(finishedRound.courseId);
+      // Save a personal copy — does NOT end the round for others
+      const course = course_ref.current;
       if (course) {
         const round = {
           id: Date.now().toString(),
-          courseId: finishedRound.courseId,
+          courseId: course.id,
           courseName: course.name,
-          tee: finishedRound.tee,
-          teeLabel: finishedRound.teeLabel,
+          tee: R.tee,
+          teeLabel: R.teeLabel,
           par: course.par,
-          date: finishedRound.date,
-          players: [...finishedRound.players],
-          scores: JSON.parse(JSON.stringify(finishedRound.scores)),
-          tracking: JSON.parse(JSON.stringify(finishedRound.tracking)),
+          date: R.date,
+          players: [...R.players],
+          scores: JSON.parse(JSON.stringify(R.scores)),
+          tracking: JSON.parse(JSON.stringify(R.tracking)),
           holePars: course.holes.map(h => h.par),
           groupCode: groupCode
         };
 
-        // Save to Firebase
+        // Save to Firebase cloud
         fbSaveRound(user.uid, round).catch(() => {});
 
         // Also save to localStorage as backup
@@ -767,8 +742,21 @@
         saveRounds(rounds);
       }
 
+      // Clean up listeners and leave
+      if (unsubscribe) unsubscribe();
+      if (unsubConn) unsubConn();
+      localStorage.removeItem('active-group-code');
       window.location.href = 'history.html';
-    }
+    };
+
+    window.leaveGroupRound = function() {
+      if (confirm('Leave without saving?')) {
+        if (unsubscribe) unsubscribe();
+        if (unsubConn) unsubConn();
+        localStorage.removeItem('active-group-code');
+        window.location.href = 'index.html';
+      }
+    };
   }
 </script>
 </body>
