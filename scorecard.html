@@ -129,6 +129,20 @@
         </div>
       `;
 
+      // Hole nav buttons — right under hole info
+      html += '<div class="hole-nav-row">';
+      if (currentHole > 0) {
+        html += `<button class="hole-nav-btn prev" onclick="goToHole(${currentHole - 1})">&larr; Hole ${currentHole}</button>`;
+      } else {
+        html += '<div></div>';
+      }
+      if (currentHole < 17) {
+        html += `<button class="hole-nav-btn next" onclick="goToHole(${currentHole + 1})">Hole ${currentHole + 2} &rarr;</button>`;
+      } else {
+        html += `<button class="hole-nav-btn next" onclick="finishRound()" style="background:var(--gold);color:#1a1a1a;">Finish Round</button>`;
+      }
+      html += '</div>';
+
       // Future hole preview banner
       if (isFutureHole) {
         html += `<div class="preview-banner">
@@ -212,20 +226,6 @@
           `;
         });
       }
-
-      // Hole nav
-      html += '<div class="hole-nav-row">';
-      if (currentHole > 0) {
-        html += `<button class="hole-nav-btn prev" onclick="goToHole(${currentHole - 1})">&larr; Hole ${currentHole}</button>`;
-      } else {
-        html += '<div></div>';
-      }
-      if (currentHole < 17) {
-        html += `<button class="hole-nav-btn next" onclick="goToHole(${currentHole + 1})">Hole ${currentHole + 2} &rarr;</button>`;
-      } else {
-        html += `<button class="hole-nav-btn next" onclick="finishRound()" style="background:var(--gold);color:#1a1a1a;">Finish Round</button>`;
-      }
-      html += '</div>';
 
       if (!isFutureHole) {
         html += `
@@ -495,6 +495,22 @@
         </div>
       `;
 
+      // Hole nav buttons — right under hole info
+      html += '<div class="hole-nav-row">';
+      if (currentHole > 0) {
+        html += `<button class="hole-nav-btn prev" onclick="goToHole(${currentHole - 1})">&larr; Hole ${currentHole}</button>`;
+      } else {
+        html += '<div></div>';
+      }
+      if (currentHole < 17) {
+        html += `<button class="hole-nav-btn next" onclick="goToHole(${currentHole + 1})">Hole ${currentHole + 2} &rarr;</button>`;
+      } else if (isCreator) {
+        html += `<button class="hole-nav-btn next" onclick="finishGroupRoundAction()" style="background:var(--gold);color:#1a1a1a;">Finish Round</button>`;
+      } else {
+        html += '<div style="font-size:12px;color:var(--text-muted);text-align:center;padding:14px">Waiting for host to finish</div>';
+      }
+      html += '</div>';
+
       // Future hole preview banner
       if (isFutureHole) {
         html += `<div class="preview-banner">
@@ -608,22 +624,6 @@
           html += '</div>'; // close player card
         });
       }
-
-      // Hole navigation
-      html += '<div class="hole-nav-row">';
-      if (currentHole > 0) {
-        html += `<button class="hole-nav-btn prev" onclick="goToHole(${currentHole - 1})">&larr; Hole ${currentHole}</button>`;
-      } else {
-        html += '<div></div>';
-      }
-      if (currentHole < 17) {
-        html += `<button class="hole-nav-btn next" onclick="goToHole(${currentHole + 1})">Hole ${currentHole + 2} &rarr;</button>`;
-      } else if (isCreator) {
-        html += `<button class="hole-nav-btn next" onclick="finishGroupRoundAction()" style="background:var(--gold);color:#1a1a1a;">Finish Round</button>`;
-      } else {
-        html += '<div style="font-size:12px;color:var(--text-muted);text-align:center;padding:14px">Waiting for host to finish</div>';
-      }
-      html += '</div>';
 
       // Finish / Cancel — only show if not previewing
       if (!isFutureHole) {
