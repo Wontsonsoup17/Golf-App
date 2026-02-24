@@ -157,7 +157,7 @@
 
       // Player cards — only show if NOT a future hole
       if (!isFutureHole) {
-        R.players.forEach(p => {
+        R.players.forEach((p, pIdx) => {
           const score = R.scores[p][currentHole];
           const scoreClass = getScoreClass(score, hole.par);
           const label = getScoreLabel(score, hole.par);
@@ -210,22 +210,24 @@
               </div>
             </div>
           `;
+
+          // Hole nav buttons — right after the first player's score counter
+          if (pIdx === 0) {
+            html += '<div class="hole-nav-row">';
+            if (currentHole > 0) {
+              html += `<button class="hole-nav-btn prev" onclick="goToHole(${currentHole - 1})">&larr; Hole ${currentHole}</button>`;
+            } else {
+              html += '<div></div>';
+            }
+            if (currentHole < 17) {
+              html += `<button class="hole-nav-btn next" onclick="goToHole(${currentHole + 1})">Hole ${currentHole + 2} &rarr;</button>`;
+            } else {
+              html += `<button class="hole-nav-btn next" onclick="finishRound()" style="background:var(--gold);color:#1a1a1a;">Finish Round</button>`;
+            }
+            html += '</div>';
+          }
         });
       }
-
-      // Hole nav buttons — right under the score counter
-      html += '<div class="hole-nav-row">';
-      if (currentHole > 0) {
-        html += `<button class="hole-nav-btn prev" onclick="goToHole(${currentHole - 1})">&larr; Hole ${currentHole}</button>`;
-      } else {
-        html += '<div></div>';
-      }
-      if (currentHole < 17) {
-        html += `<button class="hole-nav-btn next" onclick="goToHole(${currentHole + 1})">Hole ${currentHole + 2} &rarr;</button>`;
-      } else {
-        html += `<button class="hole-nav-btn next" onclick="finishRound()" style="background:var(--gold);color:#1a1a1a;">Finish Round</button>`;
-      }
-      html += '</div>';
 
       if (!isFutureHole) {
         html += `
@@ -527,8 +529,8 @@
         if (myName) orderedPlayers.push(myName);
         R.players.forEach(p => { if (p !== myName) orderedPlayers.push(p); });
 
-        orderedPlayers.forEach(p => {
-          const isMe = p === myName;
+        // Helper to render a single player card
+        function renderPlayerCard(p, isMe) {
           const score = R.scores[p][currentHole];
           const scoreClass = getScoreClass(score, hole.par);
           const label = getScoreLabel(score, hole.par);
@@ -606,24 +608,34 @@
           html += '</div></div>';
 
           html += '</div>'; // close player card
+        }
+
+        // Render current user's card first
+        if (myName) {
+          renderPlayerCard(myName, true);
+        }
+
+        // Hole nav buttons — right under YOUR score counter
+        html += '<div class="hole-nav-row">';
+        if (currentHole > 0) {
+          html += `<button class="hole-nav-btn prev" onclick="goToHole(${currentHole - 1})">&larr; Hole ${currentHole}</button>`;
+        } else {
+          html += '<div></div>';
+        }
+        if (currentHole < 17) {
+          html += `<button class="hole-nav-btn next" onclick="goToHole(${currentHole + 1})">Hole ${currentHole + 2} &rarr;</button>`;
+        } else if (isCreator) {
+          html += `<button class="hole-nav-btn next" onclick="finishGroupRoundAction()" style="background:var(--gold);color:#1a1a1a;">Finish Round</button>`;
+        } else {
+          html += '<div style="font-size:12px;color:var(--text-muted);text-align:center;padding:14px">Waiting for host to finish</div>';
+        }
+        html += '</div>';
+
+        // Render other players' cards below the nav buttons
+        orderedPlayers.forEach(p => {
+          if (p !== myName) renderPlayerCard(p, false);
         });
       }
-
-      // Hole nav buttons — right under the score counter
-      html += '<div class="hole-nav-row">';
-      if (currentHole > 0) {
-        html += `<button class="hole-nav-btn prev" onclick="goToHole(${currentHole - 1})">&larr; Hole ${currentHole}</button>`;
-      } else {
-        html += '<div></div>';
-      }
-      if (currentHole < 17) {
-        html += `<button class="hole-nav-btn next" onclick="goToHole(${currentHole + 1})">Hole ${currentHole + 2} &rarr;</button>`;
-      } else if (isCreator) {
-        html += `<button class="hole-nav-btn next" onclick="finishGroupRoundAction()" style="background:var(--gold);color:#1a1a1a;">Finish Round</button>`;
-      } else {
-        html += '<div style="font-size:12px;color:var(--text-muted);text-align:center;padding:14px">Waiting for host to finish</div>';
-      }
-      html += '</div>';
 
       // Finish / Cancel — only show if not previewing
       if (!isFutureHole) {
