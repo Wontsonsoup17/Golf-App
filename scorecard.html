@@ -400,80 +400,8 @@
         </div>
       `;
 
-      // Share code button
-      html += `
-        <div class="group-code-display" style="padding:12px; margin-bottom:12px;">
-          <div class="group-code-label">Share Code</div>
-          <div class="group-code" style="font-size:28px">${groupCode}</div>
-          <div class="group-code-actions">
-            <button class="copy-code-btn" onclick="copyCode()">Copy Code</button>
-          </div>
-        </div>
-      `;
-
       // Leaderboard link
       html += `<a href="live-game.html?group=${groupCode}" class="leaderboard-link">&#127942; View Full Leaderboard</a>`;
-
-      // Live players section
-      html += '<div style="background:var(--bg-card);border-radius:var(--radius);border:1px solid var(--border);margin-bottom:12px;overflow:hidden">';
-      html += '<div style="padding:10px 14px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center">';
-      html += '<span style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--text-muted)">Players</span>';
-      html += '<span style="font-size:11px;color:var(--green-accent)">&#9679; Live</span>';
-      html += '</div>';
-
-      // Sort players: current user first, then by score
-      const sortedPlayers = R.players.slice().sort(function(a, b) {
-        if (a === myName) return -1;
-        if (b === myName) return 1;
-        const aPlayed = R.scores[a].filter(s => s > 0).length;
-        const bPlayed = R.scores[b].filter(s => s > 0).length;
-        if (aPlayed === 0 && bPlayed === 0) return 0;
-        if (aPlayed === 0) return 1;
-        if (bPlayed === 0) return -1;
-        const aDiff = R.scores[a].reduce((s, v) => s + v, 0) - course.holes.filter((h, i) => R.scores[a][i] > 0).reduce((a2, h) => a2 + h.par, 0);
-        const bDiff = R.scores[b].reduce((s, v) => s + v, 0) - course.holes.filter((h, i) => R.scores[b][i] > 0).reduce((a2, h) => a2 + h.par, 0);
-        return aDiff - bDiff;
-      });
-
-      sortedPlayers.forEach(function(p, idx) {
-        const isMe = p === myName;
-        const scores = R.scores[p];
-        const totalScore = scores.reduce((s, v) => s + v, 0);
-        const holesPlayed = scores.filter(s => s > 0).length;
-        const parPlayed = course.holes.filter((h, i) => scores[i] > 0).reduce((a, h) => a + h.par, 0);
-        const diff = totalScore - parPlayed;
-        let toPar = 'E';
-        let toParColor = 'var(--text-muted)';
-        if (holesPlayed === 0) { toPar = '\u2014'; }
-        else if (diff < 0) { toPar = diff.toString(); toParColor = 'var(--green-accent)'; }
-        else if (diff > 0) { toPar = '+' + diff; toParColor = 'var(--bogey)'; }
-
-        const borderTop = idx > 0 ? 'border-top:1px solid var(--border);' : '';
-        const meBg = isMe ? 'background:rgba(0,230,118,0.04);' : '';
-
-        html += '<div style="padding:10px 14px;display:flex;align-items:center;justify-content:space-between;' + borderTop + meBg + '">';
-
-        // Left: badge + name
-        html += '<div style="display:flex;align-items:center;gap:10px;min-width:0;flex:1">';
-        if (isMe) {
-          html += '<div style="width:26px;height:26px;border-radius:50%;background:var(--green-accent);color:#000;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:800;flex-shrink:0">YOU</div>';
-        } else {
-          html += '<div style="width:26px;height:26px;border-radius:50%;background:var(--bg-elevated);color:var(--text-muted);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;flex-shrink:0;border:1px solid var(--border)">' + p.charAt(0).toUpperCase() + '</div>';
-        }
-        html += '<span style="font-weight:600;font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + p + '</span>';
-        html += '</div>';
-
-        // Right: thru holes, total, to-par
-        html += '<div style="display:flex;align-items:center;gap:12px;flex-shrink:0">';
-        html += '<span style="font-size:11px;color:var(--text-muted)">' + (holesPlayed > 0 ? 'Thru ' + holesPlayed : '\u2014') + '</span>';
-        html += '<span style="font-size:16px;font-weight:800;min-width:28px;text-align:right">' + (holesPlayed > 0 ? totalScore : '\u2014') + '</span>';
-        html += '<span style="font-size:13px;font-weight:700;min-width:32px;text-align:right;color:' + toParColor + '">' + toPar + '</span>';
-        html += '</div>';
-
-        html += '</div>';
-      });
-
-      html += '</div>';
 
       // Hole strip
       html += '<div class="hole-strip" id="holeStrip">';
@@ -631,11 +559,80 @@
         }
         html += '</div>';
 
-        // Render other players' cards below the nav buttons
+        // Live players section — right under nav buttons
+        html += '<div style="background:var(--bg-card);border-radius:var(--radius);border:1px solid var(--border);margin-bottom:12px;overflow:hidden">';
+        html += '<div style="padding:10px 14px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center">';
+        html += '<span style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--text-muted)">Players</span>';
+        html += '<span style="font-size:11px;color:var(--green-accent)">&#9679; Live</span>';
+        html += '</div>';
+
+        const sortedPlayers = R.players.slice().sort(function(a, b) {
+          if (a === myName) return -1;
+          if (b === myName) return 1;
+          const aPlayed = R.scores[a].filter(s => s > 0).length;
+          const bPlayed = R.scores[b].filter(s => s > 0).length;
+          if (aPlayed === 0 && bPlayed === 0) return 0;
+          if (aPlayed === 0) return 1;
+          if (bPlayed === 0) return -1;
+          const aDiff = R.scores[a].reduce((s, v) => s + v, 0) - course.holes.filter((h, i) => R.scores[a][i] > 0).reduce((a2, h) => a2 + h.par, 0);
+          const bDiff = R.scores[b].reduce((s, v) => s + v, 0) - course.holes.filter((h, i) => R.scores[b][i] > 0).reduce((a2, h) => a2 + h.par, 0);
+          return aDiff - bDiff;
+        });
+
+        sortedPlayers.forEach(function(p, idx) {
+          const isMe = p === myName;
+          const scores = R.scores[p];
+          const totalScore = scores.reduce((s, v) => s + v, 0);
+          const holesPlayed = scores.filter(s => s > 0).length;
+          const parPlayed = course.holes.filter((h, i) => scores[i] > 0).reduce((a, h) => a + h.par, 0);
+          const diff = totalScore - parPlayed;
+          let toPar = 'E';
+          let toParColor = 'var(--text-muted)';
+          if (holesPlayed === 0) { toPar = '\u2014'; }
+          else if (diff < 0) { toPar = diff.toString(); toParColor = 'var(--green-accent)'; }
+          else if (diff > 0) { toPar = '+' + diff; toParColor = 'var(--bogey)'; }
+
+          const borderTop = idx > 0 ? 'border-top:1px solid var(--border);' : '';
+          const meBg = isMe ? 'background:rgba(0,230,118,0.04);' : '';
+
+          html += '<div style="padding:10px 14px;display:flex;align-items:center;justify-content:space-between;' + borderTop + meBg + '">';
+
+          html += '<div style="display:flex;align-items:center;gap:10px;min-width:0;flex:1">';
+          if (isMe) {
+            html += '<div style="width:26px;height:26px;border-radius:50%;background:var(--green-accent);color:#000;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:800;flex-shrink:0">YOU</div>';
+          } else {
+            html += '<div style="width:26px;height:26px;border-radius:50%;background:var(--bg-elevated);color:var(--text-muted);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;flex-shrink:0;border:1px solid var(--border)">' + p.charAt(0).toUpperCase() + '</div>';
+          }
+          html += '<span style="font-weight:600;font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + p + '</span>';
+          html += '</div>';
+
+          html += '<div style="display:flex;align-items:center;gap:12px;flex-shrink:0">';
+          html += '<span style="font-size:11px;color:var(--text-muted)">' + (holesPlayed > 0 ? 'Thru ' + holesPlayed : '\u2014') + '</span>';
+          html += '<span style="font-size:16px;font-weight:800;min-width:28px;text-align:right">' + (holesPlayed > 0 ? totalScore : '\u2014') + '</span>';
+          html += '<span style="font-size:13px;font-weight:700;min-width:32px;text-align:right;color:' + toParColor + '">' + toPar + '</span>';
+          html += '</div>';
+
+          html += '</div>';
+        });
+
+        html += '</div>';
+
+        // Render other players' cards below the players section
         orderedPlayers.forEach(p => {
           if (p !== myName) renderPlayerCard(p, false);
         });
       }
+
+      // Share code — right above finish/leave
+      html += `
+        <div class="group-code-display" style="padding:12px; margin-bottom:12px;">
+          <div class="group-code-label">Share Code</div>
+          <div class="group-code" style="font-size:28px">${groupCode}</div>
+          <div class="group-code-actions">
+            <button class="copy-code-btn" onclick="copyCode()">Copy Code</button>
+          </div>
+        </div>
+      `;
 
       // Finish / Cancel — only show if not previewing
       if (!isFutureHole) {
