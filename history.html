@@ -81,11 +81,19 @@
       }
 
       const sorted = [...rounds].sort((a, b) => new Date(b.date) - new Date(a.date));
-      const completed = sorted.filter(r => !r.incomplete && !r.players.some(p => r.scores[p].filter(s => s > 0).length < 18));
-      const incomplete = sorted.filter(r => r.incomplete || r.players.some(p => r.scores[p].filter(s => s > 0).length < 18));
+
+      // For group rounds, trust the `incomplete` flag (set based on saving player's own holes).
+      // For solo rounds, fall back to checking all players' scores (backward compatible).
+      function isRoundIncomplete(r) {
+        if (r.groupCode) return !!r.incomplete;
+        return r.incomplete || r.players.some(p => r.scores[p].filter(s => s > 0).length < 18);
+      }
+
+      const completed = sorted.filter(r => !isRoundIncomplete(r));
+      const incomplete = sorted.filter(r => isRoundIncomplete(r));
 
       function renderRoundCard(r) {
-        const isIncomplete = r.incomplete || r.players.some(p => r.scores[p].filter(s => s > 0).length < 18);
+        const isIncomplete = isRoundIncomplete(r);
         return `
         <div class="history-card">
           <h3>${r.courseName}${r.groupCode ? ' <span style="font-size:11px;color:var(--gold);font-family:monospace;letter-spacing:1px">[' + r.groupCode + ']</span>' : ''}${isIncomplete ? ' <span style="font-size:10px;color:var(--bogey);font-weight:600;background:rgba(255,82,82,0.12);padding:2px 6px;border-radius:4px;vertical-align:middle">ENDED EARLY</span>' : ''}</h3>
@@ -140,7 +148,7 @@
       const round = rounds.find(r => r.id === roundId);
       if (!round) return;
 
-      const isIncomplete = round.incomplete || round.players.some(p => round.scores[p].filter(s => s > 0).length < 18);
+      const isIncomplete = isRoundIncomplete(round);
       document.getElementById('detailTitle').textContent = `${round.courseName} — ${formatDate(round.date)}`;
 
       let html = '';
