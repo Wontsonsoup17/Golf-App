@@ -208,6 +208,18 @@ function checkAndCleanupRound(code) {
   });
 }
 
+// Admin ends the round for all players — sets status to 'ended', then cleans up after delay
+function endGroupRoundForAll(code) {
+  return db.ref('activeRounds/' + code + '/meta/status').set('ended').then(function() {
+    // Give other players' listeners time to detect the status change and save their rounds
+    return new Promise(function(resolve) {
+      setTimeout(function() {
+        db.ref('activeRounds/' + code).remove().then(resolve).catch(resolve);
+      }, 3000);
+    });
+  });
+}
+
 // Clean up: remove a finished group round from Firebase
 function removeGroupRound(code) {
   return db.ref('activeRounds/' + code).remove();

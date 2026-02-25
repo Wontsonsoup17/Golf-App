@@ -417,9 +417,57 @@
     });
 
     function startGroupListener() {
+    var roundEndedHandled = false;
     // Listen for real-time updates
     unsubscribe = listenToGroupRound(groupCode, function(data) {
       if (!data || !data.meta) return;
+
+      // Detect admin-ended round for non-admin players
+      if (data.meta.status === 'ended' && data.meta.createdBy !== user.uid && !roundEndedHandled) {
+        roundEndedHandled = true;
+
+        // Auto-save this player's scores to history
+        var tempR = groupDataToRound(data, groupCode);
+        var course = getCourse(tempR.courseId);
+        if (course) {
+          var myName = tempR._uidToName[user.uid];
+          var myHolesPlayed = myName ? tempR.scores[myName].filter(function(s) { return s > 0; }).length : 0;
+          var holesCompleted = {};
+          tempR.players.forEach(function(p) {
+            holesCompleted[p] = tempR.scores[p].filter(function(s) { return s > 0; }).length;
+          });
+
+          var round = {
+            id: Date.now().toString(),
+            courseId: course.id,
+            courseName: course.name,
+            tee: tempR.tee,
+            teeLabel: tempR.teeLabel,
+            par: course.par,
+            date: tempR.date,
+            players: tempR.players.slice(),
+            scores: JSON.parse(JSON.stringify(tempR.scores)),
+            tracking: JSON.parse(JSON.stringify(tempR.tracking)),
+            holePars: course.holes.map(function(h) { return h.par; }),
+            groupCode: groupCode,
+            holesCompleted: holesCompleted,
+            incomplete: myHolesPlayed < 18
+          };
+
+          fbSaveRound(user.uid, round).catch(function() {});
+          var rounds = loadRounds();
+          rounds.push(round);
+          saveRounds(rounds);
+        }
+
+        // Clean up and redirect
+        if (unsubscribe) unsubscribe();
+        if (unsubConn) unsubConn();
+        localStorage.removeItem('active-group-code');
+        alert('The admin has ended the round. Your scores have been saved.');
+        window.location.href = 'history.html';
+        return;
+      }
 
       R = groupDataToRound(data, groupCode);
       const course = getCourse(R.courseId);
@@ -480,6 +528,7 @@
 
       sorted.forEach(function(p, idx) {
         const isMe = p === myName;
+        const isAdmin = roundData._nameToUid && roundData._nameToUid[p] === roundData._createdBy;
         const scores = roundData.scores[p];
         const totalScore = scores.reduce((s, v) => s + v, 0);
         const holesPlayed = scores.filter(s => s > 0).length;
@@ -502,6 +551,9 @@
           lhtml += '<div style="width:26px;height:26px;border-radius:50%;background:var(--bg-elevated);color:var(--text-muted);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;flex-shrink:0;border:1px solid var(--border)">' + p.charAt(0).toUpperCase() + '</div>';
         }
         lhtml += '<span style="font-weight:600;font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + p + '</span>';
+        if (isAdmin) {
+          lhtml += '<span style="font-size:9px;font-weight:700;color:#f5a623;background:rgba(245,166,35,0.15);padding:2px 6px;border-radius:4px;letter-spacing:0.5px;flex-shrink:0">&#9733; ADMIN</span>';
+        }
         lhtml += '</div>';
         lhtml += '<div style="display:flex;align-items:center;gap:12px;flex-shrink:0">';
         lhtml += '<span style="font-size:11px;color:var(--text-muted)">' + (holesPlayed > 0 ? 'Thru ' + holesPlayed : '\u2014') + '</span>';
@@ -702,6 +754,9 @@
       if (!isFutureHole) {
         html += '<div class="finish-section">';
         html += '<button class="btn-gold" onclick="finishGroupRoundAction()">Save & Finish</button>';
+        if (R._createdBy === user.uid) {
+          html += '<button class="btn-danger" onclick="endRoundForAll()" style="background:#c0392b;color:#fff;border:none;padding:12px 24px;border-radius:var(--radius);font-weight:700;font-size:14px;cursor:pointer;width:100%">End Round for All</button>';
+        }
         html += '<button class="btn-secondary" onclick="leaveGroupRound()">Leave</button>';
         html += '</div>';
       }
@@ -909,6 +964,54 @@
         return checkAndCleanupRound(groupCode);
       }).catch(function() {}).then(function() {
         // Clean up listeners and leave
+        if (unsubscribe) unsubscribe();
+        if (unsubConn) unsubConn();
+        localStorage.removeItem('active-group-code');
+        window.location.href = 'history.html';
+      });
+    };
+
+    window.endRoundForAll = function() {
+      if (!R) return;
+      if (R._createdBy !== user.uid) { alert('Only the admin can end the round.'); return; }
+      if (!confirm('End the round for all players? Everyone\'s scores will be saved as-is.')) return;
+
+      // Save admin's own scores to history
+      const course = course_ref.current;
+      if (course) {
+        const holesCompleted = {};
+        R.players.forEach(function(p) {
+          holesCompleted[p] = R.scores[p].filter(s => s > 0).length;
+        });
+
+        const myName = R._uidToName[user.uid];
+        const myHolesPlayed = myName ? R.scores[myName].filter(s => s > 0).length : 0;
+
+        const round = {
+          id: Date.now().toString(),
+          courseId: course.id,
+          courseName: course.name,
+          tee: R.tee,
+          teeLabel: R.teeLabel,
+          par: course.par,
+          date: R.date,
+          players: [...R.players],
+          scores: JSON.parse(JSON.stringify(R.scores)),
+          tracking: JSON.parse(JSON.stringify(R.tracking)),
+          holePars: course.holes.map(h => h.par),
+          groupCode: groupCode,
+          holesCompleted: holesCompleted,
+          incomplete: myHolesPlayed < 18
+        };
+
+        fbSaveRound(user.uid, round).catch(() => {});
+        const rounds = loadRounds();
+        rounds.push(round);
+        saveRounds(rounds);
+      }
+
+      // Set status to 'ended' — triggers all other players' listeners to save & exit
+      endGroupRoundForAll(groupCode).catch(function() {}).then(function() {
         if (unsubscribe) unsubscribe();
         if (unsubConn) unsubConn();
         localStorage.removeItem('active-group-code');
