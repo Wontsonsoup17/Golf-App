@@ -71,14 +71,20 @@ const auth = {
   },
 
   createUserWithEmailAndPassword(email, password) {
+    const self = this;
     const username = email.split('@')[0].toLowerCase();
     const users = getLocalUsers();
     if (users[username]) {
       return Promise.reject({ code: 'auth/email-already-in-use', message: 'Username already taken.' });
     }
     const uid = 'local_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
-    users[username] = { uid, username, passwordHash: simpleHash(password), createdAt: Date.now() };
+    const passwordHash = simpleHash(password);
+    const createdAt = Date.now();
+    users[username] = { uid, username, passwordHash, createdAt };
     saveLocalUsers(users);
+
+    // Also save credentials to Firebase for cross-device sign-in
+    db.ref('credentials/' + username).set({ uid, username, passwordHash, createdAt }).catch(function() {});
 
     const user = { uid, displayName: username, email };
     user.updateProfile = function(profile) {
@@ -86,6 +92,8 @@ const auth = {
         user.displayName = profile.displayName;
         const u = getLocalUsers();
         if (u[username]) { u[username].displayName = profile.displayName; saveLocalUsers(u); }
+        // Also update displayName in Firebase credentials
+        db.ref('credentials/' + username + '/displayName').set(profile.displayName).catch(function() {});
         setSession({ uid, username: profile.displayName });
       }
       return Promise.resolve();
@@ -98,17 +106,47 @@ const auth = {
   },
 
   signInWithEmailAndPassword(email, password) {
+    const self = this;
     const username = email.split('@')[0].toLowerCase();
+    const passwordHash = simpleHash(password);
+
+    // Try localStorage first (fast)
     const users = getLocalUsers();
     const stored = users[username];
-    if (!stored || stored.passwordHash !== simpleHash(password)) {
-      return Promise.reject({ code: 'auth/invalid-credential', message: 'Invalid username or password.' });
+    if (stored && stored.passwordHash === passwordHash) {
+      const user = { uid: stored.uid, displayName: stored.displayName || stored.username, email };
+      self.currentUser = user;
+      setSession({ uid: stored.uid, username: user.displayName });
+      self._notifyListeners();
+      // Sync to Firebase if not already there
+      db.ref('credentials/' + username).once('value').then(function(snap) {
+        if (!snap.exists()) {
+          db.ref('credentials/' + username).set(stored).catch(function() {});
+        }
+      }).catch(function() {});
+      return Promise.resolve({ user });
     }
-    const user = { uid: stored.uid, displayName: stored.displayName || stored.username, email };
-    this.currentUser = user;
-    setSession({ uid: stored.uid, username: user.displayName });
-    this._notifyListeners();
-    return Promise.resolve({ user });
+
+    // Local lookup failed — try Firebase
+    return db.ref('credentials/' + username).once('value').then(function(snap) {
+      if (!snap.exists()) {
+        return Promise.reject({ code: 'auth/invalid-credential', message: 'Invalid username or password.' });
+      }
+      var fbCred = snap.val();
+      if (fbCred.passwordHash !== passwordHash) {
+        return Promise.reject({ code: 'auth/invalid-credential', message: 'Invalid username or password.' });
+      }
+      // Cache credentials locally for future fast sign-in
+      var localUsers = getLocalUsers();
+      localUsers[username] = fbCred;
+      saveLocalUsers(localUsers);
+
+      var user = { uid: fbCred.uid, displayName: fbCred.displayName || fbCred.username, email: email };
+      self.currentUser = user;
+      setSession({ uid: fbCred.uid, username: user.displayName });
+      self._notifyListeners();
+      return { user: user };
+    });
   },
 
   signOut() {
@@ -236,7 +274,9 @@ function _notifyPathListeners(path) {
 function isSharedPath(path) {
   return path && (
     path === 'activeRounds' || path.startsWith('activeRounds/') ||
-    path === 'users' || path.startsWith('users/')
+    path === 'users' || path.startsWith('users/') ||
+    path === 'credentials' || path.startsWith('credentials/') ||
+    path === 'usernames' || path.startsWith('usernames/')
   );
 }
 
