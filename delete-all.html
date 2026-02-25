@@ -55,14 +55,29 @@
     localStorage.removeItem('active-round-v2');
     localStorage.removeItem('active-group-code');
 
+    // Also wipe Firebase: credentials, usernames, and user data
     var resultEl = document.getElementById('result');
-    if (count > 0) {
-      resultEl.style.color = 'var(--accent)';
-      resultEl.textContent = 'Deleted ' + count + ' account' + (count > 1 ? 's' : '') + ': ' + names.join(', ') + '. All data wiped.';
-    } else {
-      resultEl.style.color = 'var(--text-muted)';
-      resultEl.textContent = 'No accounts found. All data wiped.';
-    }
+    resultEl.style.color = 'var(--text-muted)';
+    resultEl.textContent = 'Clearing local data... Wiping Firebase...';
+
+    _firebaseLoadPromise.then(function() {
+      if (!_firebaseReady || !_firebaseDB) {
+        resultEl.style.color = 'var(--bogey)';
+        resultEl.textContent = 'Local data wiped (' + count + ' account' + (count > 1 ? 's' : '') + '). Firebase offline — could not clear cloud data.';
+        return;
+      }
+      Promise.all([
+        _firebaseDB.ref('credentials').remove(),
+        _firebaseDB.ref('usernames').remove(),
+        _firebaseDB.ref('users').remove()
+      ]).then(function() {
+        resultEl.style.color = 'var(--green-accent)';
+        resultEl.textContent = 'All data wiped — ' + count + ' local account' + (count > 1 ? 's' : '') + ' deleted, Firebase credentials/usernames/users cleared.';
+      }).catch(function(err) {
+        resultEl.style.color = 'var(--bogey)';
+        resultEl.textContent = 'Local wiped. Firebase error: ' + (err.message || 'Unknown error');
+      });
+    });
   })();
 </script>
 </body>
