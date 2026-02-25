@@ -11,7 +11,7 @@
 <link rel="manifest" href="manifest.json">
 <link rel="apple-touch-icon" href="icon-192.png">
 <title>History - Westchester Golf</title>
-<link rel="stylesheet" href="shared.css?v=13">
+<link rel="stylesheet" href="shared.css?v=14">
 </head>
 <body>
 
@@ -40,15 +40,24 @@
 
 <nav class="bottom-nav" id="bottomNav"></nav>
 
-<script src="firebase-config.js?v=13"></script>
-<script src="shared.js?v=13"></script>
-<script src="firebase-sync.js?v=13"></script>
+<script src="firebase-config.js?v=14"></script>
+<script src="shared.js?v=14"></script>
+<script src="firebase-sync.js?v=14"></script>
 <script>
   requireAuth(function(user) {
     renderBottomNav('history');
     renderActiveRoundBanner();
 
     let rounds = [];
+
+    // Determine if a round was ended early.
+    // Trust the saved `incomplete` flag when present (set by scorecard based on
+    // the saving player's own holes played). Fall back to checking scores only
+    // for very old rounds that don't have the flag.
+    function isRoundIncomplete(r) {
+      if (typeof r.incomplete === 'boolean') return r.incomplete;
+      return r.players.some(p => r.scores[p].filter(s => s > 0).length < 18);
+    }
 
     // Load from Firebase, merge with localStorage, deduplicate
     fbLoadRounds(user.uid).then(fbRounds => {
@@ -81,14 +90,6 @@
       }
 
       const sorted = [...rounds].sort((a, b) => new Date(b.date) - new Date(a.date));
-
-      // For group rounds, trust the `incomplete` flag (set based on saving player's own holes).
-      // For solo rounds, fall back to checking all players' scores (backward compatible).
-      function isRoundIncomplete(r) {
-        if (r.groupCode) return !!r.incomplete;
-        return r.incomplete || r.players.some(p => r.scores[p].filter(s => s > 0).length < 18);
-      }
-
       const completed = sorted.filter(r => !isRoundIncomplete(r));
       const incomplete = sorted.filter(r => isRoundIncomplete(r));
 
