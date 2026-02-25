@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#0a0f0d">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icon-192.png">
+<title>Clear Cache - Westchester Golf</title>
+<link rel="stylesheet" href="shared.css?v=13">
+</head>
+<body>
+
+<div class="header">
+  <h1>Clear Device Cache</h1>
+  <div class="subtitle">Clears local data on this device only</div>
+</div>
+
+<div class="main">
+  <div class="auth-card">
+    <div id="result" style="text-align:center;padding:12px;font-weight:600"></div>
+    <div style="text-align:center;margin-top:16px">
+      <a href="login.html" style="color:var(--text-muted);font-size:13px">Back to login</a>
+    </div>
+  </div>
+</div>
+
+<script>
+  (function() {
+    // Nuclear clear — wipe ALL localStorage for this domain
+    localStorage.clear();
+
+    var resultEl = document.getElementById('result');
+    resultEl.style.color = 'var(--green-accent)';
+    resultEl.textContent = 'Device cache cleared. Redirecting to login...';
+
+    // Redirect to login with cache-busting timestamp to force fresh page load
+    setTimeout(function() {
+      window.location.href = 'login.html?_=' + Date.now();
+    }, 1500);
+  })();
+</script>
+</body>
+</html>
