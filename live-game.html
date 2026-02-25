@@ -288,11 +288,11 @@
     var gotData = false;
     listenToGroupRound(groupCode, function(data) {
       gotData = true;
-      if (data.meta && data.meta.status === 'finished') {
+      if (data.meta && (data.meta.status === 'finished' || data.meta.status === 'ended')) {
         document.getElementById('mainContent').innerHTML =
           '<div class="empty-state">' +
             '<div class="icon">&#127948;</div>' +
-            '<p>This round has finished.<br><a href="history.html">View history</a></p>' +
+            '<p>This round has ended.<br><a href="history.html">View History</a></p>' +
           '</div>';
         return;
       }
@@ -308,10 +308,14 @@
         return;
       }
 
+      // Check if current user is the admin and if they've finished
+      var isAdmin = data.meta.createdBy === user.uid;
+      var iAmFinished = data.finishedPlayers && data.finishedPlayers[user.uid] === true;
+
       document.getElementById('courseName').textContent = course.name;
       document.getElementById('courseSub').textContent = R.teeLabel + ' Tees  |  Par ' + course.par + '  |  ' + formatDate(R.date);
 
-      renderLeaderboard(R, course, user, groupCode);
+      renderLeaderboard(R, course, user, groupCode, isAdmin, iAmFinished);
     });
 
     // If no data after a short delay, show error
@@ -329,7 +333,7 @@
   // ============================
   // RENDER LEADERBOARD
   // ============================
-  function renderLeaderboard(R, course, user, groupCode) {
+  function renderLeaderboard(R, course, user, groupCode, isAdmin, iAmFinished) {
     var content = document.getElementById('mainContent');
     var scorecardUrl = groupCode ? 'scorecard.html?group=' + groupCode : 'scorecard.html';
 
@@ -417,8 +421,12 @@
     // Build HTML
     var html = '';
 
-    // Back to scorecard button
-    html += '<button class="live-back-btn" onclick="window.location.href=\'' + scorecardUrl + '\'">&#127948; Back to Scorecard</button>';
+    // Top navigation button
+    if (iAmFinished) {
+      html += '<a href="history.html" class="live-back-btn" style="text-decoration:none;display:flex">&#128218; View History</a>';
+    } else {
+      html += '<button class="live-back-btn" onclick="window.location.href=\'' + scorecardUrl + '\'">&#127948; Back to Scorecard</button>';
+    }
 
     // Leaderboard card
     html += '<div class="leaderboard">';
@@ -450,7 +458,8 @@
       // Header row
       html += '<div class="lb-player-header" onclick="togglePlayer(\'' + ps.name.replace(/'/g, "\\'") + '\')">';
       html += '<div class="lb-rank ' + rankClass + '">' + ps.rank + '</div>';
-      html += '<div class="lb-player-name">' + ps.name + (isMe ? '<span class="you-tag">YOU</span>' : '') + '</div>';
+      var isPlayerAdmin = groupCode && R._nameToUid && R._createdBy && R._nameToUid[ps.name] === R._createdBy;
+      html += '<div class="lb-player-name">' + ps.name + (isMe ? '<span class="you-tag">YOU</span>' : '') + (isPlayerAdmin ? '<span style="font-size:9px;font-weight:700;color:#f5a623;background:rgba(245,166,35,0.15);padding:2px 6px;border-radius:4px;letter-spacing:0.5px;margin-left:6px;vertical-align:middle">&#9733; ADMIN</span>' : '') + '</div>';
       html += '<div class="lb-player-score">';
       html += '<div class="lb-total">' + (ps.holesPlayed > 0 ? ps.totalScore : '-') + '</div>';
       html += '<div class="lb-diff ' + diffClass + '">' + diffText + '</div>';
@@ -482,8 +491,17 @@
 
     html += '</div>'; // leaderboard
 
-    // Back to scorecard again at bottom
-    html += '<button class="live-back-btn" onclick="window.location.href=\'' + scorecardUrl + '\'">&#127948; Back to Scorecard</button>';
+    // Admin: End Round button
+    if (groupCode && isAdmin && iAmFinished) {
+      html += '<button onclick="endRoundFromLive()" style="background:#c0392b;color:#fff;border:none;padding:13px 20px;border-radius:var(--radius-sm);font-size:14px;font-weight:700;cursor:pointer;width:100%;margin-bottom:12px">End Round for All</button>';
+    }
+
+    // Bottom navigation
+    if (iAmFinished) {
+      html += '<a href="history.html" class="live-back-btn" style="text-decoration:none;display:flex;background:var(--bg-elevated);color:var(--text);box-shadow:none;border:1px solid var(--border)">&#128218; View History</a>';
+    } else {
+      html += '<button class="live-back-btn" onclick="window.location.href=\'' + scorecardUrl + '\'">&#127948; Back to Scorecard</button>';
+    }
 
     content.innerHTML = html;
   }
@@ -540,6 +558,17 @@
       if (el.getAttribute('data-player') === name) {
         el.classList.toggle('expanded');
       }
+    });
+  };
+
+  // Admin ends round from live spectator view
+  window.endRoundFromLive = function() {
+    if (!confirm('End the round for all players? Everyone\'s scores will be saved as-is.')) return;
+    var urlParams = new URLSearchParams(window.location.search);
+    var code = urlParams.get('group');
+    if (!code) return;
+    endGroupRoundForAll(code).catch(function() {}).then(function() {
+      window.location.href = 'history.html';
     });
   };
 </script>

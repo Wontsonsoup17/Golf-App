@@ -968,7 +968,8 @@
         if (unsubscribe) unsubscribe();
         if (unsubConn) unsubConn();
         localStorage.removeItem('active-group-code');
-        window.location.href = 'history.html';
+        // Redirect to live spectator view so they can watch others finish
+        window.location.href = 'live-game.html?group=' + groupCode;
       });
     };
 
