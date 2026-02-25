@@ -11,7 +11,7 @@
 <link rel="manifest" href="manifest.json">
 <link rel="apple-touch-icon" href="icon-192.png">
 <title>Sign In - Westchester Golf</title>
-<link rel="stylesheet" href="shared.css?v=13">
+<link rel="stylesheet" href="shared.css?v=14">
 </head>
 <body>
 
@@ -72,10 +72,15 @@
       <button class="btn-gold" id="signupBtn" onclick="handleSignUp()">Create Account</button>
     </div>
   </div>
+
+  <div style="text-align:center;margin-top:24px;padding-bottom:20px">
+    <div style="font-size:13px;color:var(--text-muted);margin-bottom:8px">If having issues</div>
+    <a href="clear-cache.html" class="btn-outline" style="display:inline-block;font-size:13px;padding:8px 20px;text-decoration:none">Clear Cache</a>
+  </div>
 </div>
 
-<script src="firebase-config.js?v=13"></script>
-<script src="shared.js?v=13"></script>
+<script src="firebase-config.js?v=14"></script>
+<script src="shared.js?v=14"></script>
 <script>
   let signingUp = false;
   let pendingAvatarData = null;
