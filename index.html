@@ -30,7 +30,7 @@
   <div class="join-card">
     <h3>&#128279; Join a Round</h3>
     <div class="join-input-row">
-      <input type="text" id="joinCodeInput" placeholder="Enter round code" maxlength="15" autocomplete="off">
+      <input type="text" id="joinCodeInput" placeholder="Enter round code" maxlength="15" autocomplete="off" readonly onfocus="this.removeAttribute('readonly')">
       <button class="join-btn" id="joinBtn" onclick="handleJoinRound()">Join</button>
     </div>
     <div class="join-error" id="joinError"></div>
@@ -44,7 +44,7 @@
       </select>
     </div>
     <div style="margin-bottom:8px">
-      <input type="text" id="createCodeInput" placeholder="Enter a round code" maxlength="15" autocomplete="off" style="width:100%;font-family:monospace;font-size:16px;font-weight:700;letter-spacing:3px;text-transform:uppercase;text-align:center;padding:10px">
+      <input type="text" id="createCodeInput" placeholder="Enter a round code" maxlength="15" autocomplete="off" readonly onfocus="this.removeAttribute('readonly')" style="width:100%;font-family:monospace;font-size:16px;font-weight:700;letter-spacing:3px;text-transform:uppercase;text-align:center;padding:10px">
     </div>
     <div style="font-size:11px;color:var(--text-muted);margin-bottom:10px">3-15 characters. Share this code so friends can join.</div>
     <button class="btn-primary" id="createBtn" onclick="handleCreateRound()">Create Round</button>

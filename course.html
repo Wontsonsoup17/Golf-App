@@ -75,7 +75,7 @@
       <div class="form-group">
         <label>Round Code</label>
         <div style="display:flex;gap:8px;align-items:center">
-          <input type="text" id="customCodeInput" placeholder="Enter a code or generate one" maxlength="15" autocapitalize="characters" style="flex:1;text-transform:uppercase;font-family:monospace;letter-spacing:2px">
+          <input type="text" id="customCodeInput" placeholder="Enter a code or generate one" maxlength="15" autocapitalize="characters" readonly onfocus="this.removeAttribute('readonly')" style="flex:1;text-transform:uppercase;font-family:monospace;letter-spacing:2px">
           <button class="btn-outline" type="button" onclick="generateCode()" style="white-space:nowrap;padding:10px 14px">Generate</button>
         </div>
         <div style="font-size:11px; color:var(--text-muted); margin-top:6px;">

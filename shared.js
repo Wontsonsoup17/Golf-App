@@ -232,45 +232,18 @@ function getCourse(courseId) {
 }
 
 // ==================== MOBILE KEYBOARD FIX ====================
-// iOS standalone web apps auto-focus the first input on page load,
-// which pops open the keyboard. Fix: make all text inputs readonly
-// on load so iOS can't focus them, then unlock on first user tap.
+// Inputs use readonly + onfocus="this.removeAttribute('readonly')" in HTML
+// to prevent iOS from auto-focusing and opening the keyboard on page load.
+// This blur is a safety net for any edge cases.
 (function() {
-  var unlocked = false;
-
-  function lockInputs() {
-    var inputs = document.querySelectorAll('input[type="text"], input[type="password"], input[type="email"], input[type="number"], input[type="tel"], input[type="search"], input[type="url"], input:not([type]), textarea');
-    for (var i = 0; i < inputs.length; i++) {
-      if (!inputs[i].hasAttribute('data-was-readonly')) {
-        inputs[i].setAttribute('readonly', '');
-        inputs[i].setAttribute('data-keyboard-locked', 'true');
-      }
+  function blurActiveInput() {
+    var el = document.activeElement;
+    if (el && (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA')) {
+      el.blur();
     }
   }
-
-  function unlockInputs() {
-    if (unlocked) return;
-    unlocked = true;
-    var locked = document.querySelectorAll('[data-keyboard-locked]');
-    for (var i = 0; i < locked.length; i++) {
-      locked[i].removeAttribute('readonly');
-      locked[i].removeAttribute('data-keyboard-locked');
-    }
-  }
-
-  // Lock inputs as soon as DOM is ready
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', lockInputs);
-  } else {
-    lockInputs();
-  }
-
-  // Unlock all inputs on first user interaction
-  document.addEventListener('touchstart', unlockInputs, { once: true });
-  document.addEventListener('mousedown', unlockInputs, { once: true });
-
-  // Also unlock after a safe delay as fallback
-  setTimeout(unlockInputs, 1500);
+  window.addEventListener('pageshow', blurActiveInput);
+  setTimeout(blurActiveInput, 300);
 })();
 
 // ==================== HELPERS ====================
