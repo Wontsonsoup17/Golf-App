@@ -233,19 +233,25 @@ function getCourse(courseId) {
 
 // ==================== MOBILE KEYBOARD FIX ====================
 // iOS standalone web apps auto-focus the first input on page load,
-// which pops open the keyboard. Blur it on load so the keyboard
-// only appears when the user taps a field.
-document.addEventListener('DOMContentLoaded', function() {
-  if (document.activeElement && document.activeElement.tagName === 'INPUT') {
-    document.activeElement.blur();
-  }
-  // Fallback: also check after a short delay for late auto-focus
-  setTimeout(function() {
-    if (document.activeElement && document.activeElement.tagName === 'INPUT') {
-      document.activeElement.blur();
+// which pops open the keyboard. Blur any focused input across multiple
+// events and timings to catch all iOS auto-focus behaviors.
+(function() {
+  function blurActiveInput() {
+    var el = document.activeElement;
+    if (el && (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA' || el.tagName === 'SELECT')) {
+      el.blur();
     }
-  }, 100);
-});
+  }
+  // Try on multiple events — iOS may auto-focus at different points
+  document.addEventListener('DOMContentLoaded', blurActiveInput);
+  window.addEventListener('load', blurActiveInput);
+  window.addEventListener('pageshow', blurActiveInput);
+  // Repeated checks to catch late auto-focus
+  setTimeout(blurActiveInput, 50);
+  setTimeout(blurActiveInput, 150);
+  setTimeout(blurActiveInput, 300);
+  setTimeout(blurActiveInput, 500);
+})();
 
 // ==================== HELPERS ====================
 function getScoreClass(score, par) {
