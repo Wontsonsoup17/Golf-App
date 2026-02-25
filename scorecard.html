@@ -420,7 +420,12 @@
     var roundEndedHandled = false;
     // Listen for real-time updates
     unsubscribe = listenToGroupRound(groupCode, function(data) {
-      if (!data || !data.meta) return;
+      // Round deleted from Firebase (all players finished and cleanup ran)
+      if (!data) {
+        localStorage.removeItem('active-group-code');
+        return;
+      }
+      if (!data.meta) return;
 
       // Detect admin-ended round for non-admin players
       if (data.meta.status === 'ended' && data.meta.createdBy !== user.uid && !roundEndedHandled) {

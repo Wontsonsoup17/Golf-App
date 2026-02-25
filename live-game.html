@@ -288,12 +288,13 @@
     var gotData = false;
     listenToGroupRound(groupCode, function(data) {
       gotData = true;
-      if (data.meta && (data.meta.status === 'finished' || data.meta.status === 'ended')) {
+      // Round was deleted from Firebase (all players finished) or status ended
+      if (!data || (data.meta && (data.meta.status === 'finished' || data.meta.status === 'ended'))) {
         localStorage.removeItem('active-group-code');
         document.getElementById('mainContent').innerHTML =
           '<div class="empty-state">' +
-            '<div class="icon">&#127948;</div>' +
-            '<p>This round has ended.<br><a href="history.html">View History</a></p>' +
+            '<div class="icon">&#9989;</div>' +
+            '<p>Round complete!<br><a href="history.html" style="display:inline-block;margin-top:14px;padding:12px 24px;background:var(--green-accent);color:#0a0f0d;border-radius:10px;font-weight:700;text-decoration:none">View History</a></p>' +
           '</div>';
         return;
       }

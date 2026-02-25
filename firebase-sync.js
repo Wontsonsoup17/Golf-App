@@ -153,7 +153,7 @@ function listenToGroupRound(code, callback) {
   const ref = db.ref('activeRounds/' + code);
   const handler = ref.on('value', snap => {
     const data = snap.val();
-    if (data) callback(data);
+    callback(data); // pass null through so listeners can handle round deletion
   });
   return () => ref.off('value', handler);
 }
