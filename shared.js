@@ -233,24 +233,44 @@ function getCourse(courseId) {
 
 // ==================== MOBILE KEYBOARD FIX ====================
 // iOS standalone web apps auto-focus the first input on page load,
-// which pops open the keyboard. Blur any focused input across multiple
-// events and timings to catch all iOS auto-focus behaviors.
+// which pops open the keyboard. Fix: make all text inputs readonly
+// on load so iOS can't focus them, then unlock on first user tap.
 (function() {
-  function blurActiveInput() {
-    var el = document.activeElement;
-    if (el && (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA' || el.tagName === 'SELECT')) {
-      el.blur();
+  var unlocked = false;
+
+  function lockInputs() {
+    var inputs = document.querySelectorAll('input[type="text"], input[type="password"], input[type="email"], input[type="number"], input[type="tel"], input[type="search"], input[type="url"], input:not([type]), textarea');
+    for (var i = 0; i < inputs.length; i++) {
+      if (!inputs[i].hasAttribute('data-was-readonly')) {
+        inputs[i].setAttribute('readonly', '');
+        inputs[i].setAttribute('data-keyboard-locked', 'true');
+      }
     }
   }
-  // Try on multiple events — iOS may auto-focus at different points
-  document.addEventListener('DOMContentLoaded', blurActiveInput);
-  window.addEventListener('load', blurActiveInput);
-  window.addEventListener('pageshow', blurActiveInput);
-  // Repeated checks to catch late auto-focus
-  setTimeout(blurActiveInput, 50);
-  setTimeout(blurActiveInput, 150);
-  setTimeout(blurActiveInput, 300);
-  setTimeout(blurActiveInput, 500);
+
+  function unlockInputs() {
+    if (unlocked) return;
+    unlocked = true;
+    var locked = document.querySelectorAll('[data-keyboard-locked]');
+    for (var i = 0; i < locked.length; i++) {
+      locked[i].removeAttribute('readonly');
+      locked[i].removeAttribute('data-keyboard-locked');
+    }
+  }
+
+  // Lock inputs as soon as DOM is ready
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', lockInputs);
+  } else {
+    lockInputs();
+  }
+
+  // Unlock all inputs on first user interaction
+  document.addEventListener('touchstart', unlockInputs, { once: true });
+  document.addEventListener('mousedown', unlockInputs, { once: true });
+
+  // Also unlock after a safe delay as fallback
+  setTimeout(unlockInputs, 1500);
 })();
 
 // ==================== HELPERS ====================
