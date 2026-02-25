@@ -83,26 +83,31 @@ const auth = {
     users[username] = { uid, username, passwordHash, createdAt };
     saveLocalUsers(users);
 
-    // Also save credentials to Firebase for cross-device sign-in
-    db.ref('credentials/' + username).set({ uid, username, passwordHash, createdAt }).catch(function() {});
-
     const user = { uid, displayName: username, email };
     user.updateProfile = function(profile) {
       if (profile.displayName) {
         user.displayName = profile.displayName;
         const u = getLocalUsers();
         if (u[username]) { u[username].displayName = profile.displayName; saveLocalUsers(u); }
-        // Also update displayName in Firebase credentials
-        db.ref('credentials/' + username + '/displayName').set(profile.displayName).catch(function() {});
         setSession({ uid, username: profile.displayName });
+        // Update displayName in Firebase credentials (awaited)
+        return db.ref('credentials/' + username + '/displayName').set(profile.displayName).catch(function() {});
       }
       return Promise.resolve();
     };
 
-    this.currentUser = user;
+    self.currentUser = user;
     setSession({ uid, username: user.displayName || username });
-    this._notifyListeners();
-    return Promise.resolve({ user });
+    self._notifyListeners();
+
+    // Save credentials to Firebase for cross-device sign-in (awaited via returned promise)
+    var credData = { uid: uid, username: username, passwordHash: passwordHash, createdAt: createdAt };
+    return db.ref('credentials/' + username).set(credData).then(function() {
+      return { user: user };
+    }).catch(function() {
+      // Firebase write failed but local account created — still return success
+      return { user: user };
+    });
   },
 
   signInWithEmailAndPassword(email, password) {

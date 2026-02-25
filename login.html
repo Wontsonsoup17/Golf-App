@@ -9,7 +9,7 @@
 <link rel="manifest" href="manifest.json">
 <link rel="apple-touch-icon" href="icon-192.png">
 <title>Sign In - Westchester Golf</title>
-<link rel="stylesheet" href="shared.css?v=11">
+<link rel="stylesheet" href="shared.css?v=12">
 </head>
 <body>
 
@@ -72,8 +72,8 @@
   </div>
 </div>
 
-<script src="firebase-config.js?v=11"></script>
-<script src="shared.js?v=11"></script>
+<script src="firebase-config.js?v=12"></script>
+<script src="shared.js?v=12"></script>
 <script>
   let signingUp = false;
   let pendingAvatarData = null;
@@ -188,14 +188,14 @@
         .then(cred => {
           // Set display name on Firebase Auth profile
           return cred.user.updateProfile({ displayName: username }).then(() => {
-            // Reserve username and save profile
-            const updates = {};
-            updates['usernames/' + username.toLowerCase()] = cred.user.uid;
-            updates['users/' + cred.user.uid + '/profile'] = {
-              username: username,
-              createdAt: Date.now()
-            };
-            return db.ref().update(updates);
+            // Reserve username and save profile in Firebase (use individual refs so they route to Firebase)
+            return Promise.all([
+              db.ref('usernames/' + username.toLowerCase()).set(cred.user.uid),
+              db.ref('users/' + cred.user.uid + '/profile').set({
+                username: username,
+                createdAt: Date.now()
+              })
+            ]);
           });
         })
         .then(() => {
