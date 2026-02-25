@@ -231,6 +231,22 @@ function getCourse(courseId) {
   return COURSES.find(c => c.id === courseId);
 }
 
+// ==================== MOBILE KEYBOARD FIX ====================
+// iOS standalone web apps auto-focus the first input on page load,
+// which pops open the keyboard. Blur it on load so the keyboard
+// only appears when the user taps a field.
+document.addEventListener('DOMContentLoaded', function() {
+  if (document.activeElement && document.activeElement.tagName === 'INPUT') {
+    document.activeElement.blur();
+  }
+  // Fallback: also check after a short delay for late auto-focus
+  setTimeout(function() {
+    if (document.activeElement && document.activeElement.tagName === 'INPUT') {
+      document.activeElement.blur();
+    }
+  }, 100);
+});
+
 // ==================== HELPERS ====================
 function getScoreClass(score, par) {
   if (!score) return '';
