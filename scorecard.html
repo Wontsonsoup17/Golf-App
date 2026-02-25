@@ -425,40 +425,41 @@
       // Detect admin-ended round for non-admin players
       if (data.meta.status === 'ended' && data.meta.createdBy !== user.uid && !roundEndedHandled) {
         roundEndedHandled = true;
+        // Wrap in IIFE to avoid variable name conflicts with outer scope
+        (function() {
+          var tempR = groupDataToRound(data, groupCode);
+          var endedCourse = getCourse(tempR.courseId);
+          if (endedCourse) {
+            var myName = tempR._uidToName[user.uid];
+            var myHolesPlayed = myName ? tempR.scores[myName].filter(function(s) { return s > 0; }).length : 0;
+            var holesCompleted = {};
+            tempR.players.forEach(function(p) {
+              holesCompleted[p] = tempR.scores[p].filter(function(s) { return s > 0; }).length;
+            });
 
-        // Auto-save this player's scores to history
-        var tempR = groupDataToRound(data, groupCode);
-        var course = getCourse(tempR.courseId);
-        if (course) {
-          var myName = tempR._uidToName[user.uid];
-          var myHolesPlayed = myName ? tempR.scores[myName].filter(function(s) { return s > 0; }).length : 0;
-          var holesCompleted = {};
-          tempR.players.forEach(function(p) {
-            holesCompleted[p] = tempR.scores[p].filter(function(s) { return s > 0; }).length;
-          });
+            var round = {
+              id: Date.now().toString(),
+              courseId: endedCourse.id,
+              courseName: endedCourse.name,
+              tee: tempR.tee,
+              teeLabel: tempR.teeLabel,
+              par: endedCourse.par,
+              date: tempR.date,
+              players: tempR.players.slice(),
+              scores: JSON.parse(JSON.stringify(tempR.scores)),
+              tracking: JSON.parse(JSON.stringify(tempR.tracking)),
+              holePars: endedCourse.holes.map(function(h) { return h.par; }),
+              groupCode: groupCode,
+              holesCompleted: holesCompleted,
+              incomplete: myHolesPlayed < 18
+            };
 
-          var round = {
-            id: Date.now().toString(),
-            courseId: course.id,
-            courseName: course.name,
-            tee: tempR.tee,
-            teeLabel: tempR.teeLabel,
-            par: course.par,
-            date: tempR.date,
-            players: tempR.players.slice(),
-            scores: JSON.parse(JSON.stringify(tempR.scores)),
-            tracking: JSON.parse(JSON.stringify(tempR.tracking)),
-            holePars: course.holes.map(function(h) { return h.par; }),
-            groupCode: groupCode,
-            holesCompleted: holesCompleted,
-            incomplete: myHolesPlayed < 18
-          };
-
-          fbSaveRound(user.uid, round).catch(function() {});
-          var rounds = loadRounds();
-          rounds.push(round);
-          saveRounds(rounds);
-        }
+            fbSaveRound(user.uid, round).catch(function() {});
+            var rounds = loadRounds();
+            rounds.push(round);
+            saveRounds(rounds);
+          }
+        })();
 
         // Clean up and redirect
         if (unsubscribe) unsubscribe();
