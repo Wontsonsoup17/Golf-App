@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#0a0f0d">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icon-192.png">
+<title>My Stats - Westchester Golf</title>
+<link rel="stylesheet" href="shared.css?v=15">
+</head>
+<body>
+
+<div class="header">
+  <h1>My Stats</h1>
+  <div class="subtitle" id="playerName"></div>
+</div>
+
+<div id="activeRoundBanner"></div>
+
+<div class="main">
+  <div class="stat-grid" id="statGrid"></div>
+  <div id="courseStatsSection">
+    <div class="waiting-players"><span class="spinner"></span> Loading stats...</div>
+  </div>
+</div>
+
+<nav class="bottom-nav" id="bottomNav"></nav>
+
+<script src="firebase-config.js?v=15"></script>
+<script src="shared.js?v=15"></script>
+<script src="firebase-sync.js?v=15"></script>
+<script>
+  requireAuth(function(user) {
+    renderBottomNav('personal');
+    renderActiveRoundBanner();
+
+    var displayName = user.displayName || 'You';
+    document.getElementById('playerName').textContent = displayName + "'s personal stats";
+
+    fbLoadRounds(user.uid).then(function(rounds) {
+      renderPersonalStats(rounds, displayName);
+    }).catch(function() {
+      renderPersonalStats(loadRounds(), displayName);
+    });
+
+    function renderPersonalStats(rounds, myName) {
+      if (!rounds.length) {
+        document.getElementById('statGrid').innerHTML = '';
+        document.getElementById('courseStatsSection').innerHTML = '<div class="empty-state"><div class="icon">&#128100;</div><p>No rounds yet.<br><a href="index.html">Play a round</a> to see your personal stats.</p></div>';
+        return;
+      }
+
+      // Find my stats across all rounds
+      var myRounds = 0, myTotalScore = 0, myBest = Infinity, coursesPlayed = new Set();
+
+      rounds.forEach(function(r) {
+        // Find my name in this round (could vary by display name)
+        var me = r.players.find(function(p) { return p === myName; });
+        if (!me) {
+          // Fallback: check all players for a case-insensitive match
+          me = r.players.find(function(p) { return p.toLowerCase() === myName.toLowerCase(); });
+        }
+        if (!me) return;
+
+        var scores = r.scores[me];
+        if (!scores) return;
+        var total = scores.reduce(function(a, b) { return a + b; }, 0);
+        var played = scores.filter(function(s) { return s > 0; }).length;
+
+        if (total > 0 && played >= 9) {
+          myRounds++;
+          myTotalScore += total;
+          if (total < myBest) myBest = total;
+          if (r.courseId) coursesPlayed.add(r.courseId);
+        }
+      });
+
+      var myAvg = myRounds > 0 ? (myTotalScore / myRounds).toFixed(1) : '-';
+
+      document.getElementById('statGrid').innerHTML =
+        '<div class="stat-box"><div class="stat-value">' + myRounds + '</div><div class="stat-label">Rounds</div></div>' +
+        '<div class="stat-box"><div class="stat-value">' + (myBest < Infinity ? myBest : '-') + '</div><div class="stat-label">Best Score</div></div>' +
+        '<div class="stat-box"><div class="stat-value">' + myAvg + '</div><div class="stat-label">Avg Score</div></div>' +
+        '<div class="stat-box"><div class="stat-value">' + coursesPlayed.size + '</div><div class="stat-label">Courses</div></div>';
+
+      // Per-course breakdown — only my scores
+      var courseHtml = '<div class="section-title" style="margin-top:8px">By Course</div>';
+      var any = false;
+
+      COURSES.forEach(function(c) {
+        var courseRounds = rounds.filter(function(r) { return r.courseId === c.id; });
+        if (!courseRounds.length) return;
+
+        var myCourseBest = Infinity, myCourseTotal = 0, myCourseRounds = 0;
+
+        courseRounds.forEach(function(r) {
+          var me = r.players.find(function(p) { return p === myName; }) ||
+                   r.players.find(function(p) { return p.toLowerCase() === myName.toLowerCase(); });
+          if (!me || !r.scores[me]) return;
+
+          var total = r.scores[me].reduce(function(a, b) { return a + b; }, 0);
+          var played = r.scores[me].filter(function(s) { return s > 0; }).length;
+
+          if (total > 0 && played >= 9) {
+            myCourseRounds++;
+            myCourseTotal += total;
+            if (total < myCourseBest) myCourseBest = total;
+          }
+        });
+
+        if (myCourseRounds === 0) return;
+        any = true;
+
+        var myCourseAvg = (myCourseTotal / myCourseRounds).toFixed(0);
+
+        courseHtml +=
+          '<div class="history-card">' +
+            '<h3>' + c.name + '</h3>' +
+            '<div style="display:flex;gap:16px;font-size:12px;color:var(--text-muted);margin-top:4px">' +
+              '<span>' + myCourseRounds + ' round' + (myCourseRounds > 1 ? 's' : '') + '</span>' +
+              '<span>Par ' + c.par + '</span>' +
+            '</div>' +
+            '<div class="history-scores" style="margin-top:8px">' +
+              '<div class="history-score-row">' +
+                '<span>Best</span>' +
+                '<span><strong>' + myCourseBest + '</strong></span>' +
+              '</div>' +
+              '<div class="history-score-row">' +
+                '<span>Average</span>' +
+                '<span>' + myCourseAvg + '</span>' +
+              '</div>' +
+            '</div>' +
+          '</div>';
+      });
+
+      document.getElementById('courseStatsSection').innerHTML = any ? courseHtml : '<div style="text-align:center;color:var(--text-muted);font-size:13px;margin-top:16px">Play a full round (9+ holes) to see course stats.</div>';
+    }
+  });
+</script>
+</body>
+</html>

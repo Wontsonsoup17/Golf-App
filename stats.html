@@ -16,8 +16,8 @@
 <body>
 
 <div class="header">
-  <h1>Stats & Leaderboard</h1>
-  <div class="subtitle">Track your progress</div>
+  <h1>Leaderboard</h1>
+  <div class="subtitle">Community rankings</div>
 </div>
 
 <div id="activeRoundBanner"></div>
@@ -27,7 +27,6 @@
   <div id="leaderboardSection">
     <div class="waiting-players"><span class="spinner"></span> Loading stats...</div>
   </div>
-  <div id="courseStatsSection"></div>
 </div>
 
 <nav class="bottom-nav" id="bottomNav"></nav>
@@ -119,41 +118,6 @@
       }
       lbHtml += '</div>';
       document.getElementById('leaderboardSection').innerHTML = lbHtml;
-
-      // Course breakdown
-      let courseHtml = '<div class="section-title" style="margin-top:8px">By Course</div>';
-      let any = false;
-      COURSES.forEach(c => {
-        const cr = rounds.filter(r => r.courseId === c.id);
-        if (!cr.length) return;
-        any = true;
-        const cp = {};
-        cr.forEach(r => r.players.forEach(p => {
-          const total = r.scores[p].reduce((a,b)=>a+b,0);
-          if (total > 0) {
-            if (!cp[p]) cp[p] = { best:Infinity, rounds:0, total:0 };
-            cp[p].rounds++; cp[p].total += total;
-            if (total < cp[p].best) cp[p].best = total;
-          }
-        }));
-        courseHtml += `
-          <div class="history-card">
-            <h3>${c.name}</h3>
-            <div style="display:flex;gap:16px;font-size:12px;color:var(--text-muted);margin-top:4px">
-              <span>${cr.length} round${cr.length>1?'s':''}</span><span>Par ${c.par}</span>
-            </div>
-            <div class="history-scores" style="margin-top:8px">
-              ${Object.entries(cp).map(([name,s]) => `
-                <div class="history-score-row">
-                  <span>${name}</span>
-                  <span>Best: <strong>${s.best}</strong> &bull; Avg: ${(s.total/s.rounds).toFixed(0)} &bull; ${s.rounds}R</span>
-                </div>
-              `).join('')}
-            </div>
-          </div>
-        `;
-      });
-      document.getElementById('courseStatsSection').innerHTML = any ? courseHtml : '';
     }
   });
 </script>

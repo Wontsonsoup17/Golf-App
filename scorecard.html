@@ -29,7 +29,7 @@
 <script src="firebase-sync.js?v=15"></script>
 <script>
   requireAuth(function(user) {
-    renderBottomNav('play');
+    renderBottomNav('courses');
 
     const urlParams = new URLSearchParams(window.location.search);
     let groupCode = urlParams.get('group');

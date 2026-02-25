@@ -337,13 +337,12 @@ function renderBottomNav(activePage) {
   if (!nav) return;
   var groupCode = localStorage.getItem('active-group-code');
   var liveHref = groupCode ? 'live-game.html?group=' + groupCode : 'live-game.html';
-  var playHref = groupCode ? 'scorecard.html?group=' + groupCode : 'scorecard.html';
   const pages = [
-    { id: 'courses', label: 'Courses', icon: '&#9971;', href: 'index.html' },
-    { id: 'play',    label: 'Play',    icon: '&#127948;', href: playHref },
-    { id: 'live',    label: 'Live',    icon: '&#127942;', href: liveHref },
-    { id: 'history', label: 'History', icon: '&#128203;', href: 'history.html' },
-    { id: 'stats',   label: 'Stats',   icon: '&#128202;', href: 'stats.html' }
+    { id: 'courses',  label: 'Courses',  icon: '&#9971;',   href: 'index.html' },
+    { id: 'live',     label: 'Live',     icon: '&#127942;', href: liveHref },
+    { id: 'history',  label: 'History',  icon: '&#128203;', href: 'history.html' },
+    { id: 'stats',    label: 'Stats',    icon: '&#128202;', href: 'stats.html' },
+    { id: 'personal', label: 'Personal', icon: '&#128100;', href: 'personal.html' }
   ];
   nav.innerHTML = pages.map(p => `
     <a href="${p.href}" class="${p.id === activePage ? 'active' : ''}">
