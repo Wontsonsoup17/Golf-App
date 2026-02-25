@@ -289,6 +289,7 @@
     listenToGroupRound(groupCode, function(data) {
       gotData = true;
       if (data.meta && (data.meta.status === 'finished' || data.meta.status === 'ended')) {
+        localStorage.removeItem('active-group-code');
         document.getElementById('mainContent').innerHTML =
           '<div class="empty-state">' +
             '<div class="icon">&#127948;</div>' +
@@ -568,6 +569,7 @@
     var code = urlParams.get('group');
     if (!code) return;
     endGroupRoundForAll(code).catch(function() {}).then(function() {
+      localStorage.removeItem('active-group-code');
       window.location.href = 'history.html';
     });
   };

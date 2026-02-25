@@ -964,10 +964,9 @@
       markPlayerFinished(groupCode, user.uid).then(function() {
         return checkAndCleanupRound(groupCode);
       }).catch(function() {}).then(function() {
-        // Clean up listeners and leave
+        // Clean up listeners but keep group code so LIVE tab still works
         if (unsubscribe) unsubscribe();
         if (unsubConn) unsubConn();
-        localStorage.removeItem('active-group-code');
         // Redirect to live spectator view so they can watch others finish
         window.location.href = 'live-game.html?group=' + groupCode;
       });
