@@ -59,25 +59,16 @@
       return r.players.some(p => r.scores[p].filter(s => s > 0).length < 18);
     }
 
-    // Load from Firebase, merge with localStorage, deduplicate
+    // Load from Firebase (primary source), with localStorage as display-only fallback.
+    // Rounds are saved to both Firebase and localStorage at creation time,
+    // so we do NOT re-upload local-only rounds (that would undo server-side deletions).
     fbLoadRounds(user.uid).then(fbRounds => {
-      const localRounds = loadRounds();
-      // Merge: combine both sources and deduplicate by round ID
-      const allRounds = [...fbRounds];
-      const fbIds = new Set(fbRounds.map(r => r.id));
-      localRounds.forEach(r => {
-        if (!fbIds.has(r.id)) {
-          allRounds.push(r);
-          // Migrate this local-only round to Firebase
-          fbSaveRound(user.uid, r).catch(() => {});
-        }
-      });
-      rounds = allRounds;
-      // Sync localStorage to match merged set
+      rounds = fbRounds;
+      // Sync localStorage to match Firebase (clears stale local rounds)
       saveRounds(rounds);
       renderHistory();
     }).catch(() => {
-      // Fallback to localStorage
+      // Fallback to localStorage if Firebase is unavailable
       rounds = loadRounds();
       renderHistory();
     });
