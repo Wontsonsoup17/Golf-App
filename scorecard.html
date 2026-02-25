@@ -589,7 +589,7 @@
         `;
         html += '<div class="score-stepper">';
         html += `<button class="step-btn minus" onclick="adj(-1)">&minus;</button>`;
-        html += `<div class="score-big ${scoreClass}">${score || '—'}</div>`;
+        html += `<div class="score-big ${scoreClass}">${score}</div>`;
         html += `<button class="step-btn plus" onclick="adj(1)">+</button>`;
         html += '</div>';
         html += `<div class="score-label ${scoreClass}">${label}</div>`;
@@ -675,15 +675,8 @@
     // ===== Group actions (write to Firebase per-UID) =====
     window.goToHole = function(idx) {
       currentHole = idx;
-      // Auto-set score to par if unscored on this hole
-      if (R && course_ref.current) {
-        const myName = R._uidToName[user.uid];
-        const hole = course_ref.current.holes[currentHole];
-        if (myName && R.scores[myName][currentHole] === 0) {
-          updateGroupScore(groupCode, user.uid, currentHole, hole.par);
-        }
-      }
       // currentHole is local only — don't push to Firebase
+      // Holes start at 0 — user taps + to enter their score
       renderGroup();
       window.scrollTo({ top: 0, behavior: 'smooth' });
     };
@@ -693,7 +686,9 @@
       const myName = R._uidToName[user.uid];
       if (!myName) return;
       const current = R.scores[myName][currentHole];
-      const next = Math.max(1, Math.min(15, current + delta));
+      const next = Math.max(0, Math.min(15, current + delta));
+      R.scores[myName][currentHole] = next; // optimistic local update
+      renderGroup();
       updateGroupScore(groupCode, user.uid, currentHole, next);
     };
 
@@ -703,6 +698,8 @@
       if (!myName) return;
       const current = R.tracking[myName].putts[currentHole];
       const next = Math.max(0, Math.min(10, current + delta));
+      R.tracking[myName].putts[currentHole] = next;
+      renderGroup();
       updateGroupTracking(groupCode, user.uid, 'putts', currentHole, next);
     };
 
@@ -711,6 +708,8 @@
       const myName = R._uidToName[user.uid];
       if (!myName) return;
       const current = R.tracking[myName][type][currentHole];
+      R.tracking[myName][type][currentHole] = !current;
+      renderGroup();
       updateGroupTracking(groupCode, user.uid, type, currentHole, !current);
     };
 
@@ -719,7 +718,10 @@
       const myName = R._uidToName[user.uid];
       if (!myName) return;
       const current = R.tracking[myName].mulligans[currentHole];
-      updateGroupTracking(groupCode, user.uid, 'mulligans', currentHole, (current + 1) % 3);
+      const next = (current + 1) % 3;
+      R.tracking[myName].mulligans[currentHole] = next;
+      renderGroup();
+      updateGroupTracking(groupCode, user.uid, 'mulligans', currentHole, next);
     };
 
     window.cyclePenalty = function() {
@@ -727,7 +729,10 @@
       const myName = R._uidToName[user.uid];
       if (!myName) return;
       const current = R.tracking[myName].penalties[currentHole];
-      updateGroupTracking(groupCode, user.uid, 'penalties', currentHole, (current + 1) % 4);
+      const next = (current + 1) % 4;
+      R.tracking[myName].penalties[currentHole] = next;
+      renderGroup();
+      updateGroupTracking(groupCode, user.uid, 'penalties', currentHole, next);
     };
 
     window.refreshGroup = function() {
