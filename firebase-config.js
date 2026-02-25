@@ -74,12 +74,10 @@ const auth = {
     const self = this;
     const username = email.split('@')[0].toLowerCase();
     const users = getLocalUsers();
-    if (users[username]) {
-      return Promise.reject({ code: 'auth/email-already-in-use', message: 'Username already taken.' });
-    }
-    const uid = 'local_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+    // Reuse existing uid if account exists locally (e.g. stale cache), otherwise generate new
+    const uid = (users[username] && users[username].uid) || 'local_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
     const passwordHash = simpleHash(password);
-    const createdAt = Date.now();
+    const createdAt = (users[username] && users[username].createdAt) || Date.now();
     users[username] = { uid, username, passwordHash, createdAt };
     saveLocalUsers(users);
 
