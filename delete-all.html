@@ -32,40 +32,21 @@
 <script src="firebase-config.js?v=13"></script>
 <script>
   (function() {
-    var users = getLocalUsers();
-    var names = Object.keys(users);
-    var count = names.length;
+    var count = 0;
+    try { count = Object.keys(getLocalUsers()).length; } catch(e) {}
 
-    // Remove avatars for every user
-    names.forEach(function(username) {
-      var uid = users[username].uid;
-      localStorage.removeItem('wg-avatar-' + uid);
-    });
-
-    // Wipe all users
-    localStorage.removeItem('wg-users');
-
-    // Wipe entire database (profiles, usernames, rounds, active rounds)
-    localStorage.removeItem('wg-db');
-
-    // Clear current session
-    clearSession();
-
-    // Clear round storage
-    localStorage.removeItem('westchester-golf-v2');
-    localStorage.removeItem('westchester-golf-tracker');
-    localStorage.removeItem('active-round-v2');
-    localStorage.removeItem('active-group-code');
+    // Nuclear clear — wipe ALL localStorage for this domain
+    localStorage.clear();
 
     // Also wipe Firebase: credentials, usernames, and user data
     var resultEl = document.getElementById('result');
     resultEl.style.color = 'var(--text-muted)';
-    resultEl.textContent = 'Clearing local data... Wiping Firebase...';
+    resultEl.textContent = 'Clearing all data...';
 
     _firebaseLoadPromise.then(function() {
       if (!_firebaseReady || !_firebaseDB) {
         resultEl.style.color = 'var(--bogey)';
-        resultEl.textContent = 'Local data wiped (' + count + ' account' + (count > 1 ? 's' : '') + '). Firebase offline — could not clear cloud data.';
+        resultEl.textContent = 'Local data wiped. Firebase offline — could not clear cloud data.';
         return;
       }
       Promise.all([
@@ -74,7 +55,11 @@
         _firebaseDB.ref('users').remove()
       ]).then(function() {
         resultEl.style.color = 'var(--green-accent)';
-        resultEl.textContent = 'All data wiped — ' + count + ' local account' + (count > 1 ? 's' : '') + ' deleted, Firebase credentials/usernames/users cleared.';
+        resultEl.textContent = 'All data wiped — local + Firebase cleared. Redirecting...';
+        // Redirect to login with cache-busting timestamp to force fresh page load
+        setTimeout(function() {
+          window.location.href = 'login.html?_=' + Date.now();
+        }, 1500);
       }).catch(function(err) {
         resultEl.style.color = 'var(--bogey)';
         resultEl.textContent = 'Local wiped. Firebase error: ' + (err.message || 'Unknown error');

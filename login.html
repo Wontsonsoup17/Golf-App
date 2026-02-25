@@ -178,8 +178,21 @@
 
     const email = usernameToEmail(username);
 
-    // Check if username is already taken
-    db.ref('usernames/' + username.toLowerCase()).once('value').then(snap => {
+    // Clear any stale local data for this username before sign-up
+    var localUsers = getLocalUsers();
+    if (localUsers[username.toLowerCase()]) {
+      delete localUsers[username.toLowerCase()];
+      saveLocalUsers(localUsers);
+    }
+
+    // Check if username is taken — use Firebase directly, skip local fallback
+    _firebaseLoadPromise.then(function() {
+      if (_firebaseReady && _firebaseDB) {
+        return _firebaseDB.ref('usernames/' + username.toLowerCase()).once('value');
+      }
+      // Firebase not available — skip uniqueness check, proceed with sign-up
+      return Promise.resolve({ exists: function() { return false; } });
+    }).then(function(snap) {
       if (snap.exists()) {
         setLoading(btn, false);
         showError('That username is already taken.');
@@ -188,7 +201,7 @@
 
       return auth.createUserWithEmailAndPassword(email, password)
         .then(cred => {
-          // Set display name on Firebase Auth profile
+          // Set display name
           return cred.user.updateProfile({ displayName: username }).then(() => {
             // Reserve username and save profile in Firebase (use individual refs so they route to Firebase)
             return Promise.all([
@@ -201,7 +214,6 @@
           });
         })
         .then(() => {
-          // Save optional profile photo
           if (pendingAvatarData) {
             setUserAvatar(auth.currentUser.uid, pendingAvatarData);
           }
