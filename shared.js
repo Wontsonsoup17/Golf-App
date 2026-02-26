@@ -304,15 +304,64 @@ function renderUserHeader(user) {
     ? '<img src="' + avatarUrl + '" class="user-avatar-img">'
     : initial;
   header.innerHTML =
-    '<div class="user-info">' +
-      '<div class="user-avatar' + (avatarUrl ? ' has-image' : '') + '" onclick="document.getElementById(\'avatarInput\').click()" title="Change photo">' +
+    '<div class="profile-trigger" onclick="toggleProfileMenu()">' +
+      '<div class="user-avatar' + (avatarUrl ? ' has-image' : '') + '">' +
         avatarContent +
-        '<div class="avatar-edit-hint">&#128247;</div>' +
       '</div>' +
       '<div><div class="user-name">' + name + '</div></div>' +
+      '<span class="caret">&#9660;</span>' +
     '</div>' +
     '<input type="file" id="avatarInput" accept="image/*" style="display:none" onchange="handleAvatarUpload(this)">' +
-    '<button class="signout-btn" onclick="signOut()">Sign Out</button>';
+    '<div class="profile-dropdown" id="profileDropdown">' +
+      '<button class="profile-menu-item" onclick="handleChangePhoto()"><span class="menu-icon">&#128247;</span> Change Photo</button>' +
+      '<button class="profile-menu-item" onclick="handleChangeUsernameModal()"><span class="menu-icon">&#9998;</span> Change Username</button>' +
+      '<button class="profile-menu-item" onclick="handleChangePasswordModal()"><span class="menu-icon">&#128274;</span> Change Password</button>' +
+      '<div class="profile-menu-separator"></div>' +
+      '<button class="profile-menu-item danger" onclick="signOut()"><span class="menu-icon">&#128682;</span> Sign Out</button>' +
+    '</div>';
+}
+
+// ==================== PROFILE DROPDOWN ====================
+
+window.toggleProfileMenu = function() {
+  var dd = document.getElementById('profileDropdown');
+  var trigger = document.querySelector('.profile-trigger');
+  if (!dd) return;
+  var isOpen = dd.classList.contains('show');
+  dd.classList.toggle('show');
+  if (trigger) trigger.classList.toggle('open');
+  if (!isOpen) {
+    // Close on tap outside
+    setTimeout(function() {
+      document.addEventListener('click', closeProfileMenuOutside);
+    }, 10);
+  } else {
+    document.removeEventListener('click', closeProfileMenuOutside);
+  }
+};
+
+function closeProfileMenuOutside(e) {
+  var dd = document.getElementById('profileDropdown');
+  var trigger = document.querySelector('.profile-trigger');
+  if (dd && !dd.contains(e.target) && trigger && !trigger.contains(e.target)) {
+    dd.classList.remove('show');
+    if (trigger) trigger.classList.remove('open');
+    document.removeEventListener('click', closeProfileMenuOutside);
+  }
+}
+
+window.handleChangePhoto = function() {
+  closeProfileDropdown();
+  var input = document.getElementById('avatarInput');
+  if (input) input.click();
+};
+
+function closeProfileDropdown() {
+  var dd = document.getElementById('profileDropdown');
+  var trigger = document.querySelector('.profile-trigger');
+  if (dd) dd.classList.remove('show');
+  if (trigger) trigger.classList.remove('open');
+  document.removeEventListener('click', closeProfileMenuOutside);
 }
 
 function handleAvatarUpload(input) {
@@ -330,6 +379,129 @@ function handleAvatarUpload(input) {
     });
   input.value = '';
 }
+
+// ==================== CHANGE USERNAME MODAL ====================
+
+window.handleChangeUsernameModal = function() {
+  closeProfileDropdown();
+  // Remove existing modal if any
+  var old = document.getElementById('profileModal');
+  if (old) old.remove();
+
+  var modal = document.createElement('div');
+  modal.className = 'modal-overlay show';
+  modal.id = 'profileModal';
+  modal.innerHTML =
+    '<div class="modal">' +
+      '<h3>Change Username</h3>' +
+      '<div class="profile-modal-form">' +
+        '<div class="form-group">' +
+          '<label>New Username</label>' +
+          '<input type="text" id="newUsernameInput" placeholder="Enter new username" maxlength="20" autocapitalize="none">' +
+        '</div>' +
+        '<div class="form-error" id="usernameError"></div>' +
+      '</div>' +
+      '<div class="modal-actions">' +
+        '<button class="btn-secondary" onclick="closeProfileModal()">Cancel</button>' +
+        '<button class="btn-gold" id="saveUsernameBtn" onclick="submitChangeUsername()">Save</button>' +
+      '</div>' +
+    '</div>';
+  document.body.appendChild(modal);
+};
+
+window.submitChangeUsername = function() {
+  var input = document.getElementById('newUsernameInput');
+  var errEl = document.getElementById('usernameError');
+  var btn = document.getElementById('saveUsernameBtn');
+  if (!input || !errEl || !btn) return;
+
+  var newName = input.value.trim();
+  if (!newName) { errEl.textContent = 'Please enter a username.'; errEl.classList.add('show'); return; }
+
+  btn.disabled = true;
+  btn.style.opacity = '0.6';
+  errEl.classList.remove('show');
+
+  changeUsername(newName).then(function() {
+    var user = getCurrentUser();
+    renderUserHeader(user);
+    closeProfileModal();
+  }).catch(function(err) {
+    btn.disabled = false;
+    btn.style.opacity = '1';
+    errEl.textContent = err.message || 'Could not change username.';
+    errEl.classList.add('show');
+  });
+};
+
+// ==================== CHANGE PASSWORD MODAL ====================
+
+window.handleChangePasswordModal = function() {
+  closeProfileDropdown();
+  var old = document.getElementById('profileModal');
+  if (old) old.remove();
+
+  var modal = document.createElement('div');
+  modal.className = 'modal-overlay show';
+  modal.id = 'profileModal';
+  modal.innerHTML =
+    '<div class="modal">' +
+      '<h3>Change Password</h3>' +
+      '<div class="profile-modal-form">' +
+        '<div class="form-group">' +
+          '<label>Current Password</label>' +
+          '<input type="password" id="currentPwInput" placeholder="Enter current password">' +
+        '</div>' +
+        '<div class="form-group">' +
+          '<label>New Password</label>' +
+          '<input type="password" id="newPwInput" placeholder="At least 6 characters">' +
+        '</div>' +
+        '<div class="form-group">' +
+          '<label>Confirm New Password</label>' +
+          '<input type="password" id="confirmPwInput" placeholder="Confirm new password">' +
+        '</div>' +
+        '<div class="form-error" id="passwordError"></div>' +
+      '</div>' +
+      '<div class="modal-actions">' +
+        '<button class="btn-secondary" onclick="closeProfileModal()">Cancel</button>' +
+        '<button class="btn-gold" id="savePwBtn" onclick="submitChangePassword()">Save</button>' +
+      '</div>' +
+    '</div>';
+  document.body.appendChild(modal);
+};
+
+window.submitChangePassword = function() {
+  var currentPw = document.getElementById('currentPwInput');
+  var newPw = document.getElementById('newPwInput');
+  var confirmPw = document.getElementById('confirmPwInput');
+  var errEl = document.getElementById('passwordError');
+  var btn = document.getElementById('savePwBtn');
+  if (!currentPw || !newPw || !confirmPw || !errEl || !btn) return;
+
+  errEl.classList.remove('show');
+
+  if (!currentPw.value) { errEl.textContent = 'Enter your current password.'; errEl.classList.add('show'); return; }
+  if (newPw.value.length < 6) { errEl.textContent = 'New password must be at least 6 characters.'; errEl.classList.add('show'); return; }
+  if (newPw.value !== confirmPw.value) { errEl.textContent = 'Passwords do not match.'; errEl.classList.add('show'); return; }
+
+  btn.disabled = true;
+  btn.style.opacity = '0.6';
+
+  changeUserPassword(currentPw.value, newPw.value).then(function() {
+    closeProfileModal();
+    alert('Password changed successfully.');
+  }).catch(function(err) {
+    btn.disabled = false;
+    btn.style.opacity = '1';
+    errEl.textContent = err.message || 'Could not change password.';
+    errEl.classList.add('show');
+  });
+};
+
+window.closeProfileModal = function() {
+  var modal = document.getElementById('profileModal');
+  if (modal) modal.remove();
+};
 
 // ==================== NAV ====================
 function renderBottomNav(activePage) {

@@ -160,6 +160,82 @@ const auth = {
   }
 };
 
+// ==================== PROFILE MANAGEMENT ====================
+
+function changeUserPassword(currentPassword, newPassword) {
+  var user = auth.currentUser;
+  if (!user) return Promise.reject({ message: 'Not signed in.' });
+  var username = (user.email || '').split('@')[0].toLowerCase();
+  if (!username) return Promise.reject({ message: 'Cannot determine username.' });
+
+  var currentHash = simpleHash(currentPassword);
+  var users = getLocalUsers();
+  var stored = users[username];
+  if (!stored || stored.passwordHash !== currentHash) {
+    return Promise.reject({ message: 'Current password is incorrect.' });
+  }
+
+  var newHash = simpleHash(newPassword);
+  stored.passwordHash = newHash;
+  users[username] = stored;
+  saveLocalUsers(users);
+
+  // Update Firebase credentials
+  return db.ref('credentials/' + username + '/passwordHash').set(newHash).then(function() {
+    return { success: true };
+  }).catch(function() {
+    // Local updated even if Firebase fails
+    return { success: true };
+  });
+}
+
+function changeUsername(newUsername) {
+  var user = auth.currentUser;
+  if (!user) return Promise.reject({ message: 'Not signed in.' });
+  var oldUsername = (user.email || '').split('@')[0].toLowerCase();
+  if (!oldUsername) return Promise.reject({ message: 'Cannot determine current username.' });
+
+  var newLower = newUsername.toLowerCase().trim();
+  if (newLower === oldUsername) return Promise.reject({ message: 'That is already your username.' });
+  if (!/^[a-zA-Z0-9_]{2,20}$/.test(newUsername)) return Promise.reject({ message: 'Username must be 2-20 characters: letters, numbers, underscores only.' });
+
+  // Check if new username is taken in Firebase
+  return db.ref('usernames/' + newLower).once('value').then(function(snap) {
+    if (snap.exists()) {
+      return Promise.reject({ message: 'That username is already taken.' });
+    }
+
+    var users = getLocalUsers();
+    var oldData = users[oldUsername];
+    if (!oldData) return Promise.reject({ message: 'Account data not found.' });
+
+    // Update local storage — create new entry, remove old
+    var newData = Object.assign({}, oldData, { username: newLower, displayName: newUsername });
+    users[newLower] = newData;
+    delete users[oldUsername];
+    saveLocalUsers(users);
+
+    // Update session and current user
+    user.displayName = newUsername;
+    user.email = newLower + '@westchestergolf.app';
+    setSession({ uid: user.uid, username: newUsername });
+
+    // Update Firebase: new credentials, remove old, update usernames, update profile
+    return Promise.all([
+      db.ref('credentials/' + newLower).set(newData),
+      db.ref('credentials/' + oldUsername).remove(),
+      db.ref('usernames/' + newLower).set(user.uid),
+      db.ref('usernames/' + oldUsername).remove(),
+      db.ref('users/' + user.uid + '/profile/username').set(newUsername)
+    ]).then(function() {
+      return { success: true };
+    }).catch(function() {
+      // Local updated even if Firebase partially fails
+      return { success: true };
+    });
+  });
+}
+
 // ==================== REAL FIREBASE FOR GROUP ROUNDS ====================
 // Loads Firebase SDK dynamically. Only activeRounds paths use real Firebase.
 // Everything else (auth, user data, stats) stays in localStorage.

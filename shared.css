@@ -1481,6 +1481,81 @@ input[type="text"]:focus, input[type="password"]:focus, input[type="date"]:focus
   color: var(--red);
 }
 
+/* ===== PROFILE DROPDOWN ===== */
+.user-header { position: relative; }
+.profile-trigger {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  padding: 4px;
+  border-radius: 8px;
+  transition: background 0.15s;
+}
+.profile-trigger:active { background: rgba(255,255,255,0.05); }
+.profile-trigger .caret {
+  font-size: 10px;
+  color: var(--text-muted);
+  transition: transform 0.2s;
+}
+.profile-trigger.open .caret { transform: rotate(180deg); }
+.profile-dropdown {
+  position: absolute;
+  top: 100%;
+  left: 8px;
+  right: 8px;
+  background: var(--bg-card);
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-sm);
+  box-shadow: 0 12px 40px rgba(0,0,0,0.5);
+  z-index: 150;
+  overflow: hidden;
+  display: none;
+  animation: dropdownSlide 0.15s ease-out;
+}
+.profile-dropdown.show { display: block; }
+@keyframes dropdownSlide {
+  from { opacity: 0; transform: translateY(-6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.profile-menu-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 13px 16px;
+  font-size: 14px;
+  color: var(--text);
+  cursor: pointer;
+  transition: background 0.12s;
+  border: none;
+  background: none;
+  width: 100%;
+  text-align: left;
+  font-family: inherit;
+}
+.profile-menu-item:active { background: rgba(255,255,255,0.06); }
+.profile-menu-item + .profile-menu-item { border-top: 1px solid var(--border); }
+.profile-menu-item .menu-icon { font-size: 16px; width: 22px; text-align: center; flex-shrink: 0; }
+.profile-menu-item.danger { color: var(--bogey); }
+.profile-menu-separator { height: 1px; background: var(--border); margin: 0; }
+
+/* Profile modal form */
+.profile-modal-form .form-group { margin-bottom: 14px; }
+.profile-modal-form .form-group label { display: block; font-size: 12px; color: var(--text-muted); margin-bottom: 4px; font-weight: 600; }
+.profile-modal-form .form-group input {
+  width: 100%;
+  padding: 10px 12px;
+  background: var(--bg);
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-sm);
+  color: var(--text);
+  font-size: 14px;
+  font-family: inherit;
+}
+.profile-modal-form .form-error { color: var(--bogey); font-size: 12px; margin-top: 6px; display: none; }
+.profile-modal-form .form-error.show { display: block; }
+
 /* ===== GROUP PLAY TOGGLE ===== */
 .group-toggle {
   display: flex;
