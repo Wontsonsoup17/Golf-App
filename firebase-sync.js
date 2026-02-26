@@ -74,8 +74,13 @@ function createGroupRoundWithCode(uid, displayName, courseId, tee, teeLabel, dat
 
     roundRef.once('value').then(snap => {
       if (snap.exists()) {
-        reject(new Error('That code is already in use. Try a different one.'));
-        return;
+        var existing = snap.val();
+        var status = existing.meta && existing.meta.status;
+        if (status !== 'finished' && status !== 'ended') {
+          reject(new Error('That code is already in use. Try a different one.'));
+          return;
+        }
+        // Round is finished/ended — remove old data and reuse the code
       }
 
       const roundData = {
