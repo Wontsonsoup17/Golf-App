@@ -655,9 +655,14 @@ window.openSupportModal = function() {
   modal.innerHTML =
     '<div class="modal">' +
       '<h3>\u26A0\uFE0F Report an Issue</h3>' +
+      '<div class="support-tab-row">' +
+        '<button class="support-tab active" id="supportTabIssue" onclick="switchSupportTab(\'issue\')">Issue</button>' +
+        '<button class="support-tab" id="supportTabSuggestion" onclick="switchSupportTab(\'suggestion\')">Suggestion</button>' +
+      '</div>' +
+      '<input type="hidden" id="supportType" value="issue">' +
       '<div class="support-form-group">' +
-        '<label>What\'s going on?</label>' +
-        '<textarea id="supportDesc" placeholder="Describe the issue or suggestion..." maxlength="500"></textarea>' +
+        '<label id="supportDescLabel">What\'s not working?</label>' +
+        '<textarea id="supportDesc" placeholder="Describe the issue..." maxlength="500"></textarea>' +
       '</div>' +
       '<div class="support-form-group">' +
         '<div class="support-page-info">' +
@@ -672,6 +677,29 @@ window.openSupportModal = function() {
       '</div>' +
     '</div>';
   document.body.appendChild(modal);
+};
+
+window.switchSupportTab = function(tab) {
+  var issueBtn = document.getElementById('supportTabIssue');
+  var suggBtn = document.getElementById('supportTabSuggestion');
+  var typeInput = document.getElementById('supportType');
+  var label = document.getElementById('supportDescLabel');
+  var desc = document.getElementById('supportDesc');
+  if (!issueBtn || !suggBtn) return;
+
+  if (tab === 'issue') {
+    issueBtn.classList.add('active');
+    suggBtn.classList.remove('active');
+    if (typeInput) typeInput.value = 'issue';
+    if (label) label.textContent = "What's not working?";
+    if (desc) desc.placeholder = 'Describe the issue...';
+  } else {
+    suggBtn.classList.add('active');
+    issueBtn.classList.remove('active');
+    if (typeInput) typeInput.value = 'suggestion';
+    if (label) label.textContent = "What's your suggestion?";
+    if (desc) desc.placeholder = 'Describe your idea...';
+  }
 };
 
 window.submitSupportForm = function() {
@@ -697,8 +725,10 @@ window.submitSupportForm = function() {
   var user = getCurrentUser();
   var currentPage = window.location.pathname.split('/').pop() || 'index.html';
 
+  var typeEl = document.getElementById('supportType');
   var ticketData = {
     username: user ? (user.displayName || user.email.split('@')[0]) : 'unknown',
+    type: typeEl ? typeEl.value : 'issue',
     description: description,
     page: currentPage
   };

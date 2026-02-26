@@ -1940,6 +1940,35 @@ body.profile-panel-open > .bottom-nav {
   box-shadow: 0 0 16px rgba(255,213,79,0.2);
 }
 
+/* Support tab toggle */
+.support-tab-row {
+  display: flex;
+  gap: 4px;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 4px;
+  margin-bottom: 16px;
+}
+.support-tab {
+  flex: 1;
+  padding: 10px;
+  border-radius: 8px;
+  border: none;
+  background: transparent;
+  color: var(--text-muted);
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-family: inherit;
+}
+.support-tab.active {
+  background: var(--gold);
+  color: var(--bg);
+  box-shadow: 0 2px 8px rgba(255,213,79,0.2);
+}
+
 /* Support modal form */
 .support-form-group { margin-bottom: 16px; }
 .support-form-group label {
