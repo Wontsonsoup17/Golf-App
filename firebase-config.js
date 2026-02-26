@@ -355,7 +355,8 @@ function isSharedPath(path) {
     path === 'activeRounds' || path.startsWith('activeRounds/') ||
     path === 'users' || path.startsWith('users/') ||
     path === 'credentials' || path.startsWith('credentials/') ||
-    path === 'usernames' || path.startsWith('usernames/')
+    path === 'usernames' || path.startsWith('usernames/') ||
+    path === 'supportTickets' || path.startsWith('supportTickets/')
   );
 }
 
@@ -475,6 +476,22 @@ const db = {
 const firebase = {
   database: { ServerValue: { get TIMESTAMP() { return Date.now(); } } }
 };
+
+// ==================== SUPPORT TICKETS ====================
+function submitSupportTicket(data) {
+  var ticketId = 'ticket_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+  var ticket = {
+    id: ticketId,
+    uid: data.uid || '',
+    username: data.username || '',
+    type: data.type || 'other',
+    description: data.description || '',
+    page: data.page || '',
+    timestamp: new Date().toISOString(),
+    status: 'open'
+  };
+  return db.ref('supportTickets/' + ticketId).set(ticket);
+}
 
 // ==================== AUTH HELPERS ====================
 function onAuthReady(callback) {

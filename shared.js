@@ -617,3 +617,129 @@ function processProfileImage(file) {
     reader.readAsDataURL(file);
   });
 }
+
+// ==================== SUPPORT / ISSUE CENTER ====================
+// Renders a floating ⚠️ button on every authenticated page.
+// Tapping opens a support modal. Tickets are saved to Firebase.
+
+(function() {
+  // Wait for auth to be ready before rendering
+  onAuthReady(function(user) {
+    if (!user) return; // Only show on authenticated pages
+
+    // Don't add if already exists
+    if (document.getElementById('supportFab')) return;
+
+    // Create the floating button
+    var fab = document.createElement('div');
+    fab.className = 'support-fab';
+    fab.id = 'supportFab';
+    fab.innerHTML = '\u26A0\uFE0F';
+    fab.setAttribute('role', 'button');
+    fab.setAttribute('aria-label', 'Report an issue');
+    fab.onclick = function() { openSupportModal(); };
+    document.body.appendChild(fab);
+  });
+})();
+
+window.openSupportModal = function() {
+  // Remove existing if any
+  var old = document.getElementById('supportModal');
+  if (old) old.remove();
+
+  var currentPage = window.location.pathname.split('/').pop() || 'index.html';
+
+  var modal = document.createElement('div');
+  modal.className = 'modal-overlay show';
+  modal.id = 'supportModal';
+  modal.innerHTML =
+    '<div class="modal">' +
+      '<h3>\u26A0\uFE0F Report an Issue</h3>' +
+      '<div class="support-form-group">' +
+        '<label>Issue Type</label>' +
+        '<select id="supportType">' +
+          '<option value="bug">Something isn\'t working</option>' +
+          '<option value="suggestion">Suggestion</option>' +
+          '<option value="other">Other</option>' +
+        '</select>' +
+      '</div>' +
+      '<div class="support-form-group">' +
+        '<label>Description</label>' +
+        '<textarea id="supportDesc" placeholder="Describe what happened or what you\'d like to see..." maxlength="500"></textarea>' +
+      '</div>' +
+      '<div class="support-form-group">' +
+        '<div class="support-page-info">' +
+          '<span class="page-label">Page:</span>' +
+          '<span>' + currentPage + '</span>' +
+        '</div>' +
+      '</div>' +
+      '<div class="form-error" id="supportError" style="margin-bottom:12px"></div>' +
+      '<div class="modal-actions">' +
+        '<button class="btn-secondary" onclick="closeSupportModal()">Cancel</button>' +
+        '<button class="btn-gold" id="supportSubmitBtn" onclick="submitSupportForm()">Submit</button>' +
+      '</div>' +
+    '</div>';
+  document.body.appendChild(modal);
+};
+
+window.submitSupportForm = function() {
+  var typeEl = document.getElementById('supportType');
+  var descEl = document.getElementById('supportDesc');
+  var errEl = document.getElementById('supportError');
+  var btn = document.getElementById('supportSubmitBtn');
+  if (!typeEl || !descEl || !errEl || !btn) return;
+
+  var description = descEl.value.trim();
+  if (!description) {
+    errEl.textContent = 'Please describe the issue.';
+    errEl.classList.add('show');
+    errEl.style.display = 'block';
+    return;
+  }
+
+  errEl.classList.remove('show');
+  errEl.style.display = 'none';
+  btn.disabled = true;
+  btn.style.opacity = '0.6';
+  btn.textContent = 'Submitting...';
+
+  var user = getCurrentUser();
+  var currentPage = window.location.pathname.split('/').pop() || 'index.html';
+
+  var ticketData = {
+    uid: user ? user.uid : 'unknown',
+    username: user ? (user.displayName || user.email.split('@')[0]) : 'unknown',
+    type: typeEl.value,
+    description: description,
+    page: currentPage
+  };
+
+  submitSupportTicket(ticketData).then(function() {
+    // Show success state
+    var modalContent = document.querySelector('#supportModal .modal');
+    if (modalContent) {
+      modalContent.innerHTML =
+        '<div class="support-success">' +
+          '<div class="success-icon">\u2705</div>' +
+          '<div class="success-text">Submitted!</div>' +
+          '<div class="success-sub">Thanks for your feedback.</div>' +
+        '</div>';
+    }
+    // Auto-close after 1.5s
+    setTimeout(function() {
+      closeSupportModal();
+    }, 1500);
+  }).catch(function(err) {
+    btn.disabled = false;
+    btn.style.opacity = '1';
+    btn.textContent = 'Submit';
+    errEl.textContent = err.message || 'Could not submit. Try again.';
+    errEl.classList.add('show');
+    errEl.style.display = 'block';
+  });
+};
+
+window.closeSupportModal = function() {
+  var modal = document.getElementById('supportModal');
+  if (modal) modal.remove();
+};
