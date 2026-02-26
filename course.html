@@ -11,7 +11,7 @@
 <link rel="manifest" href="manifest.json">
 <link rel="apple-touch-icon" href="icon-192.png">
 <title>Course Setup - Westchester Golf</title>
-<link rel="stylesheet" href="shared.css?v=26">
+<link rel="stylesheet" href="shared.css?v=27">
 </head>
 <body>
 
@@ -79,7 +79,7 @@
           <button class="btn-outline" type="button" onclick="generateCode()" style="white-space:nowrap;padding:10px 14px">Generate</button>
         </div>
         <div style="font-size:11px; color:var(--text-muted); margin-top:6px;">
-          3-15 characters. Share this code so others can join your round.
+          4-15 characters. Share this code so others can join your round.
         </div>
       </div>
     </div>
@@ -100,9 +100,9 @@
 
 <nav class="bottom-nav" id="bottomNav"></nav>
 
-<script src="firebase-config.js?v=26"></script>
-<script src="shared.js?v=26"></script>
-<script src="firebase-sync.js?v=26"></script>
+<script src="firebase-config.js?v=27"></script>
+<script src="shared.js?v=27"></script>
+<script src="firebase-sync.js?v=27"></script>
 <script>
   requireAuth(function(user) {
     renderBottomNav('courses');
@@ -209,8 +209,8 @@
 
       if (isGroup) {
         const customCode = document.getElementById('customCodeInput').value.trim().toUpperCase().replace(/[^A-Z0-9]/g, '');
-        if (customCode.length < 3 || customCode.length > 15) {
-          alert('Round code must be 3-15 characters.');
+        if (customCode.length < 4 || customCode.length > 15) {
+          alert('Round code must be 4-15 characters.');
           return;
         }
 
