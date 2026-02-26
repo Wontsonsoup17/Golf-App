@@ -11,7 +11,7 @@
 <link rel="manifest" href="manifest.json">
 <link rel="apple-touch-icon" href="icon-192.png">
 <title>Sign In - Westchester Golf</title>
-<link rel="stylesheet" href="shared.css?v=23">
+<link rel="stylesheet" href="shared.css?v=24">
 </head>
 <body>
 
@@ -40,7 +40,7 @@
       </div>
       <div class="form-group">
         <label>Password</label>
-        <input type="password" id="signinPassword" placeholder="Your password" autocomplete="current-password" readonly ontouchstart="this.removeAttribute('readonly')" onmousedown="this.removeAttribute('readonly')">
+        <input type="password" id="signinPassword" placeholder="Your password" autocomplete="current-password">
       </div>
       <button class="btn-gold" id="signinBtn" onclick="handleSignIn()">Sign In</button>
     </div>
@@ -54,11 +54,11 @@
       </div>
       <div class="form-group">
         <label>Password</label>
-        <input type="password" id="signupPassword" placeholder="At least 6 characters" autocomplete="new-password" readonly ontouchstart="this.removeAttribute('readonly')" onmousedown="this.removeAttribute('readonly')">
+        <input type="password" id="signupPassword" placeholder="At least 6 characters" autocomplete="new-password">
       </div>
       <div class="form-group">
         <label>Confirm Password</label>
-        <input type="password" id="signupConfirm" placeholder="Confirm your password" autocomplete="new-password" readonly ontouchstart="this.removeAttribute('readonly')" onmousedown="this.removeAttribute('readonly')">
+        <input type="password" id="signupConfirm" placeholder="Confirm your password" autocomplete="new-password">
       </div>
       <!-- Optional profile photo -->
       <div class="form-group" style="text-align:center">
@@ -79,8 +79,8 @@
   </div>
 </div>
 
-<script src="firebase-config.js?v=23"></script>
-<script src="shared.js?v=23"></script>
+<script src="firebase-config.js?v=24"></script>
+<script src="shared.js?v=24"></script>
 <script>
   let signingUp = false;
   let pendingAvatarData = null;
