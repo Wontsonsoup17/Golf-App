@@ -190,7 +190,7 @@ function isPlayerFinished(code, uid) {
   });
 }
 
-// Check if all players have finished — if so, delete the round to free the code
+// Check if all players have finished — if so, mark round as finished (keep data for live view)
 function checkAndCleanupRound(code) {
   return db.ref('activeRounds/' + code).once('value').then(function(snap) {
     if (!snap.exists()) return;
@@ -202,21 +202,30 @@ function checkAndCleanupRound(code) {
       return finished[uid] === true;
     });
     if (allDone) {
-      // Everyone finished — delete the round so the code can be reused
-      return db.ref('activeRounds/' + code).remove();
+      // Everyone finished — mark as finished so live view can show final results
+      return db.ref('activeRounds/' + code + '/meta').update({
+        status: 'finished',
+        finishedAt: firebase.database.ServerValue.TIMESTAMP
+      }).then(function() {
+        // Clean up after 5 minutes so the code can eventually be reused
+        setTimeout(function() {
+          db.ref('activeRounds/' + code).remove().catch(function() {});
+        }, 300000);
+      });
     }
   });
 }
 
-// Admin ends the round for all players — sets status to 'ended', then cleans up after delay
+// Admin ends the round for all players — sets status to 'ended', keeps data for live view
 function endGroupRoundForAll(code) {
-  return db.ref('activeRounds/' + code + '/meta/status').set('ended').then(function() {
-    // Give other players' listeners time to detect the status change and save their rounds
-    return new Promise(function(resolve) {
-      setTimeout(function() {
-        db.ref('activeRounds/' + code).remove().then(resolve).catch(resolve);
-      }, 3000);
-    });
+  return db.ref('activeRounds/' + code + '/meta').update({
+    status: 'ended',
+    finishedAt: firebase.database.ServerValue.TIMESTAMP
+  }).then(function() {
+    // Clean up after 5 minutes so spectators can still see final results
+    setTimeout(function() {
+      db.ref('activeRounds/' + code).remove().catch(function() {});
+    }, 300000);
   });
 }
 

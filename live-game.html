@@ -11,7 +11,7 @@
 <link rel="manifest" href="manifest.json">
 <link rel="apple-touch-icon" href="icon-192.png">
 <title>Live Game - Westchester Golf</title>
-<link rel="stylesheet" href="shared.css?v=24">
+<link rel="stylesheet" href="shared.css?v=25">
 <style>
   .live-back-btn {
     display: flex;
@@ -234,9 +234,9 @@
 
 <nav class="bottom-nav" id="bottomNav"></nav>
 
-<script src="firebase-config.js?v=24"></script>
-<script src="shared.js?v=24"></script>
-<script src="firebase-sync.js?v=24"></script>
+<script src="firebase-config.js?v=25"></script>
+<script src="shared.js?v=25"></script>
+<script src="firebase-sync.js?v=25"></script>
 <script>
   requireAuth(function(user) {
     renderBottomNav('live');
@@ -288,8 +288,8 @@
     var gotData = false;
     listenToGroupRound(groupCode, function(data) {
       gotData = true;
-      // Round was deleted from Firebase (all players finished) or status ended
-      if (!data || (data.meta && (data.meta.status === 'finished' || data.meta.status === 'ended'))) {
+      // Round was fully deleted from Firebase (cleanup ran after delay)
+      if (!data) {
         localStorage.removeItem('active-group-code');
         document.getElementById('mainContent').innerHTML =
           '<div class="empty-state">' +
@@ -297,6 +297,12 @@
             '<p>Round complete!<br><a href="history.html" style="display:inline-block;margin-top:14px;padding:12px 24px;background:var(--green-accent);color:#0a0f0d;border-radius:10px;font-weight:700;text-decoration:none">View History</a></p>' +
           '</div>';
         return;
+      }
+
+      // Check if round is finished/ended — still render leaderboard with data
+      var isFinished = data.meta && (data.meta.status === 'finished' || data.meta.status === 'ended');
+      if (isFinished) {
+        localStorage.removeItem('active-group-code');
       }
 
       var R = groupDataToRound(data, groupCode);
@@ -317,7 +323,7 @@
       document.getElementById('courseName').textContent = course.name;
       document.getElementById('courseSub').textContent = R.teeLabel + ' Tees  |  Par ' + course.par + '  |  ' + formatDate(R.date);
 
-      renderLeaderboard(R, course, user, groupCode, isAdmin, iAmFinished);
+      renderLeaderboard(R, course, user, groupCode, isAdmin, iAmFinished, isFinished);
     });
 
     // If no data after a short delay, show error
@@ -335,7 +341,7 @@
   // ============================
   // RENDER LEADERBOARD
   // ============================
-  function renderLeaderboard(R, course, user, groupCode, isAdmin, iAmFinished) {
+  function renderLeaderboard(R, course, user, groupCode, isAdmin, iAmFinished, isFinished) {
     var content = document.getElementById('mainContent');
     var scorecardUrl = groupCode ? 'scorecard.html?group=' + groupCode : 'scorecard.html';
 
@@ -423,8 +429,17 @@
     // Build HTML
     var html = '';
 
+    // Round complete banner
+    if (isFinished) {
+      html += '<div style="background:linear-gradient(135deg,rgba(0,230,118,0.12),rgba(0,230,118,0.04));border:1px solid rgba(0,230,118,0.25);border-radius:var(--radius);padding:16px;margin-bottom:16px;text-align:center">';
+      html += '<div style="font-size:28px;margin-bottom:6px">&#127942;</div>';
+      html += '<div style="font-size:16px;font-weight:800;color:var(--green-accent);margin-bottom:4px">Round Complete!</div>';
+      html += '<div style="font-size:12px;color:var(--text-muted)">Final results are shown below</div>';
+      html += '</div>';
+    }
+
     // Top navigation button
-    if (iAmFinished) {
+    if (isFinished || iAmFinished) {
       html += '<a href="history.html" class="live-back-btn" style="text-decoration:none;display:flex">&#128218; View History</a>';
     } else {
       html += '<button class="live-back-btn" onclick="window.location.href=\'' + scorecardUrl + '\'">&#127948; Back to Scorecard</button>';
@@ -493,13 +508,13 @@
 
     html += '</div>'; // leaderboard
 
-    // Admin: End Round button
-    if (groupCode && isAdmin && iAmFinished) {
+    // Admin: End Round button (only show if round is still active)
+    if (groupCode && isAdmin && iAmFinished && !isFinished) {
       html += '<button onclick="endRoundFromLive()" style="background:#c0392b;color:#fff;border:none;padding:13px 20px;border-radius:var(--radius-sm);font-size:14px;font-weight:700;cursor:pointer;width:100%;margin-bottom:12px">End Round for All</button>';
     }
 
     // Bottom navigation
-    if (iAmFinished) {
+    if (isFinished || iAmFinished) {
       html += '<a href="history.html" class="live-back-btn" style="text-decoration:none;display:flex;background:var(--bg-elevated);color:var(--text);box-shadow:none;border:1px solid var(--border)">&#128218; View History</a>';
     } else {
       html += '<button class="live-back-btn" onclick="window.location.href=\'' + scorecardUrl + '\'">&#127948; Back to Scorecard</button>';
