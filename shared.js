@@ -303,66 +303,83 @@ function renderUserHeader(user) {
   const avatarContent = avatarUrl
     ? '<img src="' + avatarUrl + '" class="user-avatar-img">'
     : initial;
+
+  // Header just shows clickable avatar+name
   header.innerHTML =
-    '<div class="profile-trigger" onclick="toggleProfileMenu()">' +
+    '<div class="profile-trigger" onclick="toggleProfilePanel()">' +
       '<div class="user-avatar' + (avatarUrl ? ' has-image' : '') + '">' +
         avatarContent +
       '</div>' +
       '<div><div class="user-name">' + name + '</div></div>' +
-      '<span class="caret">&#9660;</span>' +
     '</div>' +
-    '<input type="file" id="avatarInput" accept="image/*" style="display:none" onchange="handleAvatarUpload(this)">' +
-    '<div class="profile-dropdown" id="profileDropdown">' +
+    '<input type="file" id="avatarInput" accept="image/*" style="display:none" onchange="handleAvatarUpload(this)">';
+
+  // Create slide-out panel (once, appended to body)
+  var existingPanel = document.getElementById('profilePanel');
+  var existingBackdrop = document.getElementById('profileBackdrop');
+  if (existingPanel) existingPanel.remove();
+  if (existingBackdrop) existingBackdrop.remove();
+
+  var panelAvatarContent = avatarUrl
+    ? '<img src="' + avatarUrl + '">'
+    : initial;
+
+  var backdrop = document.createElement('div');
+  backdrop.className = 'profile-backdrop';
+  backdrop.id = 'profileBackdrop';
+  backdrop.onclick = function() { closeProfilePanel(); };
+  document.body.appendChild(backdrop);
+
+  var panel = document.createElement('div');
+  panel.className = 'profile-panel';
+  panel.id = 'profilePanel';
+  panel.innerHTML =
+    '<div class="profile-panel-header">' +
+      '<div class="profile-panel-avatar' + (avatarUrl ? ' has-image' : '') + '">' +
+        panelAvatarContent +
+      '</div>' +
+      '<div class="profile-panel-name">' + name + '</div>' +
+      '<div class="profile-panel-sub">Westchester Golf</div>' +
+    '</div>' +
+    '<div class="profile-panel-menu">' +
       '<button class="profile-menu-item" onclick="handleChangePhoto()"><span class="menu-icon">&#128247;</span> Change Photo</button>' +
       '<button class="profile-menu-item" onclick="handleChangeUsernameModal()"><span class="menu-icon">&#9998;</span> Change Username</button>' +
       '<button class="profile-menu-item" onclick="handleChangePasswordModal()"><span class="menu-icon">&#128274;</span> Change Password</button>' +
       '<div class="profile-menu-separator"></div>' +
       '<button class="profile-menu-item danger" onclick="signOut()"><span class="menu-icon">&#128682;</span> Sign Out</button>' +
     '</div>';
+  document.body.appendChild(panel);
 }
 
-// ==================== PROFILE DROPDOWN ====================
+// ==================== PROFILE SLIDE PANEL ====================
 
-window.toggleProfileMenu = function() {
-  var dd = document.getElementById('profileDropdown');
-  var trigger = document.querySelector('.profile-trigger');
-  if (!dd) return;
-  var isOpen = dd.classList.contains('show');
-  dd.classList.toggle('show');
-  if (trigger) trigger.classList.toggle('open');
-  if (!isOpen) {
-    // Close on tap outside
-    setTimeout(function() {
-      document.addEventListener('click', closeProfileMenuOutside);
-    }, 10);
+window.toggleProfilePanel = function() {
+  var panel = document.getElementById('profilePanel');
+  var backdrop = document.getElementById('profileBackdrop');
+  if (!panel) return;
+  var isOpen = panel.classList.contains('open');
+  if (isOpen) {
+    closeProfilePanel();
   } else {
-    document.removeEventListener('click', closeProfileMenuOutside);
+    panel.classList.add('open');
+    if (backdrop) backdrop.classList.add('show');
+    document.body.classList.add('profile-panel-open');
   }
 };
 
-function closeProfileMenuOutside(e) {
-  var dd = document.getElementById('profileDropdown');
-  var trigger = document.querySelector('.profile-trigger');
-  if (dd && !dd.contains(e.target) && trigger && !trigger.contains(e.target)) {
-    dd.classList.remove('show');
-    if (trigger) trigger.classList.remove('open');
-    document.removeEventListener('click', closeProfileMenuOutside);
-  }
-}
+window.closeProfilePanel = function() {
+  var panel = document.getElementById('profilePanel');
+  var backdrop = document.getElementById('profileBackdrop');
+  if (panel) panel.classList.remove('open');
+  if (backdrop) backdrop.classList.remove('show');
+  document.body.classList.remove('profile-panel-open');
+};
 
 window.handleChangePhoto = function() {
-  closeProfileDropdown();
+  closeProfilePanel();
   var input = document.getElementById('avatarInput');
   if (input) input.click();
 };
-
-function closeProfileDropdown() {
-  var dd = document.getElementById('profileDropdown');
-  var trigger = document.querySelector('.profile-trigger');
-  if (dd) dd.classList.remove('show');
-  if (trigger) trigger.classList.remove('open');
-  document.removeEventListener('click', closeProfileMenuOutside);
-}
 
 function handleAvatarUpload(input) {
   var file = input.files && input.files[0];
@@ -383,7 +400,7 @@ function handleAvatarUpload(input) {
 // ==================== CHANGE USERNAME MODAL ====================
 
 window.handleChangeUsernameModal = function() {
-  closeProfileDropdown();
+  closeProfilePanel();
   // Remove existing modal if any
   var old = document.getElementById('profileModal');
   if (old) old.remove();
@@ -437,7 +454,7 @@ window.submitChangeUsername = function() {
 // ==================== CHANGE PASSWORD MODAL ====================
 
 window.handleChangePasswordModal = function() {
-  closeProfileDropdown();
+  closeProfilePanel();
   var old = document.getElementById('profileModal');
   if (old) old.remove();
 
