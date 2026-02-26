@@ -11,7 +11,7 @@
 <link rel="manifest" href="manifest.json">
 <link rel="apple-touch-icon" href="icon-192.png">
 <title>Live Round - Westchester Golf</title>
-<link rel="stylesheet" href="shared.css?v=25">
+<link rel="stylesheet" href="shared.css?v=26">
 </head>
 <body>
 
@@ -24,9 +24,9 @@
 
 <nav class="bottom-nav" id="bottomNav"></nav>
 
-<script src="firebase-config.js?v=25"></script>
-<script src="shared.js?v=25"></script>
-<script src="firebase-sync.js?v=25"></script>
+<script src="firebase-config.js?v=26"></script>
+<script src="shared.js?v=26"></script>
+<script src="firebase-sync.js?v=26"></script>
 <script>
   requireAuth(function(user) {
     renderBottomNav('courses');
@@ -192,14 +192,14 @@
                 <button class="track-toggle ${t.fairway[currentHole] ? 'active' : ''}" onclick="toggleFairway('${pSafe}')">
                   <span class="track-icon">&#127963;</span>Fairway
                 </button>
-                <button class="track-toggle ${t.gir[currentHole] ? 'active' : ''}" onclick="toggleGIR('${pSafe}')">
-                  <span class="track-icon">&#9971;</span>GIR
+                <button class="track-toggle ${t.gir[currentHole] ? 'active' : ''}" onclick="toggleGIR('${pSafe}')" title="Green in Regulation">
+                  <span class="track-icon">&#9971;</span>Green
                 </button>
                 <button class="track-toggle ${t.mulligans[currentHole] > 0 ? 'mulligan-active' : ''}" onclick="addMulligan('${pSafe}')">
                   <span class="track-icon">&#128260;</span>Mulligan${t.mulligans[currentHole] > 0 ? ' (' + t.mulligans[currentHole] + ')' : ''}
                 </button>
                 <button class="track-toggle ${t.penalties[currentHole] > 0 ? 'penalty-active' : ''}" onclick="addPenalty('${pSafe}')">
-                  <span class="track-icon">&#9888;</span>Penalty${t.penalties[currentHole] > 0 ? ' (' + t.penalties[currentHole] + ')' : ''}
+                  <span class="track-icon">&#9888;</span>Drop${t.penalties[currentHole] > 0 ? ' (' + t.penalties[currentHole] + ')' : ''}
                 </button>
               </div>
               <div class="putts-row">
@@ -300,7 +300,7 @@
         toggles[2].className = 'track-toggle ' + (t.mulligans[currentHole] > 0 ? 'mulligan-active' : '');
         toggles[2].innerHTML = '<span class="track-icon">&#128260;</span>Mulligan' + (t.mulligans[currentHole] > 0 ? ' (' + t.mulligans[currentHole] + ')' : '');
         toggles[3].className = 'track-toggle ' + (t.penalties[currentHole] > 0 ? 'penalty-active' : '');
-        toggles[3].innerHTML = '<span class="track-icon">&#9888;</span>Penalty' + (t.penalties[currentHole] > 0 ? ' (' + t.penalties[currentHole] + ')' : '');
+        toggles[3].innerHTML = '<span class="track-icon">&#9888;</span>Drop' + (t.penalties[currentHole] > 0 ? ' (' + t.penalties[currentHole] + ')' : '');
       }
     }
 
@@ -702,14 +702,14 @@
           <button class="track-toggle ${t.fairway[currentHole] ? 'active' : ''}" onclick="toggleTrack('fairway')">
             <span class="track-icon">&#127963;</span>Fairway
           </button>
-          <button class="track-toggle ${t.gir[currentHole] ? 'active' : ''}" onclick="toggleTrack('gir')">
-            <span class="track-icon">&#9971;</span>GIR
+          <button class="track-toggle ${t.gir[currentHole] ? 'active' : ''}" onclick="toggleTrack('gir')" title="Green in Regulation">
+            <span class="track-icon">&#9971;</span>Green
           </button>
           <button class="track-toggle ${t.mulligans[currentHole] > 0 ? 'mulligan-active' : ''}" onclick="cycleMulligan()">
             <span class="track-icon">&#128260;</span>Mulligan${t.mulligans[currentHole] > 0 ? ' (' + t.mulligans[currentHole] + ')' : ''}
           </button>
           <button class="track-toggle ${t.penalties[currentHole] > 0 ? 'penalty-active' : ''}" onclick="cyclePenalty()">
-            <span class="track-icon">&#9888;</span>Penalty${t.penalties[currentHole] > 0 ? ' (' + t.penalties[currentHole] + ')' : ''}
+            <span class="track-icon">&#9888;</span>Drop${t.penalties[currentHole] > 0 ? ' (' + t.penalties[currentHole] + ')' : ''}
           </button>
         `;
         html += '</div>';
@@ -827,7 +827,7 @@
         toggles[2].className = 'track-toggle ' + (t.mulligans[currentHole] > 0 ? 'mulligan-active' : '');
         toggles[2].innerHTML = '<span class="track-icon">&#128260;</span>Mulligan' + (t.mulligans[currentHole] > 0 ? ' (' + t.mulligans[currentHole] + ')' : '');
         toggles[3].className = 'track-toggle ' + (t.penalties[currentHole] > 0 ? 'penalty-active' : '');
-        toggles[3].innerHTML = '<span class="track-icon">&#9888;</span>Penalty' + (t.penalties[currentHole] > 0 ? ' (' + t.penalties[currentHole] + ')' : '');
+        toggles[3].innerHTML = '<span class="track-icon">&#9888;</span>Drop' + (t.penalties[currentHole] > 0 ? ' (' + t.penalties[currentHole] + ')' : '');
       }
     }
 

@@ -11,7 +11,7 @@
 <link rel="manifest" href="manifest.json">
 <link rel="apple-touch-icon" href="icon-192.png">
 <title>Live Game - Westchester Golf</title>
-<link rel="stylesheet" href="shared.css?v=25">
+<link rel="stylesheet" href="shared.css?v=26">
 <style>
   .live-back-btn {
     display: flex;
@@ -234,9 +234,9 @@
 
 <nav class="bottom-nav" id="bottomNav"></nav>
 
-<script src="firebase-config.js?v=25"></script>
-<script src="shared.js?v=25"></script>
-<script src="firebase-sync.js?v=25"></script>
+<script src="firebase-config.js?v=26"></script>
+<script src="shared.js?v=26"></script>
+<script src="firebase-sync.js?v=26"></script>
 <script>
   requireAuth(function(user) {
     renderBottomNav('live');
@@ -496,10 +496,10 @@
       // Tracking summary
       html += '<div class="lb-tracking-summary">';
       if (ps.fwTotal > 0) html += '<div class="lb-track-stat">FW: <span>' + ps.fwHit + '/' + ps.fwTotal + '</span></div>';
-      if (ps.holesPlayed > 0) html += '<div class="lb-track-stat">GIR: <span>' + ps.girHit + '/' + ps.holesPlayed + '</span></div>';
+      if (ps.holesPlayed > 0) html += '<div class="lb-track-stat">Greens: <span>' + ps.girHit + '/' + ps.holesPlayed + '</span></div>';
       if (ps.totalPutts > 0) html += '<div class="lb-track-stat">Putts: <span>' + ps.totalPutts + '</span></div>';
       if (ps.totalMulligans > 0) html += '<div class="lb-track-stat">Mulligans: <span>' + ps.totalMulligans + '</span></div>';
-      if (ps.totalPenalties > 0) html += '<div class="lb-track-stat">Penalties: <span>' + ps.totalPenalties + '</span></div>';
+      if (ps.totalPenalties > 0) html += '<div class="lb-track-stat">Drops: <span>' + ps.totalPenalties + '</span></div>';
       html += '</div>';
 
       html += '</div>'; // lb-detail

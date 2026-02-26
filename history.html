@@ -11,7 +11,7 @@
 <link rel="manifest" href="manifest.json">
 <link rel="apple-touch-icon" href="icon-192.png">
 <title>History - Westchester Golf</title>
-<link rel="stylesheet" href="shared.css?v=25">
+<link rel="stylesheet" href="shared.css?v=26">
 </head>
 <body>
 
@@ -40,9 +40,9 @@
 
 <nav class="bottom-nav" id="bottomNav"></nav>
 
-<script src="firebase-config.js?v=25"></script>
-<script src="shared.js?v=25"></script>
-<script src="firebase-sync.js?v=25"></script>
+<script src="firebase-config.js?v=26"></script>
+<script src="shared.js?v=26"></script>
+<script src="firebase-sync.js?v=26"></script>
 <script>
   requireAuth(function(user) {
     renderBottomNav('history');
@@ -80,9 +80,8 @@
         return;
       }
 
+      // All rounds sorted newest first — latest round always at top
       const sorted = [...rounds].sort((a, b) => new Date(b.date) - new Date(a.date));
-      const completed = sorted.filter(r => !isRoundIncomplete(r));
-      const incomplete = sorted.filter(r => isRoundIncomplete(r));
 
       function renderRoundCard(r) {
         const isIncomplete = isRoundIncomplete(r);
@@ -107,7 +106,7 @@
                 const parts = [];
                 if (totalPutts > 0) parts.push(totalPutts + ' putts');
                 if (fwHit > 0) parts.push(fwHit + ' FW');
-                if (girHit > 0) parts.push(girHit + ' GIR');
+                if (girHit > 0) parts.push(girHit + ' Greens');
                 if (totalMulligans > 0) parts.push(totalMulligans + ' mull.');
                 if (parts.length) trackSummary = '<span style="font-size:11px;color:var(--text-muted);display:block;margin-top:2px">' + parts.join(' &bull; ') + '</span>';
               }
@@ -122,17 +121,8 @@
       }
 
       let html = '';
-
-      if (completed.length) {
-        html += '<div class="section-title">Completed Rounds</div>';
-        html += completed.map(renderRoundCard).join('');
-      }
-
-      if (incomplete.length) {
-        html += '<div class="section-title" style="margin-top:' + (completed.length ? '24px' : '0') + '">Ended Early</div>';
-        html += incomplete.map(renderRoundCard).join('');
-      }
-
+      html += '<div class="section-title">Your Rounds</div>';
+      html += sorted.map(renderRoundCard).join('');
       container.innerHTML = html;
     }
 

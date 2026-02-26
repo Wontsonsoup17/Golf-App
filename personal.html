@@ -11,7 +11,7 @@
 <link rel="manifest" href="manifest.json">
 <link rel="apple-touch-icon" href="icon-192.png">
 <title>My Stats - Westchester Golf</title>
-<link rel="stylesheet" href="shared.css?v=25">
+<link rel="stylesheet" href="shared.css?v=26">
 </head>
 <body>
 
@@ -32,9 +32,9 @@
 
 <nav class="bottom-nav" id="bottomNav"></nav>
 
-<script src="firebase-config.js?v=25"></script>
-<script src="shared.js?v=25"></script>
-<script src="firebase-sync.js?v=25"></script>
+<script src="firebase-config.js?v=26"></script>
+<script src="shared.js?v=26"></script>
+<script src="firebase-sync.js?v=26"></script>
 <script>
   requireAuth(function(user) {
     renderBottomNav('personal');
@@ -83,10 +83,76 @@
 
       var myAvg = myRounds > 0 ? (myTotalScore / myRounds).toFixed(1) : '-';
 
+      // Calculate tracking stats: fairway %, GIR %, avg putts, handicap estimate
+      var totalFwHit = 0, totalFwChances = 0, totalGirHit = 0, totalGirChances = 0;
+      var totalPutts = 0, totalPuttHoles = 0;
+
+      rounds.forEach(function(r) {
+        var me = r.players.find(function(p) { return p === myName; }) ||
+                 r.players.find(function(p) { return p.toLowerCase() === myName.toLowerCase(); });
+        if (!me || !r.scores[me] || !r.tracking || !r.tracking[me]) return;
+        var scores = r.scores[me];
+        var t = r.tracking[me];
+        var played = scores.filter(function(s) { return s > 0; }).length;
+        if (played < 9) return;
+
+        for (var i = 0; i < 18; i++) {
+          if (scores[i] > 0) {
+            // Fairway: only count par 4+ holes
+            var holePar = (r.holePars && r.holePars[i]) ? r.holePars[i] : 4;
+            if (holePar >= 4) {
+              totalFwChances++;
+              if (t.fairway && t.fairway[i]) totalFwHit++;
+            }
+            // GIR
+            totalGirChances++;
+            if (t.gir && t.gir[i]) totalGirHit++;
+            // Putts
+            if (t.putts && t.putts[i] > 0) {
+              totalPutts += t.putts[i];
+              totalPuttHoles++;
+            }
+          }
+        }
+      });
+
+      var fwRate = totalFwChances > 0 ? Math.round((totalFwHit / totalFwChances) * 100) + '%' : '-';
+      var girRate = totalGirChances > 0 ? Math.round((totalGirHit / totalGirChances) * 100) + '%' : '-';
+      var avgPutts = totalPuttHoles > 0 ? (totalPutts / totalPuttHoles).toFixed(1) : '-';
+
+      // Handicap estimate: average of (score - par) * 0.96, simplified
+      var handicap = '-';
+      if (myRounds > 0) {
+        var diffs = [];
+        rounds.forEach(function(r) {
+          var me = r.players.find(function(p) { return p === myName; }) ||
+                   r.players.find(function(p) { return p.toLowerCase() === myName.toLowerCase(); });
+          if (!me || !r.scores[me]) return;
+          var total = r.scores[me].reduce(function(a, b) { return a + b; }, 0);
+          var played = r.scores[me].filter(function(s) { return s > 0; }).length;
+          if (total > 0 && played >= 9) {
+            var par = r.par || 72;
+            diffs.push(total - par);
+          }
+        });
+        if (diffs.length > 0) {
+          // Use best 8 of last 20 differentials (simplified handicap formula)
+          diffs.sort(function(a, b) { return a - b; });
+          var useCount = Math.max(1, Math.min(8, Math.ceil(diffs.length * 0.4)));
+          var bestDiffs = diffs.slice(0, useCount);
+          var avgDiff = bestDiffs.reduce(function(a, b) { return a + b; }, 0) / bestDiffs.length;
+          handicap = Math.max(0, avgDiff * 0.96).toFixed(1);
+        }
+      }
+
       document.getElementById('statGrid').innerHTML =
         '<div class="stat-box"><div class="stat-value">' + myRounds + '</div><div class="stat-label">Rounds</div></div>' +
         '<div class="stat-box"><div class="stat-value">' + (myBest < Infinity ? myBest : '-') + '</div><div class="stat-label">Best Score</div></div>' +
         '<div class="stat-box"><div class="stat-value">' + myAvg + '</div><div class="stat-label">Avg Score</div></div>' +
+        '<div class="stat-box"><div class="stat-value">' + handicap + '</div><div class="stat-label">Handicap</div></div>' +
+        '<div class="stat-box"><div class="stat-value">' + fwRate + '</div><div class="stat-label">Fairway %</div></div>' +
+        '<div class="stat-box"><div class="stat-value">' + girRate + '</div><div class="stat-label">Greens %</div></div>' +
+        '<div class="stat-box"><div class="stat-value">' + avgPutts + '</div><div class="stat-label">Avg Putts</div></div>' +
         '<div class="stat-box"><div class="stat-value">' + coursesPlayed.size + '</div><div class="stat-label">Courses</div></div>';
 
       // Score performance chart
