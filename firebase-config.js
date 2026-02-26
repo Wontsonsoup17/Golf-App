@@ -355,8 +355,7 @@ function isSharedPath(path) {
     path === 'activeRounds' || path.startsWith('activeRounds/') ||
     path === 'users' || path.startsWith('users/') ||
     path === 'credentials' || path.startsWith('credentials/') ||
-    path === 'usernames' || path.startsWith('usernames/') ||
-    path === 'supportTickets' || path.startsWith('supportTickets/')
+    path === 'usernames' || path.startsWith('usernames/')
   );
 }
 
@@ -477,20 +476,28 @@ const firebase = {
   database: { ServerValue: { get TIMESTAMP() { return Date.now(); } } }
 };
 
-// ==================== SUPPORT TICKETS ====================
+// ==================== SUPPORT TICKETS (Google Sheets) ====================
+// Replace this URL with your deployed Google Apps Script web app URL
+var GOOGLE_SHEET_WEBHOOK = 'https://script.google.com/macros/s/PASTE_YOUR_DEPLOYMENT_ID_HERE/exec';
+
 function submitSupportTicket(data) {
-  var ticketId = 'ticket_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
   var ticket = {
-    id: ticketId,
     uid: data.uid || '',
     username: data.username || '',
     type: data.type || 'other',
     description: data.description || '',
     page: data.page || '',
-    timestamp: new Date().toISOString(),
-    status: 'open'
+    timestamp: new Date().toISOString()
   };
-  return db.ref('supportTickets/' + ticketId).set(ticket);
+
+  return fetch(GOOGLE_SHEET_WEBHOOK, {
+    method: 'POST',
+    mode: 'no-cors',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(ticket)
+  }).then(function() {
+    return { success: true };
+  });
 }
 
 // ==================== AUTH HELPERS ====================
