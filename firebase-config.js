@@ -478,7 +478,7 @@ const firebase = {
 
 // ==================== SUPPORT TICKETS (Google Sheets) ====================
 // Replace this URL with your deployed Google Apps Script web app URL
-var GOOGLE_SHEET_WEBHOOK = 'https://script.google.com/macros/s/PASTE_YOUR_DEPLOYMENT_ID_HERE/exec';
+var GOOGLE_SHEET_WEBHOOK = 'https://script.google.com/macros/s/AKfycbyOxPQSEmB-GI67v_NNdvJ0P1YVxk9ba1pAc8w55b79D3KZyCdhExZPXYBzeYtukmK2Ew/exec';
 
 function submitSupportTicket(data) {
   var ticket = {
