@@ -656,16 +656,8 @@ window.openSupportModal = function() {
     '<div class="modal">' +
       '<h3>\u26A0\uFE0F Report an Issue</h3>' +
       '<div class="support-form-group">' +
-        '<label>Issue Type</label>' +
-        '<select id="supportType">' +
-          '<option value="bug">Something isn\'t working</option>' +
-          '<option value="suggestion">Suggestion</option>' +
-          '<option value="other">Other</option>' +
-        '</select>' +
-      '</div>' +
-      '<div class="support-form-group">' +
-        '<label>Description</label>' +
-        '<textarea id="supportDesc" placeholder="Describe what happened or what you\'d like to see..." maxlength="500"></textarea>' +
+        '<label>What\'s going on?</label>' +
+        '<textarea id="supportDesc" placeholder="Describe the issue or suggestion..." maxlength="500"></textarea>' +
       '</div>' +
       '<div class="support-form-group">' +
         '<div class="support-page-info">' +
@@ -683,11 +675,10 @@ window.openSupportModal = function() {
 };
 
 window.submitSupportForm = function() {
-  var typeEl = document.getElementById('supportType');
   var descEl = document.getElementById('supportDesc');
   var errEl = document.getElementById('supportError');
   var btn = document.getElementById('supportSubmitBtn');
-  if (!typeEl || !descEl || !errEl || !btn) return;
+  if (!descEl || !errEl || !btn) return;
 
   var description = descEl.value.trim();
   if (!description) {
@@ -707,9 +698,7 @@ window.submitSupportForm = function() {
   var currentPage = window.location.pathname.split('/').pop() || 'index.html';
 
   var ticketData = {
-    uid: user ? user.uid : 'unknown',
     username: user ? (user.displayName || user.email.split('@')[0]) : 'unknown',
-    type: typeEl.value,
     description: description,
     page: currentPage
   };

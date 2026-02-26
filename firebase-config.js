@@ -482,11 +482,9 @@ var GOOGLE_SHEET_WEBHOOK = 'https://script.google.com/macros/s/AKfycbyOxPQSEmB-G
 
 function submitSupportTicket(data) {
   var ticket = {
-    uid: data.uid || '',
     username: data.username || '',
-    type: data.type || 'other',
-    description: data.description || '',
     page: data.page || '',
+    description: data.description || '',
     timestamp: new Date().toISOString()
   };
 
