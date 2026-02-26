@@ -196,17 +196,16 @@
       var cw = W - ml - mr;
       var ch = H - mt - mb;
 
-      // Score range
+      // Score range — inverted: 0 at top, max at bottom (lower = better in golf)
       var scores = points.map(function(p) { return p.score; });
-      var minS = Math.min.apply(null, scores);
       var maxS = Math.max.apply(null, scores);
-      var pad = Math.max(3, Math.round((maxS - minS) * 0.15));
-      var yMin = minS - pad;
+      var pad = Math.max(3, Math.round(maxS * 0.05));
+      var yMin = 0;
       var yMax = maxS + pad;
 
-      // Helpers
+      // Helpers — inverted Y: low scores at top, high scores at bottom
       function xPos(i) { return ml + (i / (points.length - 1)) * cw; }
-      function yPos(s) { return mt + ch - ((s - yMin) / (yMax - yMin)) * ch; }
+      function yPos(s) { return mt + ((s - yMin) / (yMax - yMin)) * ch; }
 
       // Draw grid lines
       ctx.strokeStyle = 'rgba(255,255,255,0.06)';
@@ -219,8 +218,8 @@
         ctx.lineTo(ml + cw, gy);
         ctx.stroke();
 
-        // Y-axis labels
-        var label = Math.round(yMax - (g / gridSteps) * (yMax - yMin));
+        // Y-axis labels — 0 at top, max at bottom
+        var label = Math.round(yMin + (g / gridSteps) * (yMax - yMin));
         ctx.fillStyle = 'rgba(255,255,255,0.35)';
         ctx.font = '10px -apple-system, sans-serif';
         ctx.textAlign = 'right';
@@ -262,7 +261,7 @@
         ctx.arc(px, py, 4, 0, Math.PI * 2);
         ctx.fillStyle = '#00e676';
         ctx.fill();
-        ctx.strokeStyle = 'var(--card-bg)';
+        ctx.strokeStyle = '#1a1f2e';
         ctx.lineWidth = 2;
         ctx.stroke();
 
