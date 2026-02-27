@@ -1,7 +1,7 @@
 // ==================== AUTO-UPDATE CHECK ====================
 // Forces a hard reload when a new version is deployed
 (function() {
-  var APP_VERSION = '101';
+  var APP_VERSION = '102';
   var storedVersion = localStorage.getItem('app_version');
   if (storedVersion && storedVersion !== APP_VERSION) {
     // Version changed — clear browser caches and force reload
