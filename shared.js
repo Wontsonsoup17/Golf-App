@@ -1,6 +1,6 @@
 // ==================== AUTO-UPDATE CHECK ====================
 // Forces a hard reload when a new version is deployed
-var APP_VERSION = '105';
+var APP_VERSION = '106';
 (function() {
   var storedVersion = localStorage.getItem('app_version');
   if (storedVersion && storedVersion !== APP_VERSION) {
@@ -147,7 +147,7 @@ const COURSES = [
       { num:6,  par:3, black:155, green:127, blue:107, gold:85,  hcp:15, img:'https://golf.westchestergov.com/wp-content/uploads/2021/08/HudsonHills_Hole-6.jpg' },
       { num:7,  par:5, black:564, green:514, blue:490, gold:455, hcp:1,  img:'https://golf.westchestergov.com/wp-content/uploads/2021/08/HudsonHills_Hole-7.jpg' },
       { num:8,  par:4, black:389, green:369, blue:326, gold:287, hcp:9,  img:'https://golf.westchestergov.com/wp-content/uploads/2021/08/HudsonHills_Hole-8.jpg' },
-      { num:9,  par:3, black:152, green:138, blue:122, gold:105, hcp:13, img:'https://golf.westchestergov.com/wp-content/uploads/2021/08/HudsonHills_Hole-9.jpg' },
+      { num:9,  par:3, black:152, green:138, blue:122, gold:106, hcp:13, img:'https://golf.westchestergov.com/wp-content/uploads/2021/08/HudsonHills_Hole-9.jpg' },
       { num:10, par:5, black:521, green:491, blue:452, gold:413, hcp:8,  img:'https://golf.westchestergov.com/wp-content/uploads/2021/08/HudsonHills_Hole-10.jpg' },
       { num:11, par:3, black:200, green:174, blue:151, gold:120, hcp:16, img:'https://golf.westchestergov.com/wp-content/uploads/2021/08/HudsonHills_Hole-11.jpg' },
       { num:12, par:4, black:435, green:400, blue:362, gold:313, hcp:4,  img:'https://golf.westchestergov.com/wp-content/uploads/2021/08/HudsonHills_Hole-12.jpg' },
@@ -161,7 +161,7 @@ const COURSES = [
   },
   {
     id: 'mohansic', name: 'Mohansic',
-    address: '1500 Baldwin Rd, Yorktown Heights, NY 10598', phone: '(914) 862-5283', par: 70,
+    address: '1500 Baldwin Rd, Yorktown Heights, NY 10698', phone: '(914) 862-5283', par: 70,
     link: 'https://golf.westchestergov.com/mohansic/mohansic-course-layout/',
     overview: 'https://golf.westchestergov.com/wp-content/uploads/2021/04/mohansic-course.jpg',
     tees: {

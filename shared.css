@@ -1512,6 +1512,22 @@ input[type="text"]:focus, input[type="password"]:focus, input[type="date"]:focus
   letter-spacing: 1px;
 }
 
+/* ===== MULLIGAN ROW ===== */
+.mulligan-row {
+  margin-top: 8px;
+  padding-top: 8px;
+}
+.mulligan-label-text {
+  color: var(--gold);
+}
+.mulligan-btn:active {
+  background: var(--gold-dim);
+  border-color: var(--gold);
+}
+.mulligan-val {
+  color: var(--gold);
+}
+
 /* Sign-up avatar picker */
 .signup-avatar-preview {
   width: 80px;

@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <script>
-(function(){var v='105';var k='app_v';var s=localStorage.getItem(k);if(s&&s!==v){localStorage.setItem(k,v);window.location.replace(window.location.pathname+'?_='+Date.now());return;}localStorage.setItem(k,v);})();
+(function(){var v='106';var k='app_v';var s=localStorage.getItem(k);if(s&&s!==v){localStorage.setItem(k,v);window.location.replace(window.location.pathname+'?_='+Date.now());return;}localStorage.setItem(k,v);})();
 </script>
 <meta charset="UTF-8">
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
@@ -14,7 +14,7 @@
 <link rel="manifest" href="manifest.json">
 <link rel="apple-touch-icon" href="icon-192.png">
 <title>Live Round - Westchester Golf</title>
-<link rel="stylesheet" href="shared.css?v=105">
+<link rel="stylesheet" href="shared.css?v=106">
 </head>
 <body>
 
@@ -38,11 +38,11 @@
 </div>
 
 <nav class="bottom-nav" id="bottomNav"></nav>
-<div style="text-align:center;font-size:9px;color:#333;padding:4px;opacity:0.5">v105</div>
+<div style="text-align:center;font-size:9px;color:#333;padding:4px;opacity:0.5">v106</div>
 
-<script src="firebase-config.js?v=105"></script>
-<script src="shared.js?v=105"></script>
-<script src="firebase-sync.js?v=105"></script>
+<script src="firebase-config.js?v=106"></script>
+<script src="shared.js?v=106"></script>
+<script src="firebase-sync.js?v=106"></script>
 <script>
   requireAuth(function(user) {
     renderBottomNav('courses');
@@ -312,9 +312,6 @@
                 <button class="track-toggle ${t.gir[currentHole] ? 'active' : ''}" onclick="toggleGIR('${pSafe}')" title="Green in Regulation">
                   <span class="track-icon">&#9971;</span>Green
                 </button>
-                <button class="track-toggle ${t.mulligans[currentHole] > 0 ? 'mulligan-active' : ''}" onclick="addMulligan('${pSafe}')">
-                  <span class="track-icon">&#128260;</span>Mulligan${t.mulligans[currentHole] > 0 ? ' (' + t.mulligans[currentHole] + ')' : ''}
-                </button>
                 <button class="track-toggle ${t.penalties[currentHole] > 0 ? 'penalty-active' : ''}" onclick="addPenalty('${pSafe}')">
                   <span class="track-icon">&#9888;</span>Drop${t.penalties[currentHole] > 0 ? ' (' + t.penalties[currentHole] + ')' : ''}
                 </button>
@@ -325,6 +322,14 @@
                   <button class="putt-btn p-minus" onclick="adjPutt('${pSafe}', -1)">&minus;</button>
                   <div class="putt-val">${t.putts[currentHole]}</div>
                   <button class="putt-btn p-plus" onclick="adjPutt('${pSafe}', 1)">+</button>
+                </div>
+              </div>
+              <div class="putts-row mulligan-row">
+                <span class="putts-label mulligan-label-text">Mulligans</span>
+                <div class="putt-stepper">
+                  <button class="putt-btn p-minus mulligan-btn" onclick="adjMulligan('${pSafe}', -1)">&minus;</button>
+                  <div class="putt-val mulligan-val">${t.mulligans[currentHole]}</div>
+                  <button class="putt-btn p-plus mulligan-btn" onclick="adjMulligan('${pSafe}', 1)">+</button>
                 </div>
               </div>
             </div>
@@ -441,22 +446,24 @@
       if (puttVal) puttVal.textContent = t.putts[currentHole];
 
       const toggles = card.querySelectorAll('.track-toggle');
-      if (toggles.length >= 4) {
+      if (toggles.length >= 3) {
         toggles[0].className = 'track-toggle ' + (t.fairway[currentHole] ? 'active' : '');
         toggles[1].className = 'track-toggle ' + (t.gir[currentHole] ? 'active' : '');
-        toggles[2].className = 'track-toggle ' + (t.mulligans[currentHole] > 0 ? 'mulligan-active' : '');
-        toggles[2].innerHTML = '<span class="track-icon">&#128260;</span>Mulligan' + (t.mulligans[currentHole] > 0 ? ' (' + t.mulligans[currentHole] + ')' : '');
-        toggles[3].className = 'track-toggle ' + (t.penalties[currentHole] > 0 ? 'penalty-active' : '');
-        toggles[3].innerHTML = '<span class="track-icon">&#9888;</span>Drop' + (t.penalties[currentHole] > 0 ? ' (' + t.penalties[currentHole] + ')' : '');
+        toggles[2].className = 'track-toggle ' + (t.penalties[currentHole] > 0 ? 'penalty-active' : '');
+        toggles[2].innerHTML = '<span class="track-icon">&#9888;</span>Drop' + (t.penalties[currentHole] > 0 ? ' (' + t.penalties[currentHole] + ')' : '');
       }
+
+      const mulliganVal = card.querySelector('.mulligan-val');
+      if (mulliganVal) mulliganVal.textContent = t.mulligans[currentHole];
     }
 
     window.adj = function(player, delta) { R.scores[player][currentHole] = Math.max(1, Math.min(15, R.scores[player][currentHole] + delta)); save(); updateSoloCard(player); };
     window.adjPutt = function(player, delta) { R.tracking[player].putts[currentHole] = Math.max(0, Math.min(10, R.tracking[player].putts[currentHole] + delta)); save(); updateSoloCard(player); };
     window.toggleFairway = function(player) { R.tracking[player].fairway[currentHole] = !R.tracking[player].fairway[currentHole]; save(); updateSoloCard(player); };
     window.toggleGIR = function(player) { R.tracking[player].gir[currentHole] = !R.tracking[player].gir[currentHole]; save(); updateSoloCard(player); };
-    window.addMulligan = function(player) {
-      var next = (R.tracking[player].mulligans[currentHole] + 1) % 3;
+    window.adjMulligan = function(player, delta) {
+      var current = R.tracking[player].mulligans[currentHole];
+      var next = Math.max(0, Math.min(10, current + delta));
       R.tracking[player].mulligans[currentHole] = next;
       // Reset locations when count changes
       if (!R.tracking[player].mulliganLocations) R.tracking[player].mulliganLocations = new Array(18).fill(null);
@@ -865,9 +872,6 @@
           <button class="track-toggle ${t.gir[currentHole] ? 'active' : ''}" onclick="toggleTrack('gir')" title="Green in Regulation">
             <span class="track-icon">&#9971;</span>Green
           </button>
-          <button class="track-toggle ${t.mulligans[currentHole] > 0 ? 'mulligan-active' : ''}" onclick="cycleMulligan()">
-            <span class="track-icon">&#128260;</span>Mulligan${t.mulligans[currentHole] > 0 ? ' (' + t.mulligans[currentHole] + ')' : ''}
-          </button>
           <button class="track-toggle ${t.penalties[currentHole] > 0 ? 'penalty-active' : ''}" onclick="cyclePenalty()">
             <span class="track-icon">&#9888;</span>Drop${t.penalties[currentHole] > 0 ? ' (' + t.penalties[currentHole] + ')' : ''}
           </button>
@@ -880,6 +884,14 @@
         html += `<button class="putt-btn p-minus" onclick="adjPutt(-1)">&minus;</button>`;
         html += `<div class="putt-val">${t.putts[currentHole]}</div>`;
         html += `<button class="putt-btn p-plus" onclick="adjPutt(1)">+</button>`;
+        html += '</div></div>';
+
+        html += '<div class="putts-row mulligan-row">';
+        html += '<span class="putts-label mulligan-label-text">Mulligans</span>';
+        html += '<div class="putt-stepper">';
+        html += `<button class="putt-btn p-minus mulligan-btn" onclick="adjMulligan(-1)">&minus;</button>`;
+        html += `<div class="putt-val mulligan-val">${t.mulligans[currentHole]}</div>`;
+        html += `<button class="putt-btn p-plus mulligan-btn" onclick="adjMulligan(1)">+</button>`;
         html += '</div></div>';
 
         html += '</div>'; // close player card
@@ -981,14 +993,20 @@
       if (!myName) return;
       const t = R.tracking[myName];
       const toggles = document.querySelectorAll('.track-toggle');
-      if (toggles.length >= 4) {
+      if (toggles.length >= 3) {
         toggles[0].className = 'track-toggle ' + (t.fairway[currentHole] ? 'active' : '');
         toggles[1].className = 'track-toggle ' + (t.gir[currentHole] ? 'active' : '');
-        toggles[2].className = 'track-toggle ' + (t.mulligans[currentHole] > 0 ? 'mulligan-active' : '');
-        toggles[2].innerHTML = '<span class="track-icon">&#128260;</span>Mulligan' + (t.mulligans[currentHole] > 0 ? ' (' + t.mulligans[currentHole] + ')' : '');
-        toggles[3].className = 'track-toggle ' + (t.penalties[currentHole] > 0 ? 'penalty-active' : '');
-        toggles[3].innerHTML = '<span class="track-icon">&#9888;</span>Drop' + (t.penalties[currentHole] > 0 ? ' (' + t.penalties[currentHole] + ')' : '');
+        toggles[2].className = 'track-toggle ' + (t.penalties[currentHole] > 0 ? 'penalty-active' : '');
+        toggles[2].innerHTML = '<span class="track-icon">&#9888;</span>Drop' + (t.penalties[currentHole] > 0 ? ' (' + t.penalties[currentHole] + ')' : '');
       }
+    }
+
+    function updateMulliganDisplay() {
+      if (!R) return;
+      const myName = R._uidToName[user.uid];
+      if (!myName) return;
+      const mulliganVal = document.querySelector('.mulligan-val');
+      if (mulliganVal) mulliganVal.textContent = R.tracking[myName].mulligans[currentHole];
     }
 
     function updatePuttDisplay() {
@@ -1066,17 +1084,17 @@
       updateGroupTracking(groupCode, user.uid, type, currentHole, !current);
     };
 
-    window.cycleMulligan = function() {
+    window.adjMulligan = function(delta) {
       if (!R) return;
       const myName = R._uidToName[user.uid];
       if (!myName) return;
       const current = R.tracking[myName].mulligans[currentHole];
-      const next = (current + 1) % 3;
+      const next = Math.max(0, Math.min(10, current + delta));
       R.tracking[myName].mulligans[currentHole] = next;
       // Reset locations when count changes
       if (!R.tracking[myName].mulliganLocations) R.tracking[myName].mulliganLocations = new Array(18).fill(null);
       R.tracking[myName].mulliganLocations[currentHole] = null;
-      updateTrackingDisplay();
+      updateMulliganDisplay();
       updateGroupTracking(groupCode, user.uid, 'mulligans', currentHole, next);
       updateGroupTracking(groupCode, user.uid, 'mulliganLocations', currentHole, null);
     };
