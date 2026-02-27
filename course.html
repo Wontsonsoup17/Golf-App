@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <script>
-(function(){var v='104';var k='app_v';var s=localStorage.getItem(k);if(s&&s!==v){localStorage.setItem(k,v);window.location.replace(window.location.pathname+'?_='+Date.now());return;}localStorage.setItem(k,v);})();
+(function(){var v='105';var k='app_v';var s=localStorage.getItem(k);if(s&&s!==v){localStorage.setItem(k,v);window.location.replace(window.location.pathname+'?_='+Date.now());return;}localStorage.setItem(k,v);})();
 </script>
 <meta charset="UTF-8">
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
@@ -14,7 +14,7 @@
 <link rel="manifest" href="manifest.json">
 <link rel="apple-touch-icon" href="icon-192.png">
 <title>Course Setup - Westchester Golf</title>
-<link rel="stylesheet" href="shared.css?v=104">
+<link rel="stylesheet" href="shared.css?v=105">
 </head>
 <body>
 
@@ -101,11 +101,23 @@
   </div>
 </div>
 
+<!-- Active Round Warning Modal -->
+<div class="modal-overlay" id="activeRoundModal">
+  <div class="modal">
+    <h3 style="color:var(--red)">&#9888; Active Round Found</h3>
+    <p id="activeRoundMsg" style="font-size:14px;color:var(--text-dim);margin:12px 0 16px;line-height:1.5"></p>
+    <div class="modal-actions">
+      <button class="btn-outline" onclick="dismissActiveRoundModal()">Cancel</button>
+      <button class="btn-danger" id="confirmEndBtn" onclick="confirmEndAndCreate()">End &amp; Create New</button>
+    </div>
+  </div>
+</div>
+
 <nav class="bottom-nav" id="bottomNav"></nav>
 
-<script src="firebase-config.js?v=104"></script>
-<script src="shared.js?v=104"></script>
-<script src="firebase-sync.js?v=104"></script>
+<script src="firebase-config.js?v=105"></script>
+<script src="shared.js?v=105"></script>
+<script src="firebase-sync.js?v=105"></script>
 <script>
   requireAuth(function(user) {
     renderBottomNav('courses');
@@ -214,6 +226,55 @@
       document.getElementById('customCodeInput').value = code;
     };
 
+    // Pending round creation params (used after modal confirm)
+    var _pendingGroupCreate = null;
+
+    window.dismissActiveRoundModal = function() {
+      document.getElementById('activeRoundModal').classList.remove('show');
+      var btn = document.getElementById('startBtn');
+      btn.disabled = false;
+      btn.textContent = 'Start Round';
+    };
+
+    window.confirmEndAndCreate = function() {
+      if (!_pendingGroupCreate) return;
+      var modal = document.getElementById('activeRoundModal');
+      var confirmBtn = document.getElementById('confirmEndBtn');
+      confirmBtn.disabled = true;
+      confirmBtn.textContent = 'Ending...';
+
+      // Delete the old round immediately (frees the code)
+      deleteActiveRound(_pendingGroupCreate.oldCode).then(function() {
+        modal.classList.remove('show');
+        confirmBtn.disabled = false;
+        confirmBtn.textContent = 'End & Create New';
+        // Now create the new round
+        doCreateGroupRound(_pendingGroupCreate.code);
+      }).catch(function(err) {
+        confirmBtn.disabled = false;
+        confirmBtn.textContent = 'End & Create New';
+        alert('Could not end previous round: ' + (err.message || 'Unknown error'));
+      });
+    };
+
+    function doCreateGroupRound(customCode) {
+      var btn = document.getElementById('startBtn');
+      var date = document.getElementById('roundDate').value;
+      btn.disabled = true;
+      btn.textContent = 'Creating...';
+
+      createGroupRoundWithCode(user.uid, displayName, course.id, selectedTee, course.tees[selectedTee].label, date, customCode)
+        .then(function(code) {
+          localStorage.setItem('active-group-code', code);
+          window.location.href = 'scorecard.html?group=' + code;
+        })
+        .catch(function(err) {
+          btn.disabled = false;
+          btn.textContent = 'Start Round';
+          alert(err.message || 'Could not create group round.');
+        });
+    }
+
     // Start Round
     window.startRound = function() {
       const isGroup = document.getElementById('groupToggle').checked;
@@ -226,21 +287,29 @@
           return;
         }
 
-        // Group mode: create round in Firebase
+        // Group mode: check for existing active round by this admin
         const btn = document.getElementById('startBtn');
         btn.disabled = true;
-        btn.textContent = 'Creating...';
+        btn.textContent = 'Checking...';
 
-        createGroupRoundWithCode(user.uid, displayName, course.id, selectedTee, course.tees[selectedTee].label, date, customCode)
-          .then(code => {
-            localStorage.setItem('active-group-code', code);
-            window.location.href = 'scorecard.html?group=' + code;
-          })
-          .catch(err => {
-            btn.disabled = false;
-            btn.textContent = 'Start Round';
-            alert(err.message || 'Could not create group round.');
-          });
+        findActiveRoundByAdmin(user.uid).then(function(existing) {
+          if (existing) {
+            // Admin already has an active round — show warning
+            var courseName = 'Unknown Course';
+            try { var c = getCourse(existing.meta.courseId); if (c) courseName = c.name; } catch(e) {}
+            document.getElementById('activeRoundMsg').textContent =
+              'You already have a live round in progress (Code: ' + existing.code + ', Course: ' + courseName + '). Starting a new round will end the previous one for all players.';
+            _pendingGroupCreate = { oldCode: existing.code, code: customCode };
+            document.getElementById('activeRoundModal').classList.add('show');
+            // Don't reset button — modal handles it
+            return;
+          }
+          // No existing round — create directly
+          doCreateGroupRound(customCode);
+        }).catch(function(err) {
+          // If check fails, proceed anyway (don't block round creation)
+          doCreateGroupRound(customCode);
+        });
       } else {
         // Solo mode: same as before (localStorage)
         const inputs = document.querySelectorAll('#playerInputs input');

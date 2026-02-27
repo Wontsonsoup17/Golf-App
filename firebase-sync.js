@@ -239,6 +239,29 @@ function removeGroupRound(code) {
   return db.ref('activeRounds/' + code).remove();
 }
 
+// Find any active group round created by this admin
+// Returns { code, meta } if found, or null if no active round exists
+function findActiveRoundByAdmin(uid) {
+  return db.ref('activeRounds').once('value').then(function(snap) {
+    var all = snap.val();
+    if (!all) return null;
+    var codes = Object.keys(all);
+    for (var i = 0; i < codes.length; i++) {
+      var code = codes[i];
+      var round = all[code];
+      if (round.meta && round.meta.createdBy === uid && round.meta.status === 'active') {
+        return { code: code, meta: round.meta };
+      }
+    }
+    return null;
+  });
+}
+
+// Delete an active round immediately (frees the code for reuse)
+function deleteActiveRound(code) {
+  return db.ref('activeRounds/' + code).remove();
+}
+
 // ==================== DATA CONVERSION HELPERS ====================
 // Firebase doesn't store arrays natively; convert between array and indexed object
 
