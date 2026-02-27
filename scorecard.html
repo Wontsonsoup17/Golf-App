@@ -71,7 +71,39 @@
   var mulliganModalPlayer = null; // player name (solo) or null (group)
   var _mulliganConfirmCallback = null; // set by each mode to handle post-confirm
 
+  function ensureMulliganModal() {
+    if (document.getElementById('mulliganModal')) return;
+    // Inject styles if old cached CSS doesn't have them
+    if (!document.getElementById('mulliganStyles')) {
+      var style = document.createElement('style');
+      style.id = 'mulliganStyles';
+      style.textContent =
+        '.mulligan-item{margin-bottom:16px}.mulligan-item:last-child{margin-bottom:0}' +
+        '.mulligan-label{font-size:12px;font-weight:700;color:#d4af37;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:8px}' +
+        '.mulligan-options{display:flex;gap:6px}' +
+        '.mulligan-option{flex:1;padding:10px 6px;border-radius:8px;border:1px solid rgba(255,255,255,0.1);background:#0a0f0d;color:#999;font-size:11px;font-weight:600;cursor:pointer;text-align:center;transition:all 0.15s ease}' +
+        '.mulligan-option.selected{border-color:#d4af37;background:rgba(212,175,55,0.15);color:#d4af37}' +
+        '@keyframes shake{0%,100%{transform:translateX(0)}20%,60%{transform:translateX(-4px)}40%,80%{transform:translateX(4px)}}';
+      document.head.appendChild(style);
+    }
+    // Create modal dynamically so it works even if old HTML is cached
+    var overlay = document.createElement('div');
+    overlay.className = 'modal-overlay';
+    overlay.id = 'mulliganModal';
+    overlay.innerHTML =
+      '<div class="modal">' +
+        '<h3 id="mulliganModalTitle">Mulligan Recap</h3>' +
+        '<p style="font-size:13px;color:var(--text-dim);margin-bottom:16px">Where did you take each mulligan?</p>' +
+        '<div id="mulliganModalBody"></div>' +
+        '<div class="modal-actions">' +
+          '<button class="btn-gold" id="mulliganDoneBtn" onclick="confirmMulliganLocations()">Done</button>' +
+        '</div>' +
+      '</div>';
+    document.body.appendChild(overlay);
+  }
+
   function showMulliganModal(playerName, count, holeIdx) {
+    ensureMulliganModal();
     var modal = document.getElementById('mulliganModal');
     var body = document.getElementById('mulliganModalBody');
     document.getElementById('mulliganModalTitle').textContent = 'Hole ' + (holeIdx + 1) + ' — Mulligans';
