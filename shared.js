@@ -1,6 +1,6 @@
 // ==================== AUTO-UPDATE CHECK ====================
 // Forces a hard reload when a new version is deployed
-var APP_VERSION = '110';
+var APP_VERSION = '111';
 (function() {
   var storedVersion = localStorage.getItem('app_version');
   if (storedVersion && storedVersion !== APP_VERSION) {
@@ -713,9 +713,7 @@ function processProfileImage(file) {
     nukeFab.innerHTML = '\uD83D\uDCA3';
     nukeFab.setAttribute('role', 'button');
     nukeFab.setAttribute('aria-label', 'Force clear cache and reload');
-    nukeFab.onclick = function() {
-      window.location.href = 'force-update.html?_=' + Date.now();
-    };
+    nukeFab.onclick = function() { openNukeModal(); };
 
     // Support / issue button ⚠️
     var fab = document.createElement('div');
@@ -851,6 +849,40 @@ window.submitSupportForm = function() {
 window.closeSupportModal = function() {
   var modal = document.getElementById('supportModal');
   if (modal) modal.remove();
+};
+
+// ==================== NUKE WARNING MODAL ====================
+window.openNukeModal = function() {
+  var old = document.getElementById('nukeModal');
+  if (old) old.remove();
+
+  var modal = document.createElement('div');
+  modal.className = 'modal-overlay show';
+  modal.id = 'nukeModal';
+  modal.innerHTML =
+    '<div class="modal">' +
+      '<h3>\uD83D\uDCA3 Force Update</h3>' +
+      '<p style="color:var(--text-dim);font-size:14px;margin:12px 0 16px;">This will:</p>' +
+      '<ul style="color:var(--text);font-size:14px;margin:0 0 20px;padding-left:20px;line-height:1.8;">' +
+        '<li>Update the app to the newest version</li>' +
+        '<li>Clear the website cache for this app only</li>' +
+        '<li>Bring you back to the login page</li>' +
+      '</ul>' +
+      '<div class="modal-actions">' +
+        '<button class="btn-secondary" onclick="closeNukeModal()">Cancel</button>' +
+        '<button class="btn-gold" style="background:var(--red);border-color:var(--red);" onclick="proceedNuke()">Proceed</button>' +
+      '</div>' +
+    '</div>';
+  document.body.appendChild(modal);
+};
+
+window.closeNukeModal = function() {
+  var modal = document.getElementById('nukeModal');
+  if (modal) modal.remove();
+};
+
+window.proceedNuke = function() {
+  window.location.href = 'force-update.html?_=' + Date.now();
 };
 
 // ==================== LIVE VERSION CHECK ====================
