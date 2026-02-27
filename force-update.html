@@ -31,53 +31,70 @@
   <div class="spinner"></div>
   <h2>Updating App</h2>
   <p>Clearing cached data and loading the latest version...</p>
-  <div class="status" id="status">Clearing caches...</div>
+  <div class="status" id="status">Registering updater...</div>
 </div>
 
 <script>
 (function() {
   var statusEl = document.getElementById('status');
+  function setStatus(msg) { if (statusEl) statusEl.textContent = msg; }
 
-  function setStatus(msg) {
-    if (statusEl) statusEl.textContent = msg;
-  }
-
-  // Step 1: Clear ALL localStorage
-  try { localStorage.clear(); } catch(e) {}
-
-  // Step 2: Clear ALL sessionStorage
-  try { sessionStorage.clear(); } catch(e) {}
-
-  // Step 3: Unregister ALL service workers
+  // Step 1: Register service worker that forces network-first loading
+  // This is the key fix — once active, ALL future page loads bypass the HTTP cache
   var swPromise = Promise.resolve();
   if ('serviceWorker' in navigator) {
-    swPromise = navigator.serviceWorker.getRegistrations().then(function(regs) {
-      return Promise.all(regs.map(function(r) { return r.unregister(); }));
-    }).catch(function() {});
+    swPromise = navigator.serviceWorker.register('sw.js', { updateViaCache: 'none' })
+      .then(function(reg) {
+        setStatus('Updater installed. Clearing caches...');
+        // Wait for the SW to activate
+        return new Promise(function(resolve) {
+          var sw = reg.installing || reg.waiting || reg.active;
+          if (sw && sw.state === 'activated') { resolve(); return; }
+          if (sw) {
+            sw.addEventListener('statechange', function() {
+              if (sw.state === 'activated') resolve();
+            });
+          } else { resolve(); }
+          // Safety timeout — don't wait forever
+          setTimeout(resolve, 3000);
+        });
+      })
+      .catch(function(err) {
+        // SW registration failed (e.g. not HTTPS in dev) — continue anyway
+        setStatus('Clearing caches...');
+      });
   }
 
-  // Step 4: Clear ALL Cache API caches
-  var cachePromise = Promise.resolve();
-  if (window.caches) {
-    cachePromise = caches.keys().then(function(names) {
-      return Promise.all(names.map(function(name) { return caches.delete(name); }));
-    }).catch(function() {});
-  }
+  swPromise.then(function() {
+    setStatus('Clearing all cached data...');
 
-  // Step 5: Wait for all clearing to complete, then redirect
-  Promise.all([swPromise, cachePromise]).then(function() {
-    setStatus('Caches cleared! Redirecting...');
+    // Step 2: Clear ALL localStorage
+    try { localStorage.clear(); } catch(e) {}
 
-    // Force a completely fresh load of login page with cache-busting
-    var ts = Date.now();
+    // Step 3: Clear ALL sessionStorage
+    try { sessionStorage.clear(); } catch(e) {}
+
+    // Step 4: Clear ALL Cache API caches
+    var cachePromise = Promise.resolve();
+    if (window.caches) {
+      cachePromise = caches.keys().then(function(names) {
+        return Promise.all(names.map(function(name) { return caches.delete(name); }));
+      }).catch(function() {});
+    }
+
+    return cachePromise;
+  }).then(function() {
+    setStatus('Done! Redirecting to login...');
+
+    // Step 5: Redirect to login with cache-busting
     setTimeout(function() {
-      window.location.replace('login.html?_forceclear=' + ts);
-    }, 1000);
+      window.location.replace('login.html?_forceclear=' + Date.now());
+    }, 800);
   }).catch(function() {
     setStatus('Done. Redirecting...');
     setTimeout(function() {
       window.location.replace('login.html?_forceclear=' + Date.now());
-    }, 1000);
+    }, 800);
   });
 })();
 </script>
