@@ -1,6 +1,6 @@
 // ==================== AUTO-UPDATE CHECK ====================
 // Forces a hard reload when a new version is deployed
-var APP_VERSION = '103';
+var APP_VERSION = '104';
 (function() {
   var storedVersion = localStorage.getItem('app_version');
   if (storedVersion && storedVersion !== APP_VERSION) {
@@ -19,6 +19,16 @@ var APP_VERSION = '103';
   }
   if (!storedVersion) {
     localStorage.setItem('app_version', APP_VERSION);
+  }
+})();
+
+// ==================== SERVICE WORKER ====================
+// Registers on EVERY page load — forces network-first for all HTML/JS/CSS
+// so no device ever gets stuck on stale cached files again
+(function() {
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('sw.js', { updateViaCache: 'none' })
+      .catch(function() {});
   }
 })();
 
