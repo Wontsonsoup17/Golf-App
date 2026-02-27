@@ -325,6 +325,7 @@ function createPlayerTracking() {
     fairway: new Array(18).fill(false),   // hit fairway?
     gir: new Array(18).fill(false),       // green in regulation?
     mulligans: new Array(18).fill(0),
+    mulliganLocations: new Array(18).fill(null), // null or array of "tee"/"fairway"/"green"
     penalties: new Array(18).fill(0)
   };
 }

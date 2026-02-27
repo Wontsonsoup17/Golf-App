@@ -258,22 +258,37 @@ function objToArray(obj, length) {
 }
 
 function trackingToObj(tracking) {
+  // mulliganLocations is not a simple array — each entry is null or an array of strings
+  var mlObj = {};
+  if (tracking.mulliganLocations) {
+    for (var i = 0; i < tracking.mulliganLocations.length; i++) {
+      if (tracking.mulliganLocations[i]) mlObj[i] = tracking.mulliganLocations[i];
+    }
+  }
   return {
     putts: arrayToObj(tracking.putts),
     fairway: arrayToObj(tracking.fairway),
     gir: arrayToObj(tracking.gir),
     mulligans: arrayToObj(tracking.mulligans),
+    mulliganLocations: mlObj,
     penalties: arrayToObj(tracking.penalties)
   };
 }
 
 function objToTracking(obj) {
   if (!obj) return createPlayerTracking();
+  // Parse mulliganLocations — each hole is null or an array of strings
+  var mlRaw = obj.mulliganLocations || {};
+  var mulliganLocations = new Array(18).fill(null);
+  for (var i = 0; i < 18; i++) {
+    if (mlRaw[i] && Array.isArray(mlRaw[i])) mulliganLocations[i] = mlRaw[i];
+  }
   return {
     putts: objToArray(obj.putts, 18),
     fairway: objToArray(obj.fairway, 18).map(v => !!v),
     gir: objToArray(obj.gir, 18).map(v => !!v),
     mulligans: objToArray(obj.mulligans, 18),
+    mulliganLocations: mulliganLocations,
     penalties: objToArray(obj.penalties, 18)
   };
 }

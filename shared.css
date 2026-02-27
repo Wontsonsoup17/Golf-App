@@ -867,6 +867,54 @@ input[type="text"]:focus, input[type="password"]:focus, input[type="date"]:focus
   color: var(--red);
 }
 
+/* Mulligan location modal */
+.mulligan-item {
+  margin-bottom: 16px;
+}
+.mulligan-item:last-child {
+  margin-bottom: 0;
+}
+.mulligan-label {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--gold);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 8px;
+}
+.mulligan-options {
+  display: flex;
+  gap: 6px;
+}
+.mulligan-option {
+  flex: 1;
+  padding: 10px 6px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+  background: var(--bg);
+  color: var(--text-muted);
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+  text-align: center;
+  transition: all 0.15s ease;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+}
+.mulligan-option:active {
+  transform: scale(0.95);
+}
+.mulligan-option.selected {
+  border-color: var(--gold);
+  background: var(--gold-dim);
+  color: var(--gold);
+}
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  20%, 60% { transform: translateX(-4px); }
+  40%, 80% { transform: translateX(4px); }
+}
+
 /* Putt counter */
 .putt-stepper {
   display: flex;
@@ -2295,6 +2343,14 @@ body.sunset-theme .putt-btn:active {
 body.sunset-theme .track-toggle.active {
   border-color: #ff9800;
   background: rgba(255,152,0,0.15);
+  color: #ff9800;
+}
+body.sunset-theme .mulligan-option.selected {
+  border-color: #ff9800;
+  background: rgba(255,152,0,0.15);
+  color: #ff9800;
+}
+body.sunset-theme .mulligan-label {
   color: #ff9800;
 }
 

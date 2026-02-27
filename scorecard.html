@@ -11,7 +11,7 @@
 <link rel="manifest" href="manifest.json">
 <link rel="apple-touch-icon" href="icon-192.png">
 <title>Live Round - Westchester Golf</title>
-<link rel="stylesheet" href="shared.css?v=35">
+<link rel="stylesheet" href="shared.css?v=36">
 </head>
 <body>
 
@@ -22,11 +22,23 @@
 
 <div class="main" id="mainContent"></div>
 
+<!-- Mulligan location modal -->
+<div class="modal-overlay" id="mulliganModal">
+  <div class="modal">
+    <h3 id="mulliganModalTitle">Mulligan Recap</h3>
+    <p style="font-size:13px;color:var(--text-dim);margin-bottom:16px">Where did you take each mulligan?</p>
+    <div id="mulliganModalBody"></div>
+    <div class="modal-actions">
+      <button class="btn-gold" id="mulliganDoneBtn" onclick="confirmMulliganLocations()">Done</button>
+    </div>
+  </div>
+</div>
+
 <nav class="bottom-nav" id="bottomNav"></nav>
 
-<script src="firebase-config.js?v=35"></script>
-<script src="shared.js?v=35"></script>
-<script src="firebase-sync.js?v=35"></script>
+<script src="firebase-config.js?v=36"></script>
+<script src="shared.js?v=36"></script>
+<script src="firebase-sync.js?v=36"></script>
 <script>
   requireAuth(function(user) {
     renderBottomNav('courses');
@@ -77,6 +89,12 @@
       R.players.forEach(p => R.tracking[p] = createPlayerTracking());
       save();
     }
+    // Backfill mulliganLocations for older rounds
+    R.players.forEach(p => {
+      if (R.tracking[p] && !R.tracking[p].mulliganLocations) {
+        R.tracking[p].mulliganLocations = new Array(18).fill(null);
+      }
+    });
 
     document.getElementById('courseName').textContent = course.name;
     document.getElementById('courseSub').textContent = `${R.teeLabel} Tees  |  Par ${course.par}  |  ${formatDate(R.date)}`;
@@ -257,7 +275,34 @@
       }, 50);
     }
 
+    // Pending destination when mulligan modal is open
+    var pendingHoleIdx = null;
+    var mulliganModalMode = null; // 'solo' or 'group'
+    var mulliganModalPlayer = null; // player name (solo) or null (group uses uid)
+
     window.goToHole = function(idx) {
+      // Check if moving forward and current hole has mulligans
+      if (idx > currentHole) {
+        // In solo mode, check all players for mulligans (typically 1 player)
+        var playerWithMulligans = null;
+        R.players.forEach(function(p) {
+          var count = R.tracking[p].mulligans[currentHole];
+          if (count > 0 && !R.tracking[p].mulliganLocations[currentHole]) {
+            playerWithMulligans = p;
+          }
+        });
+        if (playerWithMulligans) {
+          pendingHoleIdx = idx;
+          mulliganModalMode = 'solo';
+          mulliganModalPlayer = playerWithMulligans;
+          showMulliganModal(playerWithMulligans, R.tracking[playerWithMulligans].mulligans[currentHole], currentHole);
+          return;
+        }
+      }
+      proceedToHole(idx);
+    };
+
+    function proceedToHole(idx) {
       currentHole = idx;
       // Auto-set score to par for any player who hasn't scored this hole yet
       const hole = course.holes[currentHole];
@@ -267,7 +312,7 @@
         }
       });
       save(); render(); window.scrollTo({ top: 0, behavior: 'smooth' });
-    };
+    }
     // Surgical DOM updates for solo mode (no full re-render, no scroll jump)
     function updateSoloCard(player) {
       const card = document.querySelector('.player-score-card[data-player="' + player.replace(/'/g, "\\'") + '"]');
@@ -314,8 +359,84 @@
     window.adjPutt = function(player, delta) { R.tracking[player].putts[currentHole] = Math.max(0, Math.min(10, R.tracking[player].putts[currentHole] + delta)); save(); updateSoloCard(player); };
     window.toggleFairway = function(player) { R.tracking[player].fairway[currentHole] = !R.tracking[player].fairway[currentHole]; save(); updateSoloCard(player); };
     window.toggleGIR = function(player) { R.tracking[player].gir[currentHole] = !R.tracking[player].gir[currentHole]; save(); updateSoloCard(player); };
-    window.addMulligan = function(player) { R.tracking[player].mulligans[currentHole] = (R.tracking[player].mulligans[currentHole] + 1) % 3; save(); updateSoloCard(player); };
+    window.addMulligan = function(player) {
+      var next = (R.tracking[player].mulligans[currentHole] + 1) % 3;
+      R.tracking[player].mulligans[currentHole] = next;
+      // Reset locations when count changes
+      R.tracking[player].mulliganLocations[currentHole] = null;
+      save(); updateSoloCard(player);
+    };
     window.addPenalty = function(player) { R.tracking[player].penalties[currentHole] = (R.tracking[player].penalties[currentHole] + 1) % 4; save(); updateSoloCard(player); };
+
+    // ===== Mulligan Location Modal =====
+    function showMulliganModal(playerName, count, holeIdx) {
+      var modal = document.getElementById('mulliganModal');
+      var body = document.getElementById('mulliganModalBody');
+      document.getElementById('mulliganModalTitle').textContent = 'Hole ' + (holeIdx + 1) + ' — Mulligans';
+      var html = '';
+      for (var i = 0; i < count; i++) {
+        html += '<div class="mulligan-item">';
+        html += '<div class="mulligan-label">Mulligan ' + (i + 1) + '</div>';
+        html += '<div class="mulligan-options" data-index="' + i + '">';
+        html += '<button class="mulligan-option" data-value="tee" onclick="selectMulliganLoc(this)">Off the Tee</button>';
+        html += '<button class="mulligan-option" data-value="fairway" onclick="selectMulliganLoc(this)">On the Fairway</button>';
+        html += '<button class="mulligan-option" data-value="green" onclick="selectMulliganLoc(this)">On the Green</button>';
+        html += '</div></div>';
+      }
+      body.innerHTML = html;
+      modal.classList.add('show');
+    }
+
+    window.selectMulliganLoc = function(btn) {
+      // Deselect siblings
+      var siblings = btn.parentElement.querySelectorAll('.mulligan-option');
+      siblings.forEach(function(s) { s.classList.remove('selected'); });
+      btn.classList.add('selected');
+    };
+
+    window.confirmMulliganLocations = function() {
+      var groups = document.querySelectorAll('#mulliganModalBody .mulligan-options');
+      var locations = [];
+      var allSelected = true;
+      groups.forEach(function(g) {
+        var sel = g.querySelector('.mulligan-option.selected');
+        if (!sel) { allSelected = false; }
+        else { locations.push(sel.getAttribute('data-value')); }
+      });
+      if (!allSelected) {
+        // Shake the done button briefly
+        var btn = document.getElementById('mulliganDoneBtn');
+        btn.style.animation = 'none';
+        btn.offsetHeight; // reflow
+        btn.style.animation = 'shake 0.3s ease';
+        return;
+      }
+      // Save locations
+      if (mulliganModalMode === 'solo' && mulliganModalPlayer) {
+        R.tracking[mulliganModalPlayer].mulliganLocations[currentHole] = locations;
+        save();
+      } else if (mulliganModalMode === 'group') {
+        var myName = R._uidToName[user.uid];
+        if (myName) {
+          R.tracking[myName].mulliganLocations[currentHole] = locations;
+          updateGroupTracking(groupCode, user.uid, 'mulliganLocations', currentHole, locations);
+        }
+      }
+      // Close modal and advance
+      document.getElementById('mulliganModal').classList.remove('show');
+      if (pendingHoleIdx !== null) {
+        var dest = pendingHoleIdx;
+        var wasGroup = mulliganModalMode === 'group';
+        pendingHoleIdx = null;
+        mulliganModalMode = null;
+        mulliganModalPlayer = null;
+        if (wasGroup) {
+          proceedToHoleGroup(dest);
+        } else {
+          proceedToHole(dest);
+        }
+      }
+    };
 
     window.finishRound = function() {
       const anyScored = R.players.some(p => R.scores[p].some(s => s > 0));
@@ -853,12 +974,29 @@
 
     // ===== Group actions (write to Firebase per-UID) =====
     window.goToHole = function(idx) {
+      // Check if moving forward and current hole has mulligans
+      if (idx > currentHole) {
+        var myName = R && R._uidToName ? R._uidToName[user.uid] : null;
+        if (myName && R.tracking[myName]) {
+          var count = R.tracking[myName].mulligans[currentHole];
+          if (count > 0 && !R.tracking[myName].mulliganLocations[currentHole]) {
+            pendingHoleIdx = idx;
+            mulliganModalMode = 'group';
+            mulliganModalPlayer = null;
+            showMulliganModal(myName, count, currentHole);
+            return;
+          }
+        }
+      }
+      proceedToHoleGroup(idx);
+    };
+
+    function proceedToHoleGroup(idx) {
       currentHole = idx;
       // currentHole is local only — don't push to Firebase
-      // Holes start at 0 — user taps + to enter their score
       renderGroup();
       window.scrollTo({ top: 0, behavior: 'smooth' });
-    };
+    }
 
     window.adj = function(delta) {
       if (!R) return;
@@ -899,8 +1037,11 @@
       const current = R.tracking[myName].mulligans[currentHole];
       const next = (current + 1) % 3;
       R.tracking[myName].mulligans[currentHole] = next;
+      // Reset locations when count changes
+      R.tracking[myName].mulliganLocations[currentHole] = null;
       updateTrackingDisplay();
       updateGroupTracking(groupCode, user.uid, 'mulligans', currentHole, next);
+      updateGroupTracking(groupCode, user.uid, 'mulliganLocations', currentHole, null);
     };
 
     window.cyclePenalty = function() {
