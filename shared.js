@@ -187,6 +187,42 @@ const COURSES = [
       { num:17, par:4, blue:349, white:335, gold:310, red:290, hcp:14, img:'https://golf.westchestergov.com/wp-content/uploads/2021/04/17maplemoor.gif' },
       { num:18, par:4, blue:383, white:370, gold:345, red:325, hcp:4,  img:'https://golf.westchestergov.com/wp-content/uploads/2021/04/18maplemooor.gif' }
     ]
+  },
+
+  // ==================== OTHER COURSES ====================
+  {
+    id: 'punta-borinquen', name: 'Punta Borinquen',
+    address: 'Aguadilla, Puerto Rico', phone: '(939) 224-9315', par: 72,
+    group: 'other',
+    link: 'https://www.puntaborinquengolfclub.org/visit-our-club',
+    overview: '',
+    tees: {
+      black: { label: 'Black', yards: 7268, rating: 75.5, slope: 139 },
+      blue:  { label: 'Blue',  yards: 6633, rating: 73.4, slope: 135 },
+      white: { label: 'White', yards: 6098, rating: 71.9, slope: 131 },
+      gold:  { label: 'Gold',  yards: 5150, rating: 66.8, slope: 122 },
+      red:   { label: 'Red',   yards: 4900, rating: 65.7, slope: 120 }
+    },
+    holes: [
+      { num:1,  par:5, black:526, blue:524, white:510, gold:445, red:380, hcp:5  },
+      { num:2,  par:3, black:239, blue:190, white:167, gold:164, red:153, hcp:17 },
+      { num:3,  par:4, black:469, blue:400, white:375, gold:276, red:278, hcp:9  },
+      { num:4,  par:4, black:401, blue:345, white:320, gold:242, red:236, hcp:10 },
+      { num:5,  par:4, black:428, blue:418, white:390, gold:305, red:276, hcp:8  },
+      { num:6,  par:4, black:352, blue:352, white:340, gold:274, red:261, hcp:12 },
+      { num:7,  par:5, black:570, blue:525, white:490, gold:437, red:435, hcp:3  },
+      { num:8,  par:3, black:180, blue:180, white:153, gold:135, red:90,  hcp:15 },
+      { num:9,  par:4, black:429, blue:348, white:334, gold:250, red:250, hcp:7  },
+      { num:10, par:5, black:539, blue:539, white:457, gold:414, red:410, hcp:4  },
+      { num:11, par:3, black:210, blue:180, white:172, gold:152, red:146, hcp:16 },
+      { num:12, par:4, black:445, blue:378, white:369, gold:296, red:330, hcp:11 },
+      { num:13, par:4, black:320, blue:320, white:293, gold:272, red:265, hcp:14 },
+      { num:14, par:4, black:470, blue:440, white:383, gold:330, red:325, hcp:2  },
+      { num:15, par:4, black:460, blue:364, white:332, gold:242, red:220, hcp:13 },
+      { num:16, par:3, black:200, blue:170, white:147, gold:120, red:127, hcp:18 },
+      { num:17, par:5, black:570, blue:530, white:470, gold:423, red:412, hcp:6  },
+      { num:18, par:4, black:460, blue:430, white:396, gold:373, red:306, hcp:1  }
+    ]
   }
 ];
 
