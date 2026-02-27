@@ -1,6 +1,6 @@
 // ==================== AUTO-UPDATE CHECK ====================
 // Forces a hard reload when a new version is deployed
-var APP_VERSION = '106';
+var APP_VERSION = '107';
 (function() {
   var storedVersion = localStorage.getItem('app_version');
   if (storedVersion && storedVersion !== APP_VERSION) {
@@ -701,7 +701,23 @@ function processProfileImage(file) {
     // Don't add if already exists
     if (document.getElementById('supportFab')) return;
 
-    // Create the floating button
+    // Create the floating button container (holds both FABs)
+    var fabWrap = document.createElement('div');
+    fabWrap.className = 'fab-group';
+    fabWrap.id = 'fabGroup';
+
+    // Cache nuke button 💣
+    var nukeFab = document.createElement('div');
+    nukeFab.className = 'support-fab nuke-fab';
+    nukeFab.id = 'nukeFab';
+    nukeFab.innerHTML = '\uD83D\uDCA3';
+    nukeFab.setAttribute('role', 'button');
+    nukeFab.setAttribute('aria-label', 'Force clear cache and reload');
+    nukeFab.onclick = function() {
+      window.location.href = 'force-update.html?_=' + Date.now();
+    };
+
+    // Support / issue button ⚠️
     var fab = document.createElement('div');
     fab.className = 'support-fab';
     fab.id = 'supportFab';
@@ -709,7 +725,10 @@ function processProfileImage(file) {
     fab.setAttribute('role', 'button');
     fab.setAttribute('aria-label', 'Report an issue');
     fab.onclick = function() { openSupportModal(); };
-    document.body.appendChild(fab);
+
+    fabWrap.appendChild(nukeFab);
+    fabWrap.appendChild(fab);
+    document.body.appendChild(fabWrap);
   });
 })();
 
