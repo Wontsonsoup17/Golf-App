@@ -43,12 +43,12 @@
 
     var resultEl = document.getElementById('result');
     resultEl.style.color = 'var(--green-accent)';
-    resultEl.textContent = 'Device cache cleared. Redirecting to login...';
+    resultEl.textContent = 'Cache cleared. Running deep update...';
 
-    // Redirect to login with cache-busting timestamp to force fresh page load
+    // Chain to force-update for nuclear clearing (service workers, sessionStorage, etc.)
     setTimeout(function() {
-      window.location.href = 'login.html?_=' + Date.now();
-    }, 1500);
+      window.location.href = 'force-update.html?_=' + Date.now();
+    }, 1000);
   })();
 </script>
 </body>
