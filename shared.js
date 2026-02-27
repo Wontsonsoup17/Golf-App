@@ -1,7 +1,7 @@
 // ==================== AUTO-UPDATE CHECK ====================
 // Forces a hard reload when a new version is deployed
+var APP_VERSION = '103';
 (function() {
-  var APP_VERSION = '102';
   var storedVersion = localStorage.getItem('app_version');
   if (storedVersion && storedVersion !== APP_VERSION) {
     // Version changed — clear browser caches and force reload
@@ -823,3 +823,57 @@ window.closeSupportModal = function() {
   var modal = document.getElementById('supportModal');
   if (modal) modal.remove();
 };
+
+// ==================== LIVE VERSION CHECK ====================
+// Compares local APP_VERSION against Firebase to detect outdated code
+(function() {
+  // Skip on login and cache pages
+  var page = window.location.pathname;
+  if (page.indexOf('login') !== -1 || page.indexOf('clear-cache') !== -1 || page.indexOf('force-update') !== -1) return;
+
+  // Wait for Firebase to load, then check version
+  if (typeof _firebaseLoadPromise !== 'undefined') {
+    _firebaseLoadPromise.then(function() {
+      if (!_firebaseReady || !_firebaseDB) return;
+
+      // Write our version so the latest deployer always sets the truth
+      _firebaseDB.ref('appVersion').set(parseInt(APP_VERSION) || 0);
+
+      // Read the latest version
+      _firebaseDB.ref('appVersion').once('value').then(function(snap) {
+        var latest = snap.val();
+        if (!latest) return;
+        var local = parseInt(APP_VERSION) || 0;
+        if (local < latest) {
+          showUpdateBanner();
+        }
+      });
+    });
+  }
+
+  function showUpdateBanner() {
+    // Don't show twice
+    if (document.getElementById('updateBanner')) return;
+
+    var banner = document.createElement('div');
+    banner.id = 'updateBanner';
+    banner.style.cssText = 'position:fixed;top:0;left:0;right:0;z-index:9999;background:#b8860b;color:#fff;padding:10px 16px;display:flex;align-items:center;justify-content:space-between;font-size:13px;font-weight:600;font-family:-apple-system,BlinkMacSystemFont,sans-serif;box-shadow:0 2px 8px rgba(0,0,0,0.3);';
+
+    var text = document.createElement('span');
+    text.textContent = 'Update available — tap to update';
+
+    var btn = document.createElement('button');
+    btn.textContent = 'Update';
+    btn.style.cssText = 'background:#fff;color:#b8860b;border:none;border-radius:6px;padding:6px 14px;font-size:12px;font-weight:700;cursor:pointer;margin-left:12px;';
+    btn.onclick = function() {
+      window.location.href = 'force-update.html?_=' + Date.now();
+    };
+
+    banner.appendChild(text);
+    banner.appendChild(btn);
+
+    // Push page content down
+    document.body.style.paddingTop = '44px';
+    document.body.insertBefore(banner, document.body.firstChild);
+  }
+})();
