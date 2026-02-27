@@ -11,7 +11,7 @@
 <link rel="manifest" href="manifest.json">
 <link rel="apple-touch-icon" href="icon-192.png">
 <title>Clear Cache - Westchester Golf</title>
-<link rel="stylesheet" href="shared.css?v=26">
+<link rel="stylesheet" href="shared.css?v=100">
 </head>
 <body>
 
@@ -33,6 +33,13 @@
   (function() {
     // Nuclear clear — wipe ALL localStorage for this domain
     localStorage.clear();
+
+    // Also clear browser caches (Cache API)
+    if (window.caches) {
+      caches.keys().then(function(names) {
+        names.forEach(function(name) { caches.delete(name); });
+      });
+    }
 
     var resultEl = document.getElementById('result');
     resultEl.style.color = 'var(--green-accent)';

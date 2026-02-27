@@ -1,3 +1,27 @@
+// ==================== AUTO-UPDATE CHECK ====================
+// Forces a hard reload when a new version is deployed
+(function() {
+  var APP_VERSION = '100';
+  var storedVersion = localStorage.getItem('app_version');
+  if (storedVersion && storedVersion !== APP_VERSION) {
+    // Version changed — clear browser caches and force reload
+    localStorage.setItem('app_version', APP_VERSION);
+    if (window.caches) {
+      caches.keys().then(function(names) {
+        names.forEach(function(name) { caches.delete(name); });
+      }).then(function() {
+        window.location.reload(true);
+      });
+    } else {
+      window.location.reload(true);
+    }
+    return; // Stop executing — page will reload
+  }
+  if (!storedVersion) {
+    localStorage.setItem('app_version', APP_VERSION);
+  }
+})();
+
 // ==================== COURSE DATA ====================
 const COURSES = [
   {
