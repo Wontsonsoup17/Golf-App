@@ -1512,20 +1512,20 @@ input[type="text"]:focus, input[type="password"]:focus, input[type="date"]:focus
   letter-spacing: 1px;
 }
 
-/* ===== MULLIGAN ROW ===== */
-.mulligan-row {
+/* ===== PENALTY/DROP ROW ===== */
+.penalty-row {
   margin-top: 8px;
   padding-top: 8px;
 }
-.mulligan-label-text {
-  color: var(--gold);
+.penalty-label-text {
+  color: var(--red);
 }
-.mulligan-btn:active {
-  background: var(--gold-dim);
-  border-color: var(--gold);
+.penalty-btn:active {
+  background: var(--red-dim);
+  border-color: var(--red);
 }
-.mulligan-val {
-  color: var(--gold);
+.penalty-val {
+  color: var(--red);
 }
 
 /* Sign-up avatar picker */
