@@ -11,7 +11,7 @@
 <link rel="manifest" href="manifest.json">
 <link rel="apple-touch-icon" href="icon-192.png">
 <title>Course Setup - Westchester Golf</title>
-<link rel="stylesheet" href="shared.css?v=32">
+<link rel="stylesheet" href="shared.css?v=33">
 </head>
 <body>
 
@@ -42,8 +42,8 @@
   </div>
 
   <!-- Round Setup -->
-  <div class="card" style="border-color: rgba(0,230,118,0.15);">
-    <div class="section-title" style="margin:0 0 16px; color:var(--green-accent);">Start a Round</div>
+  <div class="card sunset-start" id="startRoundCard" style="border-color: rgba(0,230,118,0.15);">
+    <div class="section-title" id="startRoundTitle" style="margin:0 0 16px; color:var(--green-accent);">Start a Round</div>
 
     <!-- Group Play Toggle -->
     <div class="group-toggle">
@@ -100,9 +100,9 @@
 
 <nav class="bottom-nav" id="bottomNav"></nav>
 
-<script src="firebase-config.js?v=32"></script>
-<script src="shared.js?v=32"></script>
-<script src="firebase-sync.js?v=32"></script>
+<script src="firebase-config.js?v=33"></script>
+<script src="shared.js?v=33"></script>
+<script src="firebase-sync.js?v=33"></script>
 <script>
   requireAuth(function(user) {
     renderBottomNav('courses');
@@ -114,6 +114,15 @@
 
     let selectedTee = Object.keys(course.tees)[0];
     const displayName = user.displayName || user.email.split('@')[0];
+
+    // Apply sunset theme for "other" courses
+    if (course.group === 'other') {
+      document.body.classList.add('sunset-theme');
+      document.querySelector('meta[name="theme-color"]').content = '#0f0a07';
+      var startCard = document.getElementById('startRoundCard');
+      startCard.style.borderColor = 'rgba(255,152,0,0.2)';
+      document.getElementById('startRoundTitle').style.color = '#ff9800';
+    }
 
     document.getElementById('courseName').textContent = course.name;
     document.getElementById('courseSub').textContent = `Par ${course.par}  |  ${course.phone}`;

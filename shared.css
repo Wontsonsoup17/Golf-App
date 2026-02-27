@@ -2092,3 +2092,155 @@ body.profile-panel-open > .bottom-nav {
 ::-webkit-scrollbar { width: 4px; }
 ::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb { background: var(--border-light); border-radius: 4px; }
+
+/* =================================================================
+   SUNSET THEME — applied via body.sunset-theme for "Other Courses"
+   ================================================================= */
+body.sunset-theme {
+  --bg: #0f0a07;
+  --bg-card: #1e1408;
+  --bg-card-hover: #2b1c0e;
+  --bg-elevated: #2c1e10;
+  --bg-glass: rgba(40, 24, 10, 0.85);
+  --green-accent: #ff9800;
+  --green-glow: rgba(255, 152, 0, 0.15);
+  --green-dim: #7a3d00;
+  --text: #fff3e0;
+  --text-dim: #e0a060;
+  --text-muted: #9e7e5a;
+  --border: rgba(255,152,0,0.08);
+  --border-light: rgba(255,152,0,0.15);
+  --shadow-glow: 0 0 30px rgba(255,152,0,0.08);
+}
+body.sunset-theme html,
+body.sunset-theme { background: #0f0a07; }
+
+/* Header sunset gradient */
+body.sunset-theme .header {
+  background: linear-gradient(180deg, rgba(255,152,0,0.14) 0%, #0f0a07 100%);
+  border-bottom-color: rgba(255,152,0,0.12);
+}
+
+/* Cards */
+body.sunset-theme .card {
+  border-color: rgba(255,152,0,0.1);
+}
+
+/* Pill */
+body.sunset-theme .pill {
+  background: rgba(255,152,0,0.15);
+  color: #ffb74d;
+  border-color: rgba(255,152,0,0.25);
+}
+
+/* Section titles */
+body.sunset-theme .section-title {
+  color: #c49a6c;
+}
+
+/* Buttons */
+body.sunset-theme .btn-primary {
+  background: #ff9800;
+  color: #1a0e00;
+}
+body.sunset-theme .btn-primary:active {
+  box-shadow: 0 0 20px rgba(255,152,0,0.3);
+}
+body.sunset-theme .btn-gold {
+  background: linear-gradient(135deg, #ffd54f, #ff9800, #e53935);
+}
+body.sunset-theme .btn-outline {
+  border-color: rgba(255,152,0,0.3);
+  color: #ffb74d;
+}
+
+/* Tee selector */
+body.sunset-theme .tee-btn.active {
+  border-color: #ff9800;
+  color: #ff9800;
+  background: rgba(255,152,0,0.1);
+}
+
+/* Course link */
+body.sunset-theme .course-link {
+  color: #ffb74d;
+}
+
+/* Group toggle */
+body.sunset-theme .toggle-slider {
+  background: #3a2400;
+}
+body.sunset-theme input:checked + .toggle-slider {
+  background: #ff9800;
+}
+
+/* Bottom nav sunset override */
+body.sunset-theme .bottom-nav a.active {
+  color: #ff9800;
+}
+body.sunset-theme .bottom-nav a.active::before {
+  background: #ff9800;
+  box-shadow: 0 0 12px rgba(255,152,0,0.5);
+}
+
+/* Detail table */
+body.sunset-theme .detail-table th {
+  color: #c49a6c;
+}
+body.sunset-theme .nine-total td,
+body.sunset-theme .grand-total td {
+  color: #ffb74d;
+}
+
+/* Focus visible */
+body.sunset-theme :focus-visible {
+  outline-color: #ff9800;
+}
+
+/* ===== LIVE-GAME SUNSET OVERRIDES ===== */
+body.sunset-theme .live-back-btn {
+  background: #ff9800;
+  color: #1a0e00;
+  box-shadow: 0 2px 12px rgba(255,152,0,0.25);
+}
+
+body.sunset-theme .lb-header {
+  background: linear-gradient(180deg, rgba(255,152,0,0.1) 0%, transparent 100%);
+}
+
+body.sunset-theme .lb-group-code {
+  color: #ff9800;
+  background: rgba(255,152,0,0.15);
+}
+
+body.sunset-theme .you-tag {
+  color: #ff9800;
+  background: rgba(255,152,0,0.15);
+  border-color: rgba(255,152,0,0.3);
+}
+
+body.sunset-theme .lb-diff.under { color: #69f0ae; }
+body.sunset-theme .lb-diff.over { color: #ff5252; }
+body.sunset-theme .lb-diff.even { color: #40c4ff; }
+
+/* Round complete banner sunset */
+body.sunset-theme .sunset-banner {
+  background: linear-gradient(135deg, rgba(255,152,0,0.12), rgba(229,57,53,0.08));
+  border-color: rgba(255,152,0,0.25);
+}
+body.sunset-theme .sunset-banner .banner-title {
+  color: #ff9800;
+}
+
+/* Leaderboard card */
+body.sunset-theme .leaderboard {
+  border-color: rgba(255,152,0,0.12);
+}
+
+/* Start round card sunset border */
+body.sunset-theme .card.sunset-start {
+  border-color: rgba(255,152,0,0.2);
+}
+body.sunset-theme .card.sunset-start .section-title {
+  color: #ff9800;
+}
