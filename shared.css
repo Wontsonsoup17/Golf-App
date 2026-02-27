@@ -249,9 +249,26 @@ body {
 }
 .course-card:active .arrow { color: var(--green-accent); }
 
-/* Orange theme for "Other Courses" */
+/* Orange border + green interior for "Other Courses" */
 .course-card.course-orange {
   border-color: rgba(255,152,0,0.25);
+  background: linear-gradient(135deg, #0d2818 0%, #1a4d2e 40%, #0f3d1f 70%, #163b25 100%);
+}
+.course-card.course-orange h3 {
+  color: #66ff99;
+}
+.course-card.course-orange .course-meta span {
+  color: #81c784;
+}
+.course-card.course-orange .course-meta .pill {
+  background: rgba(0,230,118,0.15);
+  color: #69f0ae;
+}
+.course-card.course-orange .course-address {
+  color: #a5d6a7;
+}
+.course-card.course-orange .arrow {
+  color: #4caf50;
 }
 .course-card.course-orange::before {
   background: linear-gradient(180deg, #ff9800, #e65100);
