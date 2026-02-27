@@ -2244,3 +2244,196 @@ body.sunset-theme .card.sunset-start {
 body.sunset-theme .card.sunset-start .section-title {
   color: #ff9800;
 }
+
+/* ===== SCORECARD SUNSET OVERRIDES ===== */
+
+/* Hole pip strip */
+body.sunset-theme .hole-pip.active {
+  border-color: #ff9800;
+  background: #ff9800;
+  color: #1a0e00;
+  box-shadow: 0 0 16px rgba(255,152,0,0.3);
+}
+
+/* Hole number gradient */
+body.sunset-theme .hole-display .hole-number {
+  background: linear-gradient(135deg, #fff3e0 0%, #ff9800 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+}
+
+/* Par chip */
+body.sunset-theme .info-chip.par-chip {
+  background: rgba(255,152,0,0.15);
+  border-color: rgba(255,152,0,0.25);
+  color: #ff9800;
+}
+
+/* Score stepper buttons */
+body.sunset-theme .step-btn:active {
+  background: rgba(255,152,0,0.15);
+  border-color: #ff9800;
+}
+body.sunset-theme .putt-btn:active {
+  background: rgba(255,152,0,0.15);
+  border-color: #ff9800;
+}
+
+/* Track toggle active */
+body.sunset-theme .track-toggle.active {
+  border-color: #ff9800;
+  background: rgba(255,152,0,0.15);
+  color: #ff9800;
+}
+
+/* Next hole button */
+body.sunset-theme .hole-nav-btn.next {
+  background: #ff9800;
+  color: #1a0e00;
+  box-shadow: 0 2px 12px rgba(255,152,0,0.25);
+}
+
+/* Nine nav active */
+body.sunset-theme .nine-nav button.active {
+  background: #ff9800;
+  color: #1a0e00;
+}
+
+/* Hole layout toggle */
+body.sunset-theme .hole-layout-toggle {
+  border-color: rgba(255,152,0,0.2);
+  background: linear-gradient(135deg, rgba(255,152,0,0.06) 0%, rgba(255,152,0,0.02) 100%);
+}
+body.sunset-theme .hole-layout-toggle:active {
+  border-color: #ff9800;
+  background: rgba(255,152,0,0.15);
+}
+body.sunset-theme .hole-layout-toggle .layout-label {
+  color: #ff9800;
+}
+body.sunset-theme .hole-layout-toggle .layout-chevron {
+  color: #ff9800;
+}
+body.sunset-theme .hole-layout-container.expanded .hole-layout-toggle {
+  background: rgba(255,152,0,0.08);
+}
+body.sunset-theme .hole-layout-container.expanded .hole-layout-img-wrap {
+  border-color: rgba(255,152,0,0.2);
+}
+body.sunset-theme .hole-layout-img-wrap {
+  background: #1a1000;
+}
+
+/* Preview back button */
+body.sunset-theme .preview-back-btn {
+  border-color: rgba(255,152,0,0.3);
+  background: rgba(255,152,0,0.15);
+  color: #ff9800;
+}
+body.sunset-theme .preview-back-btn:active {
+  background: rgba(255,152,0,0.25);
+}
+
+/* Add player button */
+body.sunset-theme .add-player-btn {
+  color: #ff9800;
+  border-color: rgba(255,152,0,0.3);
+}
+
+/* Group code display */
+body.sunset-theme .group-code-display {
+  background: linear-gradient(135deg, rgba(255,152,0,0.04) 0%, #0f0a07 100%);
+  border-color: rgba(255,152,0,0.25);
+}
+body.sunset-theme .group-code {
+  color: #ff9800;
+  text-shadow: 0 0 20px rgba(255,152,0,0.3);
+}
+body.sunset-theme .copy-code-btn {
+  background: rgba(255,152,0,0.15);
+  border-color: rgba(255,152,0,0.3);
+  color: #ff9800;
+}
+
+/* Group bar code */
+body.sunset-theme .group-bar-code {
+  color: #ff9800;
+}
+
+/* YOU badge */
+body.sunset-theme .player-score-card.you-badge::before {
+  color: #ff9800;
+  background: rgba(255,152,0,0.15);
+  border-color: rgba(255,152,0,0.3);
+}
+body.sunset-theme .player-score-card.you-badge {
+  border-color: rgba(255,152,0,0.2);
+}
+
+/* Leaderboard link */
+body.sunset-theme .leaderboard-link {
+  border-color: rgba(255,152,0,0.2);
+  color: #ffb74d;
+}
+body.sunset-theme .leaderboard-link:active {
+  border-color: rgba(255,152,0,0.35);
+  background: rgba(255,152,0,0.05);
+}
+
+/* Header title gradient */
+body.sunset-theme .header h1 {
+  background: linear-gradient(135deg, #fff3e0 0%, #ff9800 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+}
+
+/* Connection status */
+body.sunset-theme .connection-status.online .connection-dot {
+  background: #ff9800;
+  box-shadow: 0 0 8px rgba(255,152,0,0.5);
+}
+body.sunset-theme .connection-status.online {
+  color: #ff9800;
+  background: rgba(255,152,0,0.15);
+}
+
+/* Waiting spinner */
+body.sunset-theme .waiting-players .spinner {
+  border-top-color: #ff9800;
+}
+
+/* Stat value color */
+body.sunset-theme .stat-box .stat-value {
+  color: #ff9800;
+}
+
+/* User avatar gradient */
+body.sunset-theme .user-avatar {
+  background: linear-gradient(135deg, #ff9800, #e65100);
+}
+body.sunset-theme .profile-panel-avatar {
+  background: linear-gradient(135deg, #ff9800, #e65100);
+  border-color: rgba(255,152,0,0.3);
+}
+body.sunset-theme .profile-panel-header {
+  background: linear-gradient(180deg, rgba(255,152,0,0.08) 0%, transparent 100%);
+}
+
+/* Bottom nav background */
+body.sunset-theme .bottom-nav {
+  background: rgba(15, 10, 7, 0.92);
+}
+
+/* Input focus */
+body.sunset-theme input[type="text"]:focus,
+body.sunset-theme input[type="password"]:focus,
+body.sunset-theme input[type="date"]:focus {
+  border-color: #ff9800;
+  box-shadow: 0 0 0 4px rgba(255,152,0,0.15);
+}
+
+/* Grand total row */
+body.sunset-theme .detail-table tr.grand-total {
+  background: rgba(255,152,0,0.1);
+  color: #ff9800;
+}
