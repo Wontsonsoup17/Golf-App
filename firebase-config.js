@@ -482,11 +482,11 @@ var GOOGLE_SHEET_WEBHOOK = 'https://script.google.com/macros/s/AKfycbyOxPQSEmB-G
 
 function submitSupportTicket(data) {
   var ticket = {
+    timestamp: new Date().toISOString(),
     username: data.username || '',
     type: data.type || 'issue',
     page: data.page || '',
-    description: data.description || '',
-    timestamp: new Date().toISOString()
+    description: data.description || ''
   };
 
   return fetch(GOOGLE_SHEET_WEBHOOK, {
