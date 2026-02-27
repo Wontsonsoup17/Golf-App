@@ -249,35 +249,36 @@ body {
 }
 .course-card:active .arrow { color: var(--green-accent); }
 
-/* Orange border + green interior for "Other Courses" */
+/* Sunset theme for "Other Courses" */
 .course-card.course-orange {
-  border-color: rgba(255,152,0,0.25);
-  background: linear-gradient(135deg, #0d2818 0%, #1a4d2e 40%, #0f3d1f 70%, #163b25 100%);
+  border-color: rgba(255,152,0,0.3);
+  background: linear-gradient(135deg, #2b1400 0%, #3d1a00 30%, #3a1000 60%, #2e0a00 100%);
 }
 .course-card.course-orange h3 {
-  color: #66ff99;
+  color: #ffcc33;
 }
 .course-card.course-orange .course-meta span {
-  color: #81c784;
+  color: #e8a040;
 }
 .course-card.course-orange .course-meta .pill {
-  background: rgba(0,230,118,0.15);
-  color: #69f0ae;
+  background: rgba(255,87,34,0.18);
+  color: #ff8a65;
+  border-color: rgba(255,87,34,0.3);
 }
 .course-card.course-orange .course-address {
-  color: #a5d6a7;
+  color: #d4845a;
 }
 .course-card.course-orange .arrow {
-  color: #4caf50;
+  color: #ff7043;
 }
 .course-card.course-orange::before {
-  background: linear-gradient(180deg, #ff9800, #e65100);
+  background: linear-gradient(180deg, #ffd54f, #ff9800, #e53935);
 }
 .course-card.course-orange:active {
-  border-color: rgba(255,152,0,0.4);
-  box-shadow: 0 0 20px rgba(255,152,0,0.15);
+  border-color: rgba(255,152,0,0.5);
+  box-shadow: 0 0 20px rgba(255,87,34,0.25);
 }
-.course-card.course-orange:active .arrow { color: #ff9800; }
+.course-card.course-orange:active .arrow { color: #ffcc33; }
 
 .rounds-badge {
   display: inline-block;
