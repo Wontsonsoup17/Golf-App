@@ -11,7 +11,7 @@
 <link rel="manifest" href="manifest.json">
 <link rel="apple-touch-icon" href="icon-192.png">
 <title>Westchester Golf</title>
-<link rel="stylesheet" href="shared.css?v=29">
+<link rel="stylesheet" href="shared.css?v=30">
 </head>
 <body>
 
@@ -53,15 +53,15 @@
 
   <div class="section-title">Westchester County</div>
   <div id="courseGrid"></div>
-  <div class="section-title" style="margin-top:24px">Other Courses</div>
+  <div class="section-title" style="margin-top:24px;text-align:center">Other Courses</div>
   <div id="otherCourseGrid"></div>
 </div>
 
 <nav class="bottom-nav" id="bottomNav"></nav>
 
-<script src="firebase-config.js?v=29"></script>
-<script src="shared.js?v=29"></script>
-<script src="firebase-sync.js?v=29"></script>
+<script src="firebase-config.js?v=30"></script>
+<script src="shared.js?v=30"></script>
+<script src="firebase-sync.js?v=30"></script>
 <script>
   requireAuth(function(user) {
     renderBottomNav('courses');
@@ -95,7 +95,8 @@
       function renderCards(courses) {
         return courses.map(function(c) {
           var roundCount = rounds.filter(function(r) { return r.courseId === c.id; }).length;
-          return '<a href="course.html?id=' + c.id + '" class="course-card">' +
+          var extraClass = c.group === 'other' ? ' course-orange' : '';
+          return '<a href="course.html?id=' + c.id + '" class="course-card' + extraClass + '">' +
             '<h3>' + c.name + '</h3>' +
             '<div class="course-meta">' +
               '<span class="pill">Par ' + c.par + '</span>' +

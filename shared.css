@@ -248,6 +248,20 @@ body {
   transition: color 0.2s;
 }
 .course-card:active .arrow { color: var(--green-accent); }
+
+/* Orange theme for "Other Courses" */
+.course-card.course-orange {
+  border-color: rgba(255,152,0,0.25);
+}
+.course-card.course-orange::before {
+  background: linear-gradient(180deg, #ff9800, #e65100);
+}
+.course-card.course-orange:active {
+  border-color: rgba(255,152,0,0.4);
+  box-shadow: 0 0 20px rgba(255,152,0,0.15);
+}
+.course-card.course-orange:active .arrow { color: #ff9800; }
+
 .rounds-badge {
   display: inline-block;
   margin-top: 10px;
