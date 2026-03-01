@@ -3,7 +3,7 @@
 <head>
 <style>html,body{background:#0a0f0d}</style>
 <script>
-(function(){var v='122';var k='app_v';var s=localStorage.getItem(k);if(s&&s!==v){localStorage.setItem(k,v);window.location.replace(window.location.pathname+'?_='+Date.now());return;}localStorage.setItem(k,v);})();
+(function(){var v='123';var k='app_v';var s=localStorage.getItem(k);if(s&&s!==v){localStorage.setItem(k,v);window.location.replace(window.location.pathname+'?_='+Date.now());return;}localStorage.setItem(k,v);})();
 </script>
 <meta charset="UTF-8">
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
@@ -15,7 +15,7 @@
 <link rel="manifest" href="manifest.json">
 <link rel="apple-touch-icon" href="icon-192.png">
 <title>Live Game - Westchester Golf</title>
-<link rel="stylesheet" href="shared.css?v=122">
+<link rel="stylesheet" href="shared.css?v=123">
 <style>
   .live-back-btn {
     display: flex;
@@ -323,9 +323,9 @@
 
 <nav class="bottom-nav" id="bottomNav"></nav>
 
-<script src="firebase-config.js?v=122"></script>
-<script src="shared.js?v=122"></script>
-<script src="firebase-sync.js?v=122"></script>
+<script src="firebase-config.js?v=123"></script>
+<script src="shared.js?v=123"></script>
+<script src="firebase-sync.js?v=123"></script>
 <script>
   requireAuth(function(user) {
     renderBottomNav('live');
@@ -654,13 +654,6 @@
     // Admin: End Round button (only show if round is still active)
     if (groupCode && isAdmin && iAmFinished && !isFinished) {
       html += '<button onclick="endRoundFromLive()" style="background:#c0392b;color:#fff;border:none;padding:13px 20px;border-radius:var(--radius-sm);font-size:14px;font-weight:700;cursor:pointer;width:100%;margin-bottom:12px">End Round for All</button>';
-    }
-
-    // Bottom navigation
-    if (isFinished || iAmFinished) {
-      html += '<a href="history.html" class="live-back-btn" style="text-decoration:none;display:flex;background:var(--bg-elevated);color:var(--text);box-shadow:none;border:1px solid var(--border)">&#128218; View History</a>';
-    } else {
-      html += '<button class="live-back-btn" onclick="window.location.href=\'' + scorecardUrl + '\'">&#127948; Back to Scorecard</button>';
     }
 
     content.innerHTML = html;
