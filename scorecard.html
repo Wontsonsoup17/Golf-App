@@ -14,7 +14,7 @@
 <link rel="manifest" href="manifest.json">
 <link rel="apple-touch-icon" href="icon-192.png">
 <title>Live Round - Westchester Golf</title>
-<link rel="stylesheet" href="shared.css?v=115">
+<link rel="stylesheet" href="shared.css?v=116">
 </head>
 <body>
 
@@ -40,23 +40,23 @@
 <nav class="bottom-nav" id="bottomNav"></nav>
 <div style="text-align:center;font-size:9px;color:#333;padding:4px;opacity:0.5">v106</div>
 
-<script src="firebase-config.js?v=115"></script>
-<script src="shared.js?v=115"></script>
-<script src="firebase-sync.js?v=115"></script>
+<script src="firebase-config.js?v=116"></script>
+<script src="shared.js?v=116"></script>
+<script src="firebase-sync.js?v=116"></script>
 <script>
   // ==================== SCORE EFFECTS (emoji rain) ====================
   // Defined at script scope so both solo and group modes can access them
   function getScoreEffectTier(score, par) {
     if (!score || score <= 0) return null;
-    if (score === 1) return { name: 'Hole-in-One!', emoji: '🏆', density: 60, duration: 4000, cssClass: 'ace' };
+    if (score === 1) return { name: 'Hole-in-One!', emoji: '🏆', density: 120, duration: 4000, cssClass: 'ace' };
     var diff = score - par;
-    if (diff <= -3) return { name: 'Albatross!', emoji: '🦅', density: 50, duration: 3500, cssClass: 'eagle' };
-    if (diff === -2) return { name: 'Eagle!', emoji: '🦅', density: 40, duration: 3000, cssClass: 'eagle' };
-    if (diff === -1) return { name: 'Birdie!', emoji: '🐦', density: 30, duration: 2500, cssClass: 'birdie' };
-    if (diff === 0) return { name: 'Par', emoji: '⛳', density: 15, duration: 2000, cssClass: 'par-score' };
-    if (diff === 1) return { name: 'Bogey', emoji: '😬', density: 8, duration: 2500, cssClass: 'bogey' };
-    if (diff === 2) return { name: 'Double Bogey', emoji: '💀', density: 12, duration: 2500, cssClass: 'double-plus' };
-    return { name: 'Triple+', emoji: '🧑🏽‍🦼', density: 15, duration: 3000, cssClass: 'double-plus' };
+    if (diff <= -3) return { name: 'Albatross!', emoji: '🦅', density: 100, duration: 3500, cssClass: 'eagle' };
+    if (diff === -2) return { name: 'Eagle!', emoji: '🦅', density: 80, duration: 3000, cssClass: 'eagle' };
+    if (diff === -1) return { name: 'Birdie!', emoji: '🐦', density: 60, duration: 2500, cssClass: 'birdie' };
+    if (diff === 0) return { name: 'Par', emoji: '⛳', density: 35, duration: 2000, cssClass: 'par-score' };
+    if (diff === 1) return { name: 'Bogey', emoji: '😬', density: 20, duration: 2500, cssClass: 'bogey' };
+    if (diff === 2) return { name: 'Double Bogey', emoji: '💀', density: 25, duration: 2500, cssClass: 'double-plus' };
+    return { name: 'Triple+', emoji: '🧑🏽‍🦼', density: 30, duration: 3000, cssClass: 'double-plus' };
   }
 
   function showScoreEffect(score, par) {
