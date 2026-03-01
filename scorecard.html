@@ -14,7 +14,7 @@
 <link rel="manifest" href="manifest.json">
 <link rel="apple-touch-icon" href="icon-192.png">
 <title>Live Round - Westchester Golf</title>
-<link rel="stylesheet" href="shared.css?v=114">
+<link rel="stylesheet" href="shared.css?v=115">
 </head>
 <body>
 
@@ -40,39 +40,30 @@
 <nav class="bottom-nav" id="bottomNav"></nav>
 <div style="text-align:center;font-size:9px;color:#333;padding:4px;opacity:0.5">v106</div>
 
-<script src="firebase-config.js?v=114"></script>
-<script src="shared.js?v=114"></script>
-<script src="firebase-sync.js?v=114"></script>
+<script src="firebase-config.js?v=115"></script>
+<script src="shared.js?v=115"></script>
+<script src="firebase-sync.js?v=115"></script>
 <script>
-  // ==================== SCORE EFFECTS (confetti / emoji rain) ====================
+  // ==================== SCORE EFFECTS (emoji rain) ====================
   // Defined at script scope so both solo and group modes can access them
   function getScoreEffectTier(score, par) {
     if (!score || score <= 0) return null;
-    if (score === 1) return { name: 'Hole-in-One!', emoji: '🏆', type: 'confetti',
-      colors: ['#ffd700','#ff6b35','#ffffff','#00e676','#ff4081'], density: 60, duration: 4000, cssClass: 'ace' };
+    if (score === 1) return { name: 'Hole-in-One!', emoji: '🏆', density: 60, duration: 4000, cssClass: 'ace' };
     var diff = score - par;
-    if (diff <= -3) return { name: 'Albatross!', emoji: '🦅', type: 'confetti',
-      colors: ['#00bfa5','#ffd54f','#ffffff','#64ffda'], density: 50, duration: 3500, cssClass: 'eagle' };
-    if (diff === -2) return { name: 'Eagle!', emoji: '🦅', type: 'confetti',
-      colors: ['#00bfa5','#64ffda','#ffffff','#a7ffeb'], density: 40, duration: 3000, cssClass: 'eagle' };
-    if (diff === -1) return { name: 'Birdie!', emoji: '🐦', type: 'confetti',
-      colors: ['#00e676','#69f0ae','#ffffff','#b9f6ca'], density: 30, duration: 2500, cssClass: 'birdie' };
-    if (diff === 0) return { name: 'Par', emoji: '⛳', type: 'confetti',
-      colors: ['#40c4ff','#80d8ff','#ffffff'], density: 15, duration: 2000, cssClass: 'par-score' };
-    if (diff === 1) return { name: 'Bogey', emoji: '😬', type: 'bogey',
-      rainEmoji: '😬', density: 8, duration: 2500, cssClass: 'bogey' };
-    if (diff === 2) return { name: 'Double Bogey', emoji: '💀', type: 'bogey',
-      rainEmoji: '💀', density: 12, duration: 2500, cssClass: 'double-plus' };
-    return { name: 'Triple+', emoji: '🧑🏽‍🦼', type: 'bogey',
-      rainEmoji: '🧑🏽‍🦼', density: 15, duration: 3000, cssClass: 'double-plus' };
+    if (diff <= -3) return { name: 'Albatross!', emoji: '🦅', density: 50, duration: 3500, cssClass: 'eagle' };
+    if (diff === -2) return { name: 'Eagle!', emoji: '🦅', density: 40, duration: 3000, cssClass: 'eagle' };
+    if (diff === -1) return { name: 'Birdie!', emoji: '🐦', density: 30, duration: 2500, cssClass: 'birdie' };
+    if (diff === 0) return { name: 'Par', emoji: '⛳', density: 15, duration: 2000, cssClass: 'par-score' };
+    if (diff === 1) return { name: 'Bogey', emoji: '😬', density: 8, duration: 2500, cssClass: 'bogey' };
+    if (diff === 2) return { name: 'Double Bogey', emoji: '💀', density: 12, duration: 2500, cssClass: 'double-plus' };
+    return { name: 'Triple+', emoji: '🧑🏽‍🦼', density: 15, duration: 3000, cssClass: 'double-plus' };
   }
 
   function showScoreEffect(score, par) {
     var tier = getScoreEffectTier(score, par);
     if (!tier) return;
     showScoreAnnounce(tier);
-    if (tier.type === 'confetti') { spawnConfetti(tier); }
-    else { spawnBogeyEffect(tier); }
+    spawnEmojiRain(tier);
   }
 
   function showScoreAnnounce(tier) {
@@ -87,41 +78,18 @@
     }, 1200);
   }
 
-  function spawnConfetti(tier) {
-    var container = document.createElement('div');
-    container.className = 'score-effect-container';
-    document.body.appendChild(container);
-    var shapes = ['', 'circle', 'rect', 'strip'];
-    for (var i = 0; i < tier.density; i++) {
-      var p = document.createElement('div');
-      var shape = shapes[Math.floor(Math.random() * shapes.length)];
-      p.className = 'confetti-particle' + (shape ? ' ' + shape : '');
-      p.style.backgroundColor = tier.colors[Math.floor(Math.random() * tier.colors.length)];
-      p.style.setProperty('--x', (Math.random() * 100) + '%');
-      p.style.setProperty('--delay', (Math.random() * 0.8) + 's');
-      p.style.setProperty('--fall-dur', (2 + Math.random() * 1.5) + 's');
-      p.style.setProperty('--sway-dur', (1 + Math.random() * 1) + 's');
-      container.appendChild(p);
-    }
-    setTimeout(function() { if (container.parentNode) container.parentNode.removeChild(container); }, tier.duration + 1500);
-  }
-
-  function spawnBogeyEffect(tier) {
-    var flash = document.createElement('div');
-    flash.className = 'red-flash-overlay';
-    document.body.appendChild(flash);
-    setTimeout(function() { if (flash.parentNode) flash.parentNode.removeChild(flash); }, 800);
+  function spawnEmojiRain(tier) {
     var container = document.createElement('div');
     container.className = 'score-effect-container';
     document.body.appendChild(container);
     for (var i = 0; i < tier.density; i++) {
       var p = document.createElement('div');
       p.className = 'emoji-rain-particle';
-      p.textContent = tier.rainEmoji;
+      p.textContent = tier.emoji;
       p.style.setProperty('--x', (Math.random() * 100) + '%');
       p.style.setProperty('--delay', (Math.random() * 1.2) + 's');
-      p.style.setProperty('--fall-dur', (2.5 + Math.random() * 1.5) + 's');
-      p.style.setProperty('--emoji-size', (18 + Math.random() * 16) + 'px');
+      p.style.setProperty('--fall-dur', (2 + Math.random() * 1.5) + 's');
+      p.style.setProperty('--emoji-size', (20 + Math.random() * 20) + 'px');
       container.appendChild(p);
     }
     setTimeout(function() { if (container.parentNode) container.parentNode.removeChild(container); }, tier.duration + 2000);
