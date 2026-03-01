@@ -257,6 +257,23 @@ function findActiveRoundByAdmin(uid) {
   });
 }
 
+// Find any active group round where this user is a player
+function findActiveRoundForUser(uid) {
+  return db.ref('activeRounds').once('value').then(function(snap) {
+    var all = snap.val();
+    if (!all) return null;
+    var codes = Object.keys(all);
+    for (var i = 0; i < codes.length; i++) {
+      var code = codes[i];
+      var round = all[code];
+      if (round.meta && round.meta.status === 'active' && round.players && round.players[uid]) {
+        return { code: code, meta: round.meta };
+      }
+    }
+    return null;
+  });
+}
+
 // Listen to all active rounds and return count + list info via callback
 function listenToActiveRoundsCount(callback) {
   var ref = db.ref('activeRounds');

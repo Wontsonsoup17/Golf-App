@@ -111,7 +111,15 @@
     if (groupCode) {
       initGroupRound(user, groupCode);
     } else {
-      initSoloRound(user);
+      // No local group code — check Firebase for any round this user is in
+      findActiveRoundForUser(user.uid).then(function(found) {
+        if (found) {
+          localStorage.setItem('active-group-code', found.code);
+          initGroupRound(user, found.code);
+        } else {
+          initSoloRound(user);
+        }
+      });
     }
   });
 
