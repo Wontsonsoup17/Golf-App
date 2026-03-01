@@ -105,12 +105,8 @@
                 const t = r.tracking[p];
                 const totalPutts = t.putts.reduce((a,b)=>a+b,0);
                 const totalMulligans = t.mulligans.reduce((a,b)=>a+b,0);
-                const fwHit = t.fairway.filter(Boolean).length;
-                const girHit = t.gir.filter(Boolean).length;
                 const parts = [];
                 if (totalPutts > 0) parts.push(totalPutts + ' putts');
-                if (fwHit > 0) parts.push(fwHit + ' FW');
-                if (girHit > 0) parts.push(girHit + ' Greens');
                 if (totalMulligans > 0) {
                   // Check for location breakdown
                   var locCounts = { tee: 0, fairway: 0, green: 0 };

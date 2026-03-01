@@ -366,12 +366,6 @@
               </div>
               <div class="score-label ${scoreClass}">${label}</div>
               <div class="track-row">
-                <button class="track-toggle ${t.fairway[currentHole] ? 'active' : ''}" onclick="toggleFairway('${pSafe}')">
-                  <span class="track-icon">&#127963;</span>Fairway<span class="track-hint">Off the Tee</span>
-                </button>
-                <button class="track-toggle ${t.gir[currentHole] ? 'active' : ''}" onclick="toggleGIR('${pSafe}')" title="Green in Regulation">
-                  <span class="track-icon">&#9971;</span>Green
-                </button>
                 <button class="track-toggle ${t.mulligans[currentHole] > 0 ? 'mulligan-active' : ''}" onclick="addMulligan('${pSafe}')">
                   <span class="track-icon">🔄</span>Mulligan${t.mulligans[currentHole] > 0 ? ' (' + t.mulligans[currentHole] + ')' : ''}
                 </button>
@@ -512,11 +506,9 @@
       if (puttVal) puttVal.textContent = t.putts[currentHole];
 
       const toggles = card.querySelectorAll('.track-toggle');
-      if (toggles.length >= 3) {
-        toggles[0].className = 'track-toggle ' + (t.fairway[currentHole] ? 'active' : '');
-        toggles[1].className = 'track-toggle ' + (t.gir[currentHole] ? 'active' : '');
-        toggles[2].className = 'track-toggle ' + (t.mulligans[currentHole] > 0 ? 'mulligan-active' : '');
-        toggles[2].innerHTML = '<span class="track-icon">🔄</span>Mulligan' + (t.mulligans[currentHole] > 0 ? ' (' + t.mulligans[currentHole] + ')' : '');
+      if (toggles.length >= 1) {
+        toggles[0].className = 'track-toggle ' + (t.mulligans[currentHole] > 0 ? 'mulligan-active' : '');
+        toggles[0].innerHTML = '<span class="track-icon">🔄</span>Mulligan' + (t.mulligans[currentHole] > 0 ? ' (' + t.mulligans[currentHole] + ')' : '');
       }
 
       const penaltyVal = card.querySelector('.penalty-val');
@@ -525,8 +517,6 @@
 
     window.adj = function(player, delta) { R.scores[player][currentHole] = Math.max(1, Math.min(15, R.scores[player][currentHole] + delta)); save(); updateSoloCard(player); };
     window.adjPutt = function(player, delta) { R.tracking[player].putts[currentHole] = Math.max(0, Math.min(10, R.tracking[player].putts[currentHole] + delta)); save(); updateSoloCard(player); };
-    window.toggleFairway = function(player) { R.tracking[player].fairway[currentHole] = !R.tracking[player].fairway[currentHole]; save(); updateSoloCard(player); };
-    window.toggleGIR = function(player) { R.tracking[player].gir[currentHole] = !R.tracking[player].gir[currentHole]; save(); updateSoloCard(player); };
     window.addMulligan = function(player) {
       R.tracking[player].mulligans[currentHole] = (R.tracking[player].mulligans[currentHole] + 1) % 6;
       if (!R.tracking[player].mulliganLocations) R.tracking[player].mulliganLocations = new Array(18).fill(null);
@@ -933,12 +923,6 @@
 
         html += '<div class="track-row">';
         html += `
-          <button class="track-toggle ${t.fairway[currentHole] ? 'active' : ''}" onclick="toggleTrack('fairway')">
-            <span class="track-icon">&#127963;</span>Fairway<span class="track-hint">Off the Tee</span>
-          </button>
-          <button class="track-toggle ${t.gir[currentHole] ? 'active' : ''}" onclick="toggleTrack('gir')" title="Green in Regulation">
-            <span class="track-icon">&#9971;</span>Green
-          </button>
           <button class="track-toggle ${t.mulligans[currentHole] > 0 ? 'mulligan-active' : ''}" onclick="cycleMulligan()">
             <span class="track-icon">🔄</span>Mulligan${t.mulligans[currentHole] > 0 ? ' (' + t.mulligans[currentHole] + ')' : ''}
           </button>
@@ -1060,11 +1044,9 @@
       if (!myName) return;
       const t = R.tracking[myName];
       const toggles = document.querySelectorAll('.track-toggle');
-      if (toggles.length >= 3) {
-        toggles[0].className = 'track-toggle ' + (t.fairway[currentHole] ? 'active' : '');
-        toggles[1].className = 'track-toggle ' + (t.gir[currentHole] ? 'active' : '');
-        toggles[2].className = 'track-toggle ' + (t.mulligans[currentHole] > 0 ? 'mulligan-active' : '');
-        toggles[2].innerHTML = '<span class="track-icon">🔄</span>Mulligan' + (t.mulligans[currentHole] > 0 ? ' (' + t.mulligans[currentHole] + ')' : '');
+      if (toggles.length >= 1) {
+        toggles[0].className = 'track-toggle ' + (t.mulligans[currentHole] > 0 ? 'mulligan-active' : '');
+        toggles[0].innerHTML = '<span class="track-icon">🔄</span>Mulligan' + (t.mulligans[currentHole] > 0 ? ' (' + t.mulligans[currentHole] + ')' : '');
       }
     }
 
