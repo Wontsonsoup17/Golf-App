@@ -3,7 +3,7 @@
 <head>
 <style>html,body{background:#0a0f0d}</style>
 <script>
-(function(){var v='108';var k='app_v';var s=localStorage.getItem(k);if(s&&s!==v){localStorage.setItem(k,v);window.location.replace(window.location.pathname+'?_='+Date.now());return;}localStorage.setItem(k,v);})();
+(function(){var v='123';var k='app_v';var s=localStorage.getItem(k);if(s&&s!==v){localStorage.setItem(k,v);window.location.replace(window.location.pathname+'?_='+Date.now());return;}localStorage.setItem(k,v);})();
 </script>
 <meta charset="UTF-8">
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
@@ -15,7 +15,7 @@
 <link rel="manifest" href="manifest.json">
 <link rel="apple-touch-icon" href="icon-192.png">
 <title>Westchester Golf</title>
-<link rel="stylesheet" href="shared.css?v=112">
+<link rel="stylesheet" href="shared.css?v=123">
 </head>
 <body>
 
@@ -63,9 +63,9 @@
 
 <nav class="bottom-nav" id="bottomNav"></nav>
 
-<script src="firebase-config.js?v=112"></script>
-<script src="shared.js?v=112"></script>
-<script src="firebase-sync.js?v=112"></script>
+<script src="firebase-config.js?v=123"></script>
+<script src="shared.js?v=123"></script>
+<script src="firebase-sync.js?v=123"></script>
 <script>
   requireAuth(function(user) {
     renderBottomNav('courses');
@@ -198,33 +198,66 @@
 
       var btn = document.getElementById('createBtn');
       btn.disabled = true;
-      btn.textContent = 'Creating...';
+      btn.textContent = 'Checking...';
 
-      var displayName = user.displayName || user.email.split('@')[0];
-      var teeKey = Object.keys(course.tees)[0];
-      var teeLabel = course.tees[teeKey].label;
-      var date = new Date().toISOString().split('T')[0];
-
-      var createTimeout = setTimeout(function() {
-        btn.disabled = false;
-        btn.textContent = 'Create Round';
-        errorEl.textContent = 'Connection timed out. Please try again.';
-        errorEl.style.display = 'block';
-      }, 15000);
-
-      createGroupRoundWithCode(user.uid, displayName, course.id, teeKey, teeLabel, date, code)
-        .then(function(createdCode) {
-          clearTimeout(createTimeout);
-          localStorage.setItem('active-group-code', createdCode);
-          window.location.href = 'scorecard.html?group=' + createdCode;
-        })
-        .catch(function(err) {
-          clearTimeout(createTimeout);
+      // Check if user already has an active round
+      findActiveRoundByAdmin(user.uid).then(function(existing) {
+        if (existing) {
+          var courseName = 'Unknown Course';
+          try { var c2 = getCourse(existing.meta.courseId); if (c2) courseName = c2.name; } catch(e) {}
           btn.disabled = false;
           btn.textContent = 'Create Round';
-          errorEl.textContent = err.message || 'Could not create round.';
+          errorEl.textContent = 'You already have a live round (Code: ' + existing.code + ', ' + courseName + '). Complete or end it before starting a new one.';
           errorEl.style.display = 'block';
-        });
+          return;
+        }
+
+        btn.textContent = 'Creating...';
+        var displayName = user.displayName || user.email.split('@')[0];
+        var teeKey = Object.keys(course.tees)[0];
+        var teeLabel = course.tees[teeKey].label;
+        var date = new Date().toISOString().split('T')[0];
+
+        var createTimeout = setTimeout(function() {
+          btn.disabled = false;
+          btn.textContent = 'Create Round';
+          errorEl.textContent = 'Connection timed out. Please try again.';
+          errorEl.style.display = 'block';
+        }, 15000);
+
+        createGroupRoundWithCode(user.uid, displayName, course.id, teeKey, teeLabel, date, code)
+          .then(function(createdCode) {
+            clearTimeout(createTimeout);
+            localStorage.setItem('active-group-code', createdCode);
+            window.location.href = 'scorecard.html?group=' + createdCode;
+          })
+          .catch(function(err) {
+            clearTimeout(createTimeout);
+            btn.disabled = false;
+            btn.textContent = 'Create Round';
+            errorEl.textContent = err.message || 'Could not create round.';
+            errorEl.style.display = 'block';
+          });
+      }).catch(function() {
+        // If check fails, proceed anyway
+        btn.textContent = 'Creating...';
+        var displayName = user.displayName || user.email.split('@')[0];
+        var teeKey = Object.keys(course.tees)[0];
+        var teeLabel = course.tees[teeKey].label;
+        var date = new Date().toISOString().split('T')[0];
+
+        createGroupRoundWithCode(user.uid, displayName, course.id, teeKey, teeLabel, date, code)
+          .then(function(createdCode) {
+            localStorage.setItem('active-group-code', createdCode);
+            window.location.href = 'scorecard.html?group=' + createdCode;
+          })
+          .catch(function(err) {
+            btn.disabled = false;
+            btn.textContent = 'Create Round';
+            errorEl.textContent = err.message || 'Could not create round.';
+            errorEl.style.display = 'block';
+          });
+      });
     };
   });
 </script>

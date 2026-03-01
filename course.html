@@ -3,7 +3,7 @@
 <head>
 <style>html,body{background:#0a0f0d}</style>
 <script>
-(function(){var v='108';var k='app_v';var s=localStorage.getItem(k);if(s&&s!==v){localStorage.setItem(k,v);window.location.replace(window.location.pathname+'?_='+Date.now());return;}localStorage.setItem(k,v);})();
+(function(){var v='123';var k='app_v';var s=localStorage.getItem(k);if(s&&s!==v){localStorage.setItem(k,v);window.location.replace(window.location.pathname+'?_='+Date.now());return;}localStorage.setItem(k,v);})();
 </script>
 <meta charset="UTF-8">
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
@@ -15,7 +15,7 @@
 <link rel="manifest" href="manifest.json">
 <link rel="apple-touch-icon" href="icon-192.png">
 <title>Course Setup - Westchester Golf</title>
-<link rel="stylesheet" href="shared.css?v=112">
+<link rel="stylesheet" href="shared.css?v=123">
 </head>
 <body>
 
@@ -108,17 +108,17 @@
     <h3 style="color:var(--red)">&#9888; Active Round Found</h3>
     <p id="activeRoundMsg" style="font-size:14px;color:var(--text-dim);margin:12px 0 16px;line-height:1.5"></p>
     <div class="modal-actions">
-      <button class="btn-outline" onclick="dismissActiveRoundModal()">Cancel</button>
-      <button class="btn-danger" id="confirmEndBtn" onclick="confirmEndAndCreate()">End &amp; Create New</button>
+      <button class="btn-outline" onclick="dismissActiveRoundModal()">OK</button>
+      <button class="btn-gold" onclick="goToActiveRound()">Go to Round</button>
     </div>
   </div>
 </div>
 
 <nav class="bottom-nav" id="bottomNav"></nav>
 
-<script src="firebase-config.js?v=112"></script>
-<script src="shared.js?v=112"></script>
-<script src="firebase-sync.js?v=112"></script>
+<script src="firebase-config.js?v=123"></script>
+<script src="shared.js?v=123"></script>
+<script src="firebase-sync.js?v=123"></script>
 <script>
   requireAuth(function(user) {
     renderBottomNav('courses');
@@ -227,8 +227,7 @@
       document.getElementById('customCodeInput').value = code;
     };
 
-    // Pending round creation params (used after modal confirm)
-    var _pendingGroupCreate = null;
+    var _activeRoundCode = null;
 
     window.dismissActiveRoundModal = function() {
       document.getElementById('activeRoundModal').classList.remove('show');
@@ -237,25 +236,11 @@
       btn.textContent = 'Start Round';
     };
 
-    window.confirmEndAndCreate = function() {
-      if (!_pendingGroupCreate) return;
-      var modal = document.getElementById('activeRoundModal');
-      var confirmBtn = document.getElementById('confirmEndBtn');
-      confirmBtn.disabled = true;
-      confirmBtn.textContent = 'Ending...';
-
-      // Delete the old round immediately (frees the code)
-      deleteActiveRound(_pendingGroupCreate.oldCode).then(function() {
-        modal.classList.remove('show');
-        confirmBtn.disabled = false;
-        confirmBtn.textContent = 'End & Create New';
-        // Now create the new round
-        doCreateGroupRound(_pendingGroupCreate.code);
-      }).catch(function(err) {
-        confirmBtn.disabled = false;
-        confirmBtn.textContent = 'End & Create New';
-        alert('Could not end previous round: ' + (err.message || 'Unknown error'));
-      });
+    window.goToActiveRound = function() {
+      if (_activeRoundCode) {
+        localStorage.setItem('active-group-code', _activeRoundCode);
+        window.location.href = 'scorecard.html?group=' + _activeRoundCode;
+      }
     };
 
     function doCreateGroupRound(customCode) {
@@ -295,14 +280,13 @@
 
         findActiveRoundByAdmin(user.uid).then(function(existing) {
           if (existing) {
-            // Admin already has an active round — show warning
+            // Admin already has an active round — block creation
             var courseName = 'Unknown Course';
             try { var c = getCourse(existing.meta.courseId); if (c) courseName = c.name; } catch(e) {}
             document.getElementById('activeRoundMsg').textContent =
-              'You already have a live round in progress (Code: ' + existing.code + ', Course: ' + courseName + '). Starting a new round will end the previous one for all players.';
-            _pendingGroupCreate = { oldCode: existing.code, code: customCode };
+              'You already have a live round in progress (Code: ' + existing.code + ', Course: ' + courseName + '). You must complete or end your current round before starting a new one.';
+            _activeRoundCode = existing.code;
             document.getElementById('activeRoundModal').classList.add('show');
-            // Don't reset button — modal handles it
             return;
           }
           // No existing round — create directly
