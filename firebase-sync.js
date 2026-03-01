@@ -257,6 +257,26 @@ function findActiveRoundByAdmin(uid) {
   });
 }
 
+// Listen to all active rounds and return count + list info via callback
+function listenToActiveRoundsCount(callback) {
+  var ref = db.ref('activeRounds');
+  var handler = ref.on('value', function(snap) {
+    var all = snap.val();
+    if (!all) { callback(0, []); return; }
+    var rounds = [];
+    var codes = Object.keys(all);
+    for (var i = 0; i < codes.length; i++) {
+      var round = all[codes[i]];
+      if (round.meta && round.meta.status === 'active') {
+        var playerCount = round.players ? Object.keys(round.players).length : 0;
+        rounds.push({ code: codes[i], courseId: round.meta.courseId, teeLabel: round.meta.teeLabel, playerCount: playerCount });
+      }
+    }
+    callback(rounds.length, rounds);
+  });
+  return function() { ref.off('value', handler); };
+}
+
 // Delete an active round immediately (frees the code for reuse)
 function deleteActiveRound(code) {
   return db.ref('activeRounds/' + code).remove();

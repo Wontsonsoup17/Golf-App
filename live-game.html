@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <script>
-(function(){var v='108';var k='app_v';var s=localStorage.getItem(k);if(s&&s!==v){localStorage.setItem(k,v);window.location.replace(window.location.pathname+'?_='+Date.now());return;}localStorage.setItem(k,v);})();
+(function(){var v='117';var k='app_v';var s=localStorage.getItem(k);if(s&&s!==v){localStorage.setItem(k,v);window.location.replace(window.location.pathname+'?_='+Date.now());return;}localStorage.setItem(k,v);})();
 </script>
 <meta charset="UTF-8">
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
@@ -14,7 +14,7 @@
 <link rel="manifest" href="manifest.json">
 <link rel="apple-touch-icon" href="icon-192.png">
 <title>Live Game - Westchester Golf</title>
-<link rel="stylesheet" href="shared.css?v=112">
+<link rel="stylesheet" href="shared.css?v=117">
 <style>
   .live-back-btn {
     display: flex;
@@ -228,6 +228,10 @@
   <div class="subtitle" id="courseSub"></div>
 </div>
 
+<div id="liveCountBanner" style="display:none;background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius);padding:12px 16px;margin:16px 16px 0;text-align:center">
+  <span style="font-size:13px;font-weight:700;color:var(--text-muted)">🟢 <span id="liveCountNum" style="color:var(--green-accent);font-size:15px">0</span> Live Round<span id="liveCountPlural">s</span> on Server</span>
+</div>
+
 <div class="main" id="mainContent">
   <div class="empty-state">
     <div class="icon">&#127948;</div>
@@ -237,12 +241,24 @@
 
 <nav class="bottom-nav" id="bottomNav"></nav>
 
-<script src="firebase-config.js?v=112"></script>
-<script src="shared.js?v=112"></script>
-<script src="firebase-sync.js?v=112"></script>
+<script src="firebase-config.js?v=117"></script>
+<script src="shared.js?v=117"></script>
+<script src="firebase-sync.js?v=117"></script>
 <script>
   requireAuth(function(user) {
     renderBottomNav('live');
+
+    // Show live round count at top
+    listenToActiveRoundsCount(function(count) {
+      var banner = document.getElementById('liveCountBanner');
+      var numEl = document.getElementById('liveCountNum');
+      var pluralEl = document.getElementById('liveCountPlural');
+      if (banner && numEl) {
+        numEl.textContent = count;
+        pluralEl.textContent = count === 1 ? '' : 's';
+        banner.style.display = count > 0 ? '' : 'none';
+      }
+    });
 
     var urlParams = new URLSearchParams(window.location.search);
     var groupCode = urlParams.get('group');
