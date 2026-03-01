@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <script>
-(function(){var v='118';var k='app_v';var s=localStorage.getItem(k);if(s&&s!==v){localStorage.setItem(k,v);window.location.replace(window.location.pathname+'?_='+Date.now());return;}localStorage.setItem(k,v);})();
+(function(){var v='119';var k='app_v';var s=localStorage.getItem(k);if(s&&s!==v){localStorage.setItem(k,v);window.location.replace(window.location.pathname+'?_='+Date.now());return;}localStorage.setItem(k,v);})();
 </script>
 <meta charset="UTF-8">
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
@@ -14,7 +14,7 @@
 <link rel="manifest" href="manifest.json">
 <link rel="apple-touch-icon" href="icon-192.png">
 <title>Live Game - Westchester Golf</title>
-<link rel="stylesheet" href="shared.css?v=118">
+<link rel="stylesheet" href="shared.css?v=119">
 <style>
   .live-back-btn {
     display: flex;
@@ -220,6 +220,28 @@
     border-radius: 6px;
   }
 
+  .live-rounds-toggle {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 16px;
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .live-rounds-toggle:active { opacity: 0.8; }
+  .live-rounds-arrow {
+    font-size: 12px;
+    color: var(--text-muted);
+    transition: transform 0.2s ease;
+    margin-left: 8px;
+  }
+  .live-rounds-arrow.open { transform: rotate(90deg); }
+  .live-rounds-body {
+    display: none;
+    border-top: 1px solid var(--border);
+  }
+  .live-rounds-body.open { display: block; }
+
   .live-round-item {
     display: flex;
     align-items: center;
@@ -247,17 +269,19 @@
     margin-top: 2px;
     font-weight: 600;
   }
-  .live-round-code {
-    font-family: monospace;
-    font-size: 13px;
-    font-weight: 700;
-    color: var(--green-accent);
-    letter-spacing: 2px;
-    background: var(--green-glow);
-    padding: 3px 10px;
-    border-radius: 6px;
+  .live-round-admin {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text);
     flex-shrink: 0;
     margin-left: 12px;
+    text-align: right;
+  }
+  .live-round-admin-label {
+    font-size: 9px;
+    font-weight: 700;
+    color: #f5a623;
+    letter-spacing: 0.5px;
   }
   .live-round-empty {
     padding: 20px 16px;
@@ -276,11 +300,16 @@
 
 <div id="liveRoundsSection" style="display:none;margin:16px 16px 0">
   <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden">
-    <div style="padding:12px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between">
-      <span style="font-size:14px;font-weight:800;color:var(--text)">🟢 Live Rounds</span>
-      <span id="liveCountBadge" style="font-size:12px;font-weight:700;color:var(--green-accent);background:var(--green-glow);padding:2px 10px;border-radius:10px;border:1px solid rgba(0,230,118,0.3)">0</span>
+    <div class="live-rounds-toggle" onclick="toggleLiveRounds()">
+      <div style="display:flex;align-items:center;gap:8px">
+        <span style="font-size:14px;font-weight:800;color:var(--text)">🟢 Live Rounds</span>
+        <span id="liveCountBadge" style="font-size:12px;font-weight:700;color:var(--green-accent);background:var(--green-glow);padding:2px 10px;border-radius:10px;border:1px solid rgba(0,230,118,0.3)">0</span>
+      </div>
+      <span id="liveRoundsArrow" class="live-rounds-arrow">&rsaquo;</span>
     </div>
-    <div id="liveRoundsList"></div>
+    <div id="liveRoundsBody" class="live-rounds-body">
+      <div id="liveRoundsList"></div>
+    </div>
   </div>
 </div>
 
@@ -293,9 +322,9 @@
 
 <nav class="bottom-nav" id="bottomNav"></nav>
 
-<script src="firebase-config.js?v=118"></script>
-<script src="shared.js?v=118"></script>
-<script src="firebase-sync.js?v=118"></script>
+<script src="firebase-config.js?v=119"></script>
+<script src="shared.js?v=119"></script>
+<script src="firebase-sync.js?v=119"></script>
 <script>
   requireAuth(function(user) {
     renderBottomNav('live');
@@ -325,7 +354,7 @@
         html += '<div class="live-round-course">' + courseName + '</div>';
         html += '<div class="live-round-meta">' + r.teeLabel + ' Tees &bull; ' + r.playerCount + ' player' + (r.playerCount !== 1 ? 's' : '') + '</div>';
         html += '</div>';
-        html += '<div class="live-round-code">' + r.code + '</div>';
+        html += '<div class="live-round-admin"><div class="live-round-admin-label">★ ADMIN</div>' + (r.adminName || 'Unknown') + '</div>';
         html += '</div>';
       }
       list.innerHTML = html;
@@ -670,6 +699,14 @@
     html += '</table></div>';
     return html;
   }
+
+  // Toggle live rounds dropdown
+  window.toggleLiveRounds = function() {
+    var body = document.getElementById('liveRoundsBody');
+    var arrow = document.getElementById('liveRoundsArrow');
+    if (body) body.classList.toggle('open');
+    if (arrow) arrow.classList.toggle('open');
+  };
 
   // Toggle expand/collapse player detail
   window._expandedPlayers = {};

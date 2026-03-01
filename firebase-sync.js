@@ -269,7 +269,11 @@ function listenToActiveRoundsCount(callback) {
       var round = all[codes[i]];
       if (round.meta && round.meta.status === 'active') {
         var playerCount = round.players ? Object.keys(round.players).length : 0;
-        rounds.push({ code: codes[i], courseId: round.meta.courseId, teeLabel: round.meta.teeLabel, playerCount: playerCount });
+        var adminName = '';
+        if (round.meta.createdBy && round.players && round.players[round.meta.createdBy]) {
+          adminName = round.players[round.meta.createdBy].name || '';
+        }
+        rounds.push({ code: codes[i], courseId: round.meta.courseId, teeLabel: round.meta.teeLabel, playerCount: playerCount, adminName: adminName });
       }
     }
     callback(rounds.length, rounds);
