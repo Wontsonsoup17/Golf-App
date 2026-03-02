@@ -2603,7 +2603,7 @@ body.sunset-theme .detail-table tr.grand-total {
   z-index: 501;
   pointer-events: none;
   text-align: center;
-  background: radial-gradient(circle, #111 0%, #000 60%, rgba(0,0,0,0.85) 80%, rgba(0,0,0,0) 100%);
+  background: radial-gradient(circle, #000 0%, #000 60%, rgba(0,0,0,0.85) 80%, rgba(0,0,0,0) 100%);
   border-radius: 50%;
   width: 260px;
   height: 260px;
