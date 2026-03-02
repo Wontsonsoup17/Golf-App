@@ -92,11 +92,11 @@
     // Calculate grid to fill the viewport
     var vw = window.innerWidth;
     var vh = window.innerHeight;
-    var cellSize = 56;
+    var cellSize = 50;
     var cols = Math.ceil(vw / cellSize) + 1;
     var rows = Math.ceil(vh / cellSize) + 1;
     var total = cols * rows;
-    var fontSize = Math.round(cellSize * 0.7);
+    var fontSize = cellSize;
 
     // Shuffled delay indices for random pop-in wave
     var indices = [];
