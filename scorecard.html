@@ -49,29 +49,35 @@
   // Defined at script scope so both solo and group modes can access them
   function getScoreEffectTier(score, par) {
     if (!score || score <= 0) return null;
-    if (score === 1) return { name: 'Hole-in-One!', emoji: '🏆', density: 50, duration: 2200, cssClass: 'ace' };
+    if (score === 1) return { name: 'Hole-in-One!', emoji: '🏆', holdTime: 1800, cssClass: 'ace' };
     var diff = score - par;
-    if (diff <= -3) return { name: 'Albatross!', emoji: '🦅', density: 45, duration: 2000, cssClass: 'eagle' };
-    if (diff === -2) return { name: 'Eagle!', emoji: '🦅', density: 40, duration: 2000, cssClass: 'eagle' };
-    if (diff === -1) return { name: 'Birdie!', emoji: '🐦', density: 30, duration: 1800, cssClass: 'birdie' };
-    if (diff === 0) return { name: 'Par', emoji: '⛳', density: 18, duration: 1600, cssClass: 'par-score' };
-    if (diff === 1) return { name: 'Bogey', emoji: '😬', density: 12, duration: 1600, cssClass: 'bogey' };
-    if (diff === 2) return { name: 'Double Bogey', emoji: '💀', density: 15, duration: 1600, cssClass: 'double-plus' };
-    return { name: 'Triple+', emoji: '🧑🏽‍🦼', density: 18, duration: 1800, cssClass: 'double-plus' };
+    if (diff <= -3) return { name: 'Albatross!', emoji: '🦅', holdTime: 1600, cssClass: 'eagle' };
+    if (diff === -2) return { name: 'Eagle!', emoji: '🦅', holdTime: 1400, cssClass: 'eagle' };
+    if (diff === -1) return { name: 'Birdie!', emoji: '🐦', holdTime: 1200, cssClass: 'birdie' };
+    if (diff === 0) return { name: 'Par', emoji: '⛳', holdTime: 1000, cssClass: 'par-score' };
+    if (diff === 1) return { name: 'Bogey', emoji: '😬', holdTime: 1000, cssClass: 'bogey' };
+    if (diff === 2) return { name: 'Double Bogey', emoji: '💀', holdTime: 1000, cssClass: 'double-plus' };
+    return { name: 'Triple+', emoji: '🧑🏽‍🦼', holdTime: 1200, cssClass: 'double-plus' };
   }
 
   // Shows effect and calls onDone when animation is fully finished
   function showScoreEffect(score, par, onDone) {
     var tier = getScoreEffectTier(score, par);
     if (!tier) { if (onDone) onDone(); return; }
-    showScoreAnnounce(tier);
-    spawnEmojiBurst(tier);
-    // Wait for full effect to finish, then call onDone
-    var totalWait = tier.duration + 400; // burst + announce out
-    setTimeout(function() { if (onDone) onDone(); }, totalWait);
+    var container = spawnEmojiBurst(tier);
+    showScoreAnnounce(tier, tier.holdTime);
+    // Hold the filled screen, then fade out, then advance
+    var popInTime = 800; // time for all emojis to finish popping in
+    setTimeout(function() {
+      container.classList.add('fade-out');
+      setTimeout(function() {
+        if (container.parentNode) container.parentNode.removeChild(container);
+        if (onDone) onDone();
+      }, 400);
+    }, popInTime + tier.holdTime);
   }
 
-  function showScoreAnnounce(tier) {
+  function showScoreAnnounce(tier, holdTime) {
     var el = document.createElement('div');
     el.className = 'score-announce';
     el.innerHTML = '<span class="score-announce-emoji">' + tier.emoji + '</span>' +
@@ -80,32 +86,48 @@
     setTimeout(function() {
       el.classList.add('out');
       setTimeout(function() { if (el.parentNode) el.parentNode.removeChild(el); }, 400);
-    }, tier.duration - 400);
+    }, holdTime + 400);
   }
 
   function spawnEmojiBurst(tier) {
     var container = document.createElement('div');
     container.className = 'score-effect-container';
     document.body.appendChild(container);
-    for (var i = 0; i < tier.density; i++) {
+
+    // Calculate grid to fill the viewport
+    var vw = window.innerWidth;
+    var vh = window.innerHeight;
+    var cellSize = 56; // px per emoji cell
+    var cols = Math.ceil(vw / cellSize) + 1;
+    var rows = Math.ceil(vh / cellSize) + 1;
+    var total = cols * rows;
+
+    container.style.setProperty('--cell-size', cellSize + 'px');
+
+    // Create shuffled delay indices for a random pop-in wave
+    var indices = [];
+    for (var n = 0; n < total; n++) indices.push(n);
+    // Fisher-Yates shuffle
+    for (var s = indices.length - 1; s > 0; s--) {
+      var j = Math.floor(Math.random() * (s + 1));
+      var tmp = indices[s]; indices[s] = indices[j]; indices[j] = tmp;
+    }
+
+    var maxDelay = 0.5; // seconds — all emojis pop in within this window
+    for (var i = 0; i < total; i++) {
       var p = document.createElement('div');
       p.className = 'emoji-burst-particle';
       p.textContent = tier.emoji;
-      // Random position across the screen
-      p.style.setProperty('--x', (5 + Math.random() * 90) + '%');
-      p.style.setProperty('--y', (5 + Math.random() * 90) + '%');
-      // Small random drift so they don't all grow in place
-      p.style.setProperty('--tx', (Math.random() * 40 - 20) + 'px');
-      p.style.setProperty('--ty', (Math.random() * 40 - 20) + 'px');
-      // Staggered delays for a wave effect
-      p.style.setProperty('--delay', (Math.random() * 0.6) + 's');
-      // Each emoji grows to a large size
-      p.style.setProperty('--end-scale', (2.5 + Math.random() * 2).toFixed(1));
-      p.style.setProperty('--burst-dur', (1.2 + Math.random() * 0.8) + 's');
-      p.style.setProperty('--emoji-size', (18 + Math.random() * 14) + 'px');
+      var delay = (indices[i] / total) * maxDelay;
+      p.style.setProperty('--delay', delay.toFixed(3) + 's');
+      p.style.setProperty('--emoji-size', cellSize * 0.7 + 'px');
+      p.style.setProperty('--cell-size', cellSize + 'px');
+      // Slight random rotation for variety
+      p.style.setProperty('--rot', (Math.random() * 30 - 15).toFixed(1) + 'deg');
       container.appendChild(p);
     }
-    setTimeout(function() { if (container.parentNode) container.parentNode.removeChild(container); }, tier.duration + 1000);
+
+    return container;
   }
 
   requireAuth(function(user) {

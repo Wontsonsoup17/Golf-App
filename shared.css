@@ -2541,21 +2541,40 @@ body.sunset-theme .detail-table tr.grand-total {
   pointer-events: none;
   z-index: 500;
   overflow: hidden;
+  display: flex;
+  flex-wrap: wrap;
+  align-content: flex-start;
+  background: #0a0f0d;
+  opacity: 0;
+  animation: effectContainerIn 0.3s ease forwards;
+}
+.score-effect-container.fade-out {
+  animation: effectContainerOut 0.4s ease forwards;
+}
+@keyframes effectContainerIn {
+  0%   { opacity: 0; }
+  100% { opacity: 1; }
+}
+@keyframes effectContainerOut {
+  0%   { opacity: 1; }
+  100% { opacity: 0; }
 }
 
-/* Emoji burst — start small, grow to fill screen */
-@keyframes emojiBurst {
-  0%   { transform: translate(var(--tx, 0), var(--ty, 0)) scale(0); opacity: 0; }
-  15%  { opacity: 1; }
-  50%  { opacity: 0.9; }
-  100% { transform: translate(var(--tx, 0), var(--ty, 0)) scale(var(--end-scale, 3)); opacity: 0; }
+/* Emoji grid tiles — pop in to fill the screen */
+@keyframes emojiPopIn {
+  0%   { transform: scale(0) rotate(var(--rot, 0deg)); opacity: 0; }
+  60%  { transform: scale(1.15) rotate(var(--rot, 0deg)); opacity: 1; }
+  80%  { transform: scale(0.95) rotate(var(--rot, 0deg)); opacity: 1; }
+  100% { transform: scale(1) rotate(var(--rot, 0deg)); opacity: 1; }
 }
 .emoji-burst-particle {
-  position: absolute;
-  top: var(--y, 50%);
-  left: var(--x, 50%);
-  font-size: var(--emoji-size, 24px);
-  animation: emojiBurst var(--burst-dur, 1.8s) cubic-bezier(0.22, 0.61, 0.36, 1) forwards;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: var(--emoji-size, 36px);
+  width: var(--cell-size, 60px);
+  height: var(--cell-size, 60px);
+  animation: emojiPopIn 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) both;
   animation-delay: var(--delay, 0s);
   pointer-events: none;
   will-change: transform, opacity;
