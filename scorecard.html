@@ -97,33 +97,34 @@
     // Calculate grid to fill the viewport
     var vw = window.innerWidth;
     var vh = window.innerHeight;
-    var cellSize = 56; // px per emoji cell
+    var cellSize = 56;
     var cols = Math.ceil(vw / cellSize) + 1;
     var rows = Math.ceil(vh / cellSize) + 1;
     var total = cols * rows;
+    var fontSize = Math.round(cellSize * 0.7);
 
-    container.style.setProperty('--cell-size', cellSize + 'px');
-
-    // Create shuffled delay indices for a random pop-in wave
+    // Shuffled delay indices for random pop-in wave
     var indices = [];
     for (var n = 0; n < total; n++) indices.push(n);
-    // Fisher-Yates shuffle
     for (var s = indices.length - 1; s > 0; s--) {
       var j = Math.floor(Math.random() * (s + 1));
       var tmp = indices[s]; indices[s] = indices[j]; indices[j] = tmp;
     }
 
-    var maxDelay = 0.5; // seconds — all emojis pop in within this window
+    var maxDelay = 0.5;
     for (var i = 0; i < total; i++) {
+      var row = Math.floor(i / cols);
+      var col = i % cols;
       var p = document.createElement('div');
       p.className = 'emoji-burst-particle';
       p.textContent = tier.emoji;
-      var delay = (indices[i] / total) * maxDelay;
-      p.style.setProperty('--delay', delay.toFixed(3) + 's');
-      p.style.setProperty('--emoji-size', cellSize * 0.7 + 'px');
-      p.style.setProperty('--cell-size', cellSize + 'px');
-      // Slight random rotation for variety
-      p.style.setProperty('--rot', (Math.random() * 30 - 15).toFixed(1) + 'deg');
+      // Explicit inline position and size — no CSS variables
+      p.style.left = (col * cellSize) + 'px';
+      p.style.top = (row * cellSize) + 'px';
+      p.style.width = cellSize + 'px';
+      p.style.height = cellSize + 'px';
+      p.style.fontSize = fontSize + 'px';
+      p.style.animationDelay = ((indices[i] / total) * maxDelay).toFixed(3) + 's';
       container.appendChild(p);
     }
 
