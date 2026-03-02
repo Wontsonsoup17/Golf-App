@@ -1,6 +1,6 @@
 // ==================== AUTO-UPDATE CHECK ====================
 // Forces a hard reload when a new version is deployed
-var APP_VERSION = '124';
+var APP_VERSION = '125';
 (function() {
   var storedVersion = localStorage.getItem('app_version');
   if (storedVersion && storedVersion !== APP_VERSION) {
@@ -360,7 +360,8 @@ function createPlayerTracking() {
     gir: new Array(18).fill(false),       // green in regulation?
     mulligans: new Array(18).fill(0),
     mulliganLocations: new Array(18).fill(null), // null or array of "tee"/"fairway"/"green"
-    penalties: new Array(18).fill(0)
+    penalties: new Array(18).fill(0),
+    penaltyLocations: new Array(18).fill(null) // null or array of "water"/"ob"/"lateral"/"unplayable"
   };
 }
 

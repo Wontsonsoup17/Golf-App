@@ -128,6 +128,28 @@
                     parts.push(totalMulligans + ' mull.');
                   }
                 }
+                var totalPenalties = t.penalties.reduce((a,b)=>a+b,0);
+                if (totalPenalties > 0) {
+                  var pLocCounts = { water: 0, ob: 0, lateral: 0, unplayable: 0 };
+                  var hasPLocs = false;
+                  if (t.penaltyLocations) {
+                    for (var pi = 0; pi < 18; pi++) {
+                      if (t.penaltyLocations[pi] && Array.isArray(t.penaltyLocations[pi])) {
+                        t.penaltyLocations[pi].forEach(function(loc) { if (pLocCounts.hasOwnProperty(loc)) { pLocCounts[loc]++; hasPLocs = true; } });
+                      }
+                    }
+                  }
+                  if (hasPLocs) {
+                    var pLocParts = [];
+                    if (pLocCounts.water > 0) pLocParts.push(pLocCounts.water + ' water');
+                    if (pLocCounts.ob > 0) pLocParts.push(pLocCounts.ob + ' OB');
+                    if (pLocCounts.lateral > 0) pLocParts.push(pLocCounts.lateral + ' lateral');
+                    if (pLocCounts.unplayable > 0) pLocParts.push(pLocCounts.unplayable + ' unplayable');
+                    parts.push(totalPenalties + ' drop' + (totalPenalties !== 1 ? 's' : '') + ' (' + pLocParts.join(', ') + ')');
+                  } else {
+                    parts.push(totalPenalties + ' drop' + (totalPenalties !== 1 ? 's' : ''));
+                  }
+                }
                 if (parts.length) trackSummary = '<span style="font-size:11px;color:var(--text-muted);display:block;margin-top:2px">' + parts.join(' &bull; ') + '</span>';
               }
               return '<div class="history-score-row"><div><span>' + p + '</span>' + (playerIncomplete ? '<span style="font-size:10px;color:var(--bogey);margin-left:6px">(' + holesPlayed + '/18)</span>' : '') + trackSummary + '</div><span><strong>' + total + '</strong> (' + diffStr + ') &bull; ' + holesPlayed + '/18</span></div>';

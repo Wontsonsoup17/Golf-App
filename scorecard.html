@@ -213,6 +213,88 @@
   };
 
   // ===================================================================
+  // SHARED — Drop Location Modal (used by both solo and group)
+  // ===================================================================
+  var _dropConfirmCallback = null;
+
+  function ensureDropModal() {
+    if (document.getElementById('dropModal')) return;
+    if (!document.getElementById('dropStyles')) {
+      var style = document.createElement('style');
+      style.id = 'dropStyles';
+      style.textContent =
+        '.drop-item{margin-bottom:16px}.drop-item:last-child{margin-bottom:0}' +
+        '.drop-label{font-size:12px;font-weight:700;color:#e53935;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:8px}' +
+        '.drop-options{display:flex;gap:6px}' +
+        '.drop-option{flex:1;padding:10px 6px;border-radius:8px;border:1px solid rgba(255,255,255,0.1);background:#0a0f0d;color:#999;font-size:11px;font-weight:600;cursor:pointer;text-align:center;transition:all 0.15s ease}' +
+        '.drop-option.selected{border-color:#e53935;background:rgba(229,57,53,0.15);color:#e53935}';
+      document.head.appendChild(style);
+    }
+    var overlay = document.createElement('div');
+    overlay.className = 'modal-overlay';
+    overlay.id = 'dropModal';
+    overlay.innerHTML =
+      '<div class="modal">' +
+        '<h3 id="dropModalTitle">Drop Recap</h3>' +
+        '<p style="font-size:13px;color:var(--text-dim);margin-bottom:16px">What was each drop for?</p>' +
+        '<div id="dropModalBody"></div>' +
+        '<div class="modal-actions">' +
+          '<button class="btn-gold" id="dropDoneBtn" onclick="confirmDropLocations()" style="background:#e53935">Done</button>' +
+        '</div>' +
+      '</div>';
+    document.body.appendChild(overlay);
+  }
+
+  function showDropModal(playerName, count, holeIdx) {
+    ensureDropModal();
+    var modal = document.getElementById('dropModal');
+    var body = document.getElementById('dropModalBody');
+    document.getElementById('dropModalTitle').textContent = 'Hole ' + (holeIdx + 1) + ' — Drops';
+    var html = '';
+    for (var i = 0; i < count; i++) {
+      html += '<div class="drop-item">';
+      html += '<div class="drop-label">Drop ' + (i + 1) + '</div>';
+      html += '<div class="drop-options" data-index="' + i + '">';
+      html += '<button class="drop-option" data-value="water" onclick="selectDropLoc(this)">Water</button>';
+      html += '<button class="drop-option" data-value="ob" onclick="selectDropLoc(this)">OB</button>';
+      html += '<button class="drop-option" data-value="lateral" onclick="selectDropLoc(this)">Lateral</button>';
+      html += '<button class="drop-option" data-value="unplayable" onclick="selectDropLoc(this)">Unplayable</button>';
+      html += '</div></div>';
+    }
+    body.innerHTML = html;
+    modal.classList.add('show');
+  }
+
+  window.selectDropLoc = function(btn) {
+    var siblings = btn.parentElement.querySelectorAll('.drop-option');
+    siblings.forEach(function(s) { s.classList.remove('selected'); });
+    btn.classList.add('selected');
+  };
+
+  window.confirmDropLocations = function() {
+    var groups = document.querySelectorAll('#dropModalBody .drop-options');
+    var locations = [];
+    var allSelected = true;
+    groups.forEach(function(g) {
+      var sel = g.querySelector('.drop-option.selected');
+      if (!sel) { allSelected = false; }
+      else { locations.push(sel.getAttribute('data-value')); }
+    });
+    if (!allSelected) {
+      var btn = document.getElementById('dropDoneBtn');
+      btn.style.animation = 'none';
+      btn.offsetHeight;
+      btn.style.animation = 'shake 0.3s ease';
+      return;
+    }
+    document.getElementById('dropModal').classList.remove('show');
+    if (_dropConfirmCallback) {
+      _dropConfirmCallback(locations);
+      _dropConfirmCallback = null;
+    }
+  };
+
+  // ===================================================================
   // SOLO MODE — existing localStorage-based play (mostly unchanged)
   // ===================================================================
   function initSoloRound(user) {
@@ -242,10 +324,13 @@
       R.players.forEach(p => R.tracking[p] = createPlayerTracking());
       save();
     }
-    // Backfill mulliganLocations for older rounds
+    // Backfill mulliganLocations and penaltyLocations for older rounds
     R.players.forEach(p => {
       if (R.tracking[p] && !R.tracking[p].mulliganLocations) {
         R.tracking[p].mulliganLocations = new Array(18).fill(null);
+      }
+      if (R.tracking[p] && !R.tracking[p].penaltyLocations) {
+        R.tracking[p].penaltyLocations = new Array(18).fill(null);
       }
     });
 
@@ -427,8 +512,35 @@
       }, 50);
     }
 
+    // Check for pending drop locations, then advance
+    function checkDropsThenAdvance(idx) {
+      var playerWithDrops = null;
+      R.players.forEach(function(p) {
+        var count = R.tracking[p].penalties[currentHole];
+        var pl = R.tracking[p].penaltyLocations;
+        if (count > 0 && !(pl && pl[currentHole])) {
+          playerWithDrops = p;
+        }
+      });
+      if (playerWithDrops) {
+        var holeAtPrompt = currentHole;
+        var p = playerWithDrops;
+        if (!R.tracking[p].penaltyLocations) {
+          R.tracking[p].penaltyLocations = new Array(18).fill(null);
+        }
+        _dropConfirmCallback = function(locations) {
+          R.tracking[p].penaltyLocations[holeAtPrompt] = locations;
+          save();
+          proceedToHole(idx);
+        };
+        showDropModal(p, R.tracking[p].penalties[currentHole], currentHole);
+        return;
+      }
+      proceedToHole(idx);
+    }
+
     window.goToHole = function(idx) {
-      // Check if moving forward and current hole has mulligans
+      // Check if moving forward — prompt for mulligan locations, then drop locations
       if (idx > currentHole) {
         var playerWithMulligans = null;
         R.players.forEach(function(p) {
@@ -441,18 +553,20 @@
         if (playerWithMulligans) {
           var holeAtPrompt = currentHole;
           var p = playerWithMulligans;
-          // Ensure mulliganLocations array exists
           if (!R.tracking[p].mulliganLocations) {
             R.tracking[p].mulliganLocations = new Array(18).fill(null);
           }
           _mulliganConfirmCallback = function(locations) {
             R.tracking[p].mulliganLocations[holeAtPrompt] = locations;
             save();
-            proceedToHole(idx);
+            checkDropsThenAdvance(idx);
           };
           showMulliganModal(p, R.tracking[p].mulligans[currentHole], currentHole);
           return;
         }
+        // No mulligans pending — check drops
+        checkDropsThenAdvance(idx);
+        return;
       }
       proceedToHole(idx);
     };
@@ -526,6 +640,8 @@
     window.adjPenalty = function(player, delta) {
       var current = R.tracking[player].penalties[currentHole];
       R.tracking[player].penalties[currentHole] = Math.max(0, Math.min(10, current + delta));
+      if (!R.tracking[player].penaltyLocations) R.tracking[player].penaltyLocations = new Array(18).fill(null);
+      R.tracking[player].penaltyLocations[currentHole] = null;
       save(); updateSoloCard(player);
     };
 
@@ -1067,8 +1183,32 @@
     }
 
     // ===== Group actions (write to Firebase per-UID) =====
+    // Check for pending drop locations in group mode, then advance
+    function checkDropsThenAdvanceGroup(idx) {
+      var myName = R && R._uidToName ? R._uidToName[user.uid] : null;
+      if (myName && R.tracking[myName]) {
+        var count = R.tracking[myName].penalties[currentHole];
+        var pl = R.tracking[myName].penaltyLocations;
+        if (count > 0 && !(pl && pl[currentHole])) {
+          var holeAtPrompt = currentHole;
+          var name = myName;
+          if (!R.tracking[name].penaltyLocations) {
+            R.tracking[name].penaltyLocations = new Array(18).fill(null);
+          }
+          _dropConfirmCallback = function(locations) {
+            R.tracking[name].penaltyLocations[holeAtPrompt] = locations;
+            updateGroupTracking(groupCode, user.uid, 'penaltyLocations', holeAtPrompt, locations);
+            proceedToHoleGroup(idx);
+          };
+          showDropModal(name, count, currentHole);
+          return;
+        }
+      }
+      proceedToHoleGroup(idx);
+    }
+
     window.goToHole = function(idx) {
-      // Check if moving forward and current hole has mulligans
+      // Check if moving forward — prompt for mulligan locations, then drop locations
       if (idx > currentHole) {
         var myName = R && R._uidToName ? R._uidToName[user.uid] : null;
         if (myName && R.tracking[myName]) {
@@ -1077,19 +1217,21 @@
           if (count > 0 && !(ml && ml[currentHole])) {
             var holeAtPrompt = currentHole;
             var name = myName;
-            // Ensure mulliganLocations array exists
             if (!R.tracking[name].mulliganLocations) {
               R.tracking[name].mulliganLocations = new Array(18).fill(null);
             }
             _mulliganConfirmCallback = function(locations) {
               R.tracking[name].mulliganLocations[holeAtPrompt] = locations;
               updateGroupTracking(groupCode, user.uid, 'mulliganLocations', holeAtPrompt, locations);
-              proceedToHoleGroup(idx);
+              checkDropsThenAdvanceGroup(idx);
             };
             showMulliganModal(name, count, currentHole);
             return;
           }
         }
+        // No mulligans pending — check drops
+        checkDropsThenAdvanceGroup(idx);
+        return;
       }
       proceedToHoleGroup(idx);
     };
@@ -1163,8 +1305,11 @@
       const current = R.tracking[myName].penalties[currentHole];
       const next = Math.max(0, Math.min(10, current + delta));
       R.tracking[myName].penalties[currentHole] = next;
+      if (!R.tracking[myName].penaltyLocations) R.tracking[myName].penaltyLocations = new Array(18).fill(null);
+      R.tracking[myName].penaltyLocations[currentHole] = null;
       updatePenaltyDisplay();
       updateGroupTracking(groupCode, user.uid, 'penalties', currentHole, next);
+      updateGroupTracking(groupCode, user.uid, 'penaltyLocations', currentHole, null);
     };
 
     window.refreshGroup = function() {
