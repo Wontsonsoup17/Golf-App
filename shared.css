@@ -2592,9 +2592,15 @@ body.sunset-theme .detail-table tr.grand-total {
 }
 .score-announce-emoji {
   font-size: 56px;
-  display: block;
-  margin-bottom: 4px;
-  filter: drop-shadow(0 2px 8px rgba(0,0,0,0.4));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100px;
+  height: 100px;
+  margin: 0 auto 8px;
+  background: #000;
+  border-radius: 50%;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.6);
 }
 .score-announce-text {
   font-family: 'Playfair Display', serif;
