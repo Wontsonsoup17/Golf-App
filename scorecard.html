@@ -49,15 +49,15 @@
   // Defined at script scope so both solo and group modes can access them
   function getScoreEffectTier(score, par) {
     if (!score || score <= 0) return null;
-    if (score === 1) return { name: 'Hole-in-One!', emoji: '🏆', holdTime: 1800, cssClass: 'ace' };
+    if (score === 1) return { name: 'Hole-in-One!', emoji: '🏆', holdTime: 2800, cssClass: 'ace' };
     var diff = score - par;
-    if (diff <= -3) return { name: 'Albatross!', emoji: '🦅', holdTime: 1600, cssClass: 'eagle' };
-    if (diff === -2) return { name: 'Eagle!', emoji: '🦅', holdTime: 1400, cssClass: 'eagle' };
-    if (diff === -1) return { name: 'Birdie!', emoji: '🐦', holdTime: 1200, cssClass: 'birdie' };
-    if (diff === 0) return { name: 'Par', emoji: '⛳', holdTime: 1000, cssClass: 'par-score' };
-    if (diff === 1) return { name: 'Bogey', emoji: '😬', holdTime: 1000, cssClass: 'bogey' };
-    if (diff === 2) return { name: 'Double Bogey', emoji: '💀', holdTime: 1000, cssClass: 'double-plus' };
-    return { name: 'Triple+', emoji: '🧑🏽‍🦼', holdTime: 1200, cssClass: 'double-plus' };
+    if (diff <= -3) return { name: 'Albatross!', emoji: '🦅', holdTime: 2600, cssClass: 'eagle' };
+    if (diff === -2) return { name: 'Eagle!', emoji: '🦅', holdTime: 2400, cssClass: 'eagle' };
+    if (diff === -1) return { name: 'Birdie!', emoji: '🐦', holdTime: 2200, cssClass: 'birdie' };
+    if (diff === 0) return { name: 'Par', emoji: '⛳', holdTime: 2000, cssClass: 'par-score' };
+    if (diff === 1) return { name: 'Bogey', emoji: '😬', holdTime: 2000, cssClass: 'bogey' };
+    if (diff === 2) return { name: 'Double Bogey', emoji: '💀', holdTime: 2000, cssClass: 'double-plus' };
+    return { name: 'Triple+', emoji: '🧑🏽‍🦼', holdTime: 2200, cssClass: 'double-plus' };
   }
 
   // Shows effect and calls onDone when animation is fully finished
@@ -65,9 +65,12 @@
     var tier = getScoreEffectTier(score, par);
     if (!tier) { if (onDone) onDone(); return; }
     var container = spawnEmojiBurst(tier);
-    showScoreAnnounce(tier, tier.holdTime);
+    // Wait for grid to fill in, then show the announcement on top
+    var popInTime = 600;
+    setTimeout(function() {
+      showScoreAnnounce(tier, tier.holdTime - popInTime);
+    }, popInTime);
     // Hold the filled screen, then fade out, then advance
-    var popInTime = 800; // time for all emojis to finish popping in
     setTimeout(function() {
       container.classList.add('fade-out');
       setTimeout(function() {
