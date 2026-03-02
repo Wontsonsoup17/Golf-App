@@ -481,7 +481,7 @@
               </div>
               <div class="score-label ${scoreClass}">${label}</div>
               <div class="putts-row">
-                <span class="putts-label">⛳️ Putts</span>
+                <span class="putts-label">Putts ⛳️</span>
                 <div class="putt-stepper">
                   <button class="putt-btn p-minus" onclick="adjPutt('${pSafe}', -1)">&minus;</button>
                   <div class="putt-val">${t.putts[currentHole]}</div>
@@ -489,7 +489,7 @@
                 </div>
               </div>
               <div class="putts-row mulligan-row">
-                <span class="putts-label mulligan-label-text">🔄 Mulligan</span>
+                <span class="putts-label mulligan-label-text">Mulligan 🔄</span>
                 <div class="putt-stepper">
                   <button class="putt-btn p-minus mulligan-btn" onclick="adjMulligan('${pSafe}', -1)">&minus;</button>
                   <div class="putt-val mulligan-val">${t.mulligans[currentHole]}</div>
@@ -497,7 +497,7 @@
                 </div>
               </div>
               <div class="putts-row penalty-row">
-                <span class="putts-label penalty-label-text">🫳🏼 Drop</span>
+                <span class="putts-label penalty-label-text">Drop 🫳🏼</span>
                 <div class="putt-stepper">
                   <button class="putt-btn p-minus penalty-btn" onclick="adjPenalty('${pSafe}', -1)">&minus;</button>
                   <div class="putt-val penalty-val">${t.penalties[currentHole]}</div>
@@ -1076,7 +1076,7 @@
         html += `<div class="score-label ${scoreClass}">${label}</div>`;
 
         html += '<div class="putts-row">';
-        html += '<span class="putts-label">⛳️ Putts</span>';
+        html += '<span class="putts-label">Putts ⛳️</span>';
         html += '<div class="putt-stepper">';
         html += `<button class="putt-btn p-minus" onclick="adjPutt(-1)">&minus;</button>`;
         html += `<div class="putt-val">${t.putts[currentHole]}</div>`;
@@ -1084,7 +1084,7 @@
         html += '</div></div>';
 
         html += '<div class="putts-row mulligan-row">';
-        html += '<span class="putts-label mulligan-label-text">🔄 Mulligan</span>';
+        html += '<span class="putts-label mulligan-label-text">Mulligan 🔄</span>';
         html += '<div class="putt-stepper">';
         html += `<button class="putt-btn p-minus mulligan-btn" onclick="adjMulligan(-1)">&minus;</button>`;
         html += `<div class="putt-val mulligan-val">${t.mulligans[currentHole]}</div>`;
@@ -1092,7 +1092,7 @@
         html += '</div></div>';
 
         html += '<div class="putts-row penalty-row">';
-        html += '<span class="putts-label penalty-label-text">🫳🏼 Drop</span>';
+        html += '<span class="putts-label penalty-label-text">Drop 🫳🏼</span>';
         html += '<div class="putt-stepper">';
         html += `<button class="putt-btn p-minus penalty-btn" onclick="adjPenalty(-1)">&minus;</button>`;
         html += `<div class="putt-val penalty-val">${t.penalties[currentHole]}</div>`;
