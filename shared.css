@@ -2541,6 +2541,7 @@ body.sunset-theme .detail-table tr.grand-total {
   pointer-events: none;
   z-index: 500;
   overflow: hidden;
+  background: #0a0f0d;
 }
 .score-effect-container.fade-out {
   transition: opacity 0.5s ease;
