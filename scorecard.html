@@ -15,7 +15,7 @@
 <link rel="manifest" href="manifest.json">
 <link rel="apple-touch-icon" href="icon-192.png">
 <title>Live Round - Westchester Golf</title>
-<link rel="stylesheet" href="shared.css?v=151">
+<link rel="stylesheet" href="shared.css?v=152">
 </head>
 <body>
 
@@ -41,9 +41,9 @@
 <nav class="bottom-nav" id="bottomNav"></nav>
 <div style="text-align:center;font-size:9px;color:#333;padding:4px;opacity:0.5">v106</div>
 
-<script src="firebase-config.js?v=151"></script>
-<script src="shared.js?v=151"></script>
-<script src="firebase-sync.js?v=151"></script>
+<script src="firebase-config.js?v=152"></script>
+<script src="shared.js?v=152"></script>
+<script src="firebase-sync.js?v=152"></script>
 <script>
   // ==================== SCORE EFFECTS (emoji burst) ====================
   // Defined at script scope so both solo and group modes can access them
@@ -624,6 +624,12 @@
       R.players.forEach(p => {
         if (R.scores[p][currentHole] === 0) {
           R.scores[p][currentHole] = hole.par;
+        }
+        // Reset tracking for unplayed holes
+        if (R.tracking[p]) {
+          if (!R.tracking[p].putts[currentHole]) R.tracking[p].putts[currentHole] = 0;
+          if (!R.tracking[p].mulligans[currentHole]) R.tracking[p].mulligans[currentHole] = 0;
+          if (!R.tracking[p].penalties[currentHole]) R.tracking[p].penalties[currentHole] = 0;
         }
       });
       save(); render(); window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -1270,6 +1276,16 @@
       proceedToHoleGroup(idx);
     };
 
+    function resetTrackingForHole(holeIdx) {
+      if (!R) return;
+      var myName = R._uidToName ? R._uidToName[user.uid] : null;
+      if (!myName || !R.tracking[myName]) return;
+      var t = R.tracking[myName];
+      if (!t.putts[holeIdx]) t.putts[holeIdx] = 0;
+      if (!t.mulligans[holeIdx]) t.mulligans[holeIdx] = 0;
+      if (!t.penalties[holeIdx]) t.penalties[holeIdx] = 0;
+    }
+
     function proceedToHoleGroup(idx) {
       // Show score effect when moving forward, wait for it to finish
       if (idx > currentHole && R && R._uidToName) {
@@ -1281,6 +1297,7 @@
           if (prevScore > 0) {
             showScoreEffect(prevScore, prevPar, function() {
               currentHole = idx;
+              resetTrackingForHole(idx);
               renderGroup();
               window.scrollTo({ top: 0, behavior: 'smooth' });
             });
@@ -1289,6 +1306,7 @@
         }
       }
       currentHole = idx;
+      resetTrackingForHole(idx);
       renderGroup();
       window.scrollTo({ top: 0, behavior: 'smooth' });
     }

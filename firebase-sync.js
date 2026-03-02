@@ -347,13 +347,20 @@ function objToTracking(obj) {
   for (var i = 0; i < 18; i++) {
     if (mlRaw[i] && Array.isArray(mlRaw[i])) mulliganLocations[i] = mlRaw[i];
   }
+  // Parse penaltyLocations — each hole is null or an array of strings
+  var plRaw = obj.penaltyLocations || {};
+  var penaltyLocations = new Array(18).fill(null);
+  for (var i = 0; i < 18; i++) {
+    if (plRaw[i] && Array.isArray(plRaw[i])) penaltyLocations[i] = plRaw[i];
+  }
   return {
     putts: objToArray(obj.putts, 18),
     fairway: objToArray(obj.fairway, 18).map(v => !!v),
     gir: objToArray(obj.gir, 18).map(v => !!v),
     mulligans: objToArray(obj.mulligans, 18),
     mulliganLocations: mulliganLocations,
-    penalties: objToArray(obj.penalties, 18)
+    penalties: objToArray(obj.penalties, 18),
+    penaltyLocations: penaltyLocations
   };
 }
 
