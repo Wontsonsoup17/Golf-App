@@ -65,31 +65,23 @@
     var tier = getScoreEffectTier(score, par);
     if (!tier) { if (onDone) onDone(); return; }
     var container = spawnEmojiBurst(tier);
-    // Wait for grid to fill in, then show the announcement on top
+    // Wait for grid to fill in, then show the announcement inside the container
     var popInTime = 600;
     setTimeout(function() {
-      showScoreAnnounce(tier, tier.holdTime - popInTime);
+      var el = document.createElement('div');
+      el.className = 'score-announce';
+      el.innerHTML = '<span class="score-announce-emoji">' + tier.emoji + '</span>' +
+                     '<span class="score-announce-text ' + tier.cssClass + '">' + tier.name + '</span>';
+      container.appendChild(el);
     }, popInTime);
-    // Hold the filled screen, then fade out, then advance
+    // Hold the filled screen, then fade everything out together, then advance
     setTimeout(function() {
       container.classList.add('fade-out');
       setTimeout(function() {
         if (container.parentNode) container.parentNode.removeChild(container);
         if (onDone) onDone();
-      }, 400);
+      }, 500);
     }, popInTime + tier.holdTime);
-  }
-
-  function showScoreAnnounce(tier, holdTime) {
-    var el = document.createElement('div');
-    el.className = 'score-announce';
-    el.innerHTML = '<span class="score-announce-emoji">' + tier.emoji + '</span>' +
-                   '<span class="score-announce-text ' + tier.cssClass + '">' + tier.name + '</span>';
-    document.body.appendChild(el);
-    setTimeout(function() {
-      el.classList.add('out');
-      setTimeout(function() { if (el.parentNode) el.parentNode.removeChild(el); }, 400);
-    }, holdTime + 400);
   }
 
   function spawnEmojiBurst(tier) {
