@@ -2586,8 +2586,8 @@ body.sunset-theme .detail-table tr.grand-total {
   text-align: center;
   background: #000;
   border-radius: 50%;
-  width: 160px;
-  height: 160px;
+  width: 220px;
+  height: 220px;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -2599,14 +2599,14 @@ body.sunset-theme .detail-table tr.grand-total {
   animation: scoreAnnounceOut 0.4s ease-in forwards;
 }
 .score-announce-emoji {
-  font-size: 52px;
+  font-size: 72px;
   display: block;
   line-height: 1;
-  margin-bottom: 4px;
+  margin-bottom: 6px;
 }
 .score-announce-text {
   font-family: 'Playfair Display', serif;
-  font-size: 18px;
+  font-size: 24px;
   font-weight: 900;
   color: var(--text);
   letter-spacing: -0.3px;
