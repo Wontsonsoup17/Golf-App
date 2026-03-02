@@ -480,17 +480,20 @@
                 <button class="step-btn plus" onclick="adj('${pSafe}', 1)">+</button>
               </div>
               <div class="score-label ${scoreClass}">${label}</div>
-              <div class="track-row">
-                <button class="track-toggle ${t.mulligans[currentHole] > 0 ? 'mulligan-active' : ''}" onclick="addMulligan('${pSafe}')">
-                  <span class="track-icon">🔄</span>Mulligan${t.mulligans[currentHole] > 0 ? ' (' + t.mulligans[currentHole] + ')' : ''}
-                </button>
-              </div>
               <div class="putts-row">
                 <span class="putts-label">Putts</span>
                 <div class="putt-stepper">
                   <button class="putt-btn p-minus" onclick="adjPutt('${pSafe}', -1)">&minus;</button>
                   <div class="putt-val">${t.putts[currentHole]}</div>
                   <button class="putt-btn p-plus" onclick="adjPutt('${pSafe}', 1)">+</button>
+                </div>
+              </div>
+              <div class="putts-row mulligan-row">
+                <span class="putts-label mulligan-label-text">Mulligan</span>
+                <div class="putt-stepper">
+                  <button class="putt-btn p-minus mulligan-btn" onclick="adjMulligan('${pSafe}', -1)">&minus;</button>
+                  <div class="putt-val mulligan-val">${t.mulligans[currentHole]}</div>
+                  <button class="putt-btn p-plus mulligan-btn" onclick="adjMulligan('${pSafe}', 1)">+</button>
                 </div>
               </div>
               <div class="putts-row penalty-row">
@@ -656,11 +659,8 @@
       const puttVal = card.querySelector('.putt-val');
       if (puttVal) puttVal.textContent = t.putts[currentHole];
 
-      const toggles = card.querySelectorAll('.track-toggle');
-      if (toggles.length >= 1) {
-        toggles[0].className = 'track-toggle ' + (t.mulligans[currentHole] > 0 ? 'mulligan-active' : '');
-        toggles[0].innerHTML = '<span class="track-icon">🔄</span>Mulligan' + (t.mulligans[currentHole] > 0 ? ' (' + t.mulligans[currentHole] + ')' : '');
-      }
+      const mulliganVal = card.querySelector('.mulligan-val');
+      if (mulliganVal) mulliganVal.textContent = t.mulligans[currentHole];
 
       const penaltyVal = card.querySelector('.penalty-val');
       if (penaltyVal) penaltyVal.textContent = t.penalties[currentHole];
@@ -668,8 +668,9 @@
 
     window.adj = function(player, delta) { R.scores[player][currentHole] = Math.max(1, Math.min(15, R.scores[player][currentHole] + delta)); save(); updateSoloCard(player); };
     window.adjPutt = function(player, delta) { R.tracking[player].putts[currentHole] = Math.max(0, Math.min(10, R.tracking[player].putts[currentHole] + delta)); save(); updateSoloCard(player); };
-    window.addMulligan = function(player) {
-      R.tracking[player].mulligans[currentHole] = (R.tracking[player].mulligans[currentHole] + 1) % 6;
+    window.adjMulligan = function(player, delta) {
+      var current = R.tracking[player].mulligans[currentHole];
+      R.tracking[player].mulligans[currentHole] = Math.max(0, Math.min(5, current + delta));
       if (!R.tracking[player].mulliganLocations) R.tracking[player].mulliganLocations = new Array(18).fill(null);
       R.tracking[player].mulliganLocations[currentHole] = null;
       save(); updateSoloCard(player);
@@ -1074,20 +1075,20 @@
         html += '</div>';
         html += `<div class="score-label ${scoreClass}">${label}</div>`;
 
-        html += '<div class="track-row">';
-        html += `
-          <button class="track-toggle ${t.mulligans[currentHole] > 0 ? 'mulligan-active' : ''}" onclick="cycleMulligan()">
-            <span class="track-icon">🔄</span>Mulligan${t.mulligans[currentHole] > 0 ? ' (' + t.mulligans[currentHole] + ')' : ''}
-          </button>
-        `;
-        html += '</div>';
-
         html += '<div class="putts-row">';
         html += '<span class="putts-label">Putts</span>';
         html += '<div class="putt-stepper">';
         html += `<button class="putt-btn p-minus" onclick="adjPutt(-1)">&minus;</button>`;
         html += `<div class="putt-val">${t.putts[currentHole]}</div>`;
         html += `<button class="putt-btn p-plus" onclick="adjPutt(1)">+</button>`;
+        html += '</div></div>';
+
+        html += '<div class="putts-row mulligan-row">';
+        html += '<span class="putts-label mulligan-label-text">Mulligan</span>';
+        html += '<div class="putt-stepper">';
+        html += `<button class="putt-btn p-minus mulligan-btn" onclick="adjMulligan(-1)">&minus;</button>`;
+        html += `<div class="putt-val mulligan-val">${t.mulligans[currentHole]}</div>`;
+        html += `<button class="putt-btn p-plus mulligan-btn" onclick="adjMulligan(1)">+</button>`;
         html += '</div></div>';
 
         html += '<div class="putts-row penalty-row">';
@@ -1195,12 +1196,8 @@
       if (!R) return;
       const myName = R._uidToName[user.uid];
       if (!myName) return;
-      const t = R.tracking[myName];
-      const toggles = document.querySelectorAll('.track-toggle');
-      if (toggles.length >= 1) {
-        toggles[0].className = 'track-toggle ' + (t.mulligans[currentHole] > 0 ? 'mulligan-active' : '');
-        toggles[0].innerHTML = '<span class="track-icon">🔄</span>Mulligan' + (t.mulligans[currentHole] > 0 ? ' (' + t.mulligans[currentHole] + ')' : '');
-      }
+      const mulliganVal = document.querySelector('.mulligan-val');
+      if (mulliganVal) mulliganVal.textContent = R.tracking[myName].mulligans[currentHole];
     }
 
     function updatePenaltyDisplay() {
@@ -1328,11 +1325,12 @@
       updateGroupTracking(groupCode, user.uid, type, currentHole, !current);
     };
 
-    window.cycleMulligan = function() {
+    window.adjMulligan = function(delta) {
       if (!R) return;
       const myName = R._uidToName[user.uid];
       if (!myName) return;
-      const next = (R.tracking[myName].mulligans[currentHole] + 1) % 6;
+      var current = R.tracking[myName].mulligans[currentHole];
+      const next = Math.max(0, Math.min(5, current + delta));
       R.tracking[myName].mulligans[currentHole] = next;
       if (!R.tracking[myName].mulliganLocations) R.tracking[myName].mulliganLocations = new Array(18).fill(null);
       R.tracking[myName].mulliganLocations[currentHole] = null;
