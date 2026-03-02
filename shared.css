@@ -2584,31 +2584,33 @@ body.sunset-theme .detail-table tr.grand-total {
   z-index: 501;
   pointer-events: none;
   text-align: center;
-  width: max-content;
+  background: #000;
+  border-radius: 50%;
+  width: 160px;
+  height: 160px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 24px rgba(0,0,0,0.7);
   animation: scoreAnnounceIn 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
 }
 .score-announce.out {
   animation: scoreAnnounceOut 0.4s ease-in forwards;
 }
 .score-announce-emoji {
-  font-size: 56px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 100px;
-  height: 100px;
-  margin: 0 auto 8px;
-  background: #000;
-  border-radius: 50%;
-  box-shadow: 0 4px 20px rgba(0,0,0,0.6);
+  font-size: 52px;
+  display: block;
+  line-height: 1;
+  margin-bottom: 4px;
 }
 .score-announce-text {
   font-family: 'Playfair Display', serif;
-  font-size: 32px;
+  font-size: 18px;
   font-weight: 900;
   color: var(--text);
-  text-shadow: 0 2px 12px rgba(0,0,0,0.6);
-  letter-spacing: -0.5px;
+  letter-spacing: -0.3px;
+  white-space: nowrap;
 }
 .score-announce-text.ace     { background: linear-gradient(135deg, #ffd700, #ff6b35); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
 .score-announce-text.eagle   { color: var(--eagle, #00bfa5); }
