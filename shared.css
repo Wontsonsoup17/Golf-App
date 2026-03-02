@@ -2534,7 +2534,7 @@ body.sunset-theme .detail-table tr.grand-total {
   color: #ff9800;
 }
 
-/* ===== SCORE EFFECTS (emoji rain / announcement) ===== */
+/* ===== SCORE EFFECTS (emoji burst / announcement) ===== */
 .score-effect-container {
   position: fixed;
   top: 0; left: 0; right: 0; bottom: 0;
@@ -2543,20 +2543,22 @@ body.sunset-theme .detail-table tr.grand-total {
   overflow: hidden;
 }
 
-/* Emoji rain */
-@keyframes emojiRain {
-  0%   { transform: translateY(-40px) rotate(0deg); opacity: 0.95; }
-  80%  { opacity: 0.8; }
-  100% { transform: translateY(100vh) rotate(200deg); opacity: 0; }
+/* Emoji burst — start small, grow to fill screen */
+@keyframes emojiBurst {
+  0%   { transform: translate(var(--tx, 0), var(--ty, 0)) scale(0); opacity: 0; }
+  15%  { opacity: 1; }
+  50%  { opacity: 0.9; }
+  100% { transform: translate(var(--tx, 0), var(--ty, 0)) scale(var(--end-scale, 3)); opacity: 0; }
 }
-.emoji-rain-particle {
+.emoji-burst-particle {
   position: absolute;
-  top: -50px;
-  font-size: var(--emoji-size, 26px);
-  animation: emojiRain var(--fall-dur, 3s) ease-in forwards;
-  animation-delay: var(--delay, 0s);
+  top: var(--y, 50%);
   left: var(--x, 50%);
+  font-size: var(--emoji-size, 24px);
+  animation: emojiBurst var(--burst-dur, 1.8s) cubic-bezier(0.22, 0.61, 0.36, 1) forwards;
+  animation-delay: var(--delay, 0s);
   pointer-events: none;
+  will-change: transform, opacity;
 }
 
 /* Score announcement overlay */

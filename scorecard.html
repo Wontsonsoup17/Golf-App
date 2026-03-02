@@ -45,26 +45,30 @@
 <script src="shared.js?v=116"></script>
 <script src="firebase-sync.js?v=116"></script>
 <script>
-  // ==================== SCORE EFFECTS (emoji rain) ====================
+  // ==================== SCORE EFFECTS (emoji burst) ====================
   // Defined at script scope so both solo and group modes can access them
   function getScoreEffectTier(score, par) {
     if (!score || score <= 0) return null;
-    if (score === 1) return { name: 'Hole-in-One!', emoji: '🏆', density: 120, duration: 4000, cssClass: 'ace' };
+    if (score === 1) return { name: 'Hole-in-One!', emoji: '🏆', density: 50, duration: 2200, cssClass: 'ace' };
     var diff = score - par;
-    if (diff <= -3) return { name: 'Albatross!', emoji: '🦅', density: 100, duration: 3500, cssClass: 'eagle' };
-    if (diff === -2) return { name: 'Eagle!', emoji: '🦅', density: 80, duration: 3000, cssClass: 'eagle' };
-    if (diff === -1) return { name: 'Birdie!', emoji: '🐦', density: 60, duration: 2500, cssClass: 'birdie' };
-    if (diff === 0) return { name: 'Par', emoji: '⛳', density: 35, duration: 2000, cssClass: 'par-score' };
-    if (diff === 1) return { name: 'Bogey', emoji: '😬', density: 20, duration: 2500, cssClass: 'bogey' };
-    if (diff === 2) return { name: 'Double Bogey', emoji: '💀', density: 25, duration: 2500, cssClass: 'double-plus' };
-    return { name: 'Triple+', emoji: '🧑🏽‍🦼', density: 30, duration: 3000, cssClass: 'double-plus' };
+    if (diff <= -3) return { name: 'Albatross!', emoji: '🦅', density: 45, duration: 2000, cssClass: 'eagle' };
+    if (diff === -2) return { name: 'Eagle!', emoji: '🦅', density: 40, duration: 2000, cssClass: 'eagle' };
+    if (diff === -1) return { name: 'Birdie!', emoji: '🐦', density: 30, duration: 1800, cssClass: 'birdie' };
+    if (diff === 0) return { name: 'Par', emoji: '⛳', density: 18, duration: 1600, cssClass: 'par-score' };
+    if (diff === 1) return { name: 'Bogey', emoji: '😬', density: 12, duration: 1600, cssClass: 'bogey' };
+    if (diff === 2) return { name: 'Double Bogey', emoji: '💀', density: 15, duration: 1600, cssClass: 'double-plus' };
+    return { name: 'Triple+', emoji: '🧑🏽‍🦼', density: 18, duration: 1800, cssClass: 'double-plus' };
   }
 
-  function showScoreEffect(score, par) {
+  // Shows effect and calls onDone when animation is fully finished
+  function showScoreEffect(score, par, onDone) {
     var tier = getScoreEffectTier(score, par);
-    if (!tier) return;
+    if (!tier) { if (onDone) onDone(); return; }
     showScoreAnnounce(tier);
-    spawnEmojiRain(tier);
+    spawnEmojiBurst(tier);
+    // Wait for full effect to finish, then call onDone
+    var totalWait = tier.duration + 400; // burst + announce out
+    setTimeout(function() { if (onDone) onDone(); }, totalWait);
   }
 
   function showScoreAnnounce(tier) {
@@ -76,24 +80,32 @@
     setTimeout(function() {
       el.classList.add('out');
       setTimeout(function() { if (el.parentNode) el.parentNode.removeChild(el); }, 400);
-    }, 1200);
+    }, tier.duration - 400);
   }
 
-  function spawnEmojiRain(tier) {
+  function spawnEmojiBurst(tier) {
     var container = document.createElement('div');
     container.className = 'score-effect-container';
     document.body.appendChild(container);
     for (var i = 0; i < tier.density; i++) {
       var p = document.createElement('div');
-      p.className = 'emoji-rain-particle';
+      p.className = 'emoji-burst-particle';
       p.textContent = tier.emoji;
-      p.style.setProperty('--x', (Math.random() * 100) + '%');
-      p.style.setProperty('--delay', (Math.random() * 1.2) + 's');
-      p.style.setProperty('--fall-dur', (2 + Math.random() * 1.5) + 's');
-      p.style.setProperty('--emoji-size', (20 + Math.random() * 20) + 'px');
+      // Random position across the screen
+      p.style.setProperty('--x', (5 + Math.random() * 90) + '%');
+      p.style.setProperty('--y', (5 + Math.random() * 90) + '%');
+      // Small random drift so they don't all grow in place
+      p.style.setProperty('--tx', (Math.random() * 40 - 20) + 'px');
+      p.style.setProperty('--ty', (Math.random() * 40 - 20) + 'px');
+      // Staggered delays for a wave effect
+      p.style.setProperty('--delay', (Math.random() * 0.6) + 's');
+      // Each emoji grows to a large size
+      p.style.setProperty('--end-scale', (2.5 + Math.random() * 2).toFixed(1));
+      p.style.setProperty('--burst-dur', (1.2 + Math.random() * 0.8) + 's');
+      p.style.setProperty('--emoji-size', (18 + Math.random() * 14) + 'px');
       container.appendChild(p);
     }
-    setTimeout(function() { if (container.parentNode) container.parentNode.removeChild(container); }, tier.duration + 2000);
+    setTimeout(function() { if (container.parentNode) container.parentNode.removeChild(container); }, tier.duration + 1000);
   }
 
   requireAuth(function(user) {
@@ -572,14 +584,21 @@
     };
 
     function proceedToHole(idx) {
-      // Show score effect when moving forward
+      // Show score effect when moving forward, wait for it to finish
       if (idx > currentHole) {
         var prevPar = course.holes[currentHole].par;
         var prevScore = R.scores[R.players[0]][currentHole];
-        if (prevScore > 0) showScoreEffect(prevScore, prevPar);
+        if (prevScore > 0) {
+          showScoreEffect(prevScore, prevPar, function() {
+            doAdvanceHole(idx);
+          });
+          return;
+        }
       }
+      doAdvanceHole(idx);
+    }
+    function doAdvanceHole(idx) {
       currentHole = idx;
-      // Auto-set score to par for any player who hasn't scored this hole yet
       const hole = course.holes[currentHole];
       R.players.forEach(p => {
         if (R.scores[p][currentHole] === 0) {
@@ -1237,18 +1256,24 @@
     };
 
     function proceedToHoleGroup(idx) {
-      // Show score effect when moving forward
+      // Show score effect when moving forward, wait for it to finish
       if (idx > currentHole && R && R._uidToName) {
         var myName = R._uidToName[user.uid];
         var c = course_ref.current;
         if (myName && R.scores[myName] && c) {
           var prevPar = c.holes[currentHole].par;
           var prevScore = R.scores[myName][currentHole];
-          if (prevScore > 0) showScoreEffect(prevScore, prevPar);
+          if (prevScore > 0) {
+            showScoreEffect(prevScore, prevPar, function() {
+              currentHole = idx;
+              renderGroup();
+              window.scrollTo({ top: 0, behavior: 'smooth' });
+            });
+            return;
+          }
         }
       }
       currentHole = idx;
-      // currentHole is local only — don't push to Firebase
       renderGroup();
       window.scrollTo({ top: 0, behavior: 'smooth' });
     }
