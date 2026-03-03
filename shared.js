@@ -1,6 +1,6 @@
 // ==================== AUTO-UPDATE CHECK ====================
 // Forces a hard reload when a new version is deployed
-var APP_VERSION = '156';
+var APP_VERSION = '157';
 (function() {
   var storedVersion = localStorage.getItem('app_version');
   if (storedVersion && storedVersion !== APP_VERSION) {
@@ -329,7 +329,7 @@ const COURSES = [
     address: '187 Hill St, Mahopac, NY 10541', phone: '(845) 808-1880', par: 72,
     group: 'other',
     link: 'https://www.putnamcountygolfcourse.com/putnam-county-golf-course',
-    overview: '',
+    overview: 'images/putnam-county-map.jpg',
     tees: {
       blue:  { label: 'Blue',  yards: 6645, rating: 73.3, slope: 129 },
       white: { label: 'White', yards: 6270, rating: 71.2, slope: 127 },
