@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<style>html,body{background:#0a0f0d}</style>
+<meta charset="UTF-8">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#0a0f0d">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icon-192.png">
+<title>Delete All History - Westchester Golf</title>
+<link rel="stylesheet" href="shared.css?v=15">
+</head>
+<body>
+
+<div class="header">
+  <h1>Delete All History</h1>
+  <div class="subtitle">Wipes round history for every account — profiles are kept</div>
+</div>
+
+<div class="main">
+  <div class="auth-card">
+    <div id="result" style="text-align:center;padding:12px;font-weight:600"></div>
+    <div style="text-align:center;margin-top:16px">
+      <a href="login.html" style="color:var(--text-muted);font-size:13px">Back to login</a>
+    </div>
+  </div>
+</div>
+
+<script src="firebase-config.js?v=15"></script>
+<script>
+  (function() {
+    var resultEl = document.getElementById('result');
+    resultEl.style.color = 'var(--text-muted)';
+    resultEl.textContent = 'Clearing all round history...';
+
+    // Clear local round history (keep accounts, sessions, avatars)
+    localStorage.removeItem('westchester-golf-v2');
+    localStorage.removeItem('active-round-v2');
+    localStorage.removeItem('active-group-code');
+
+    // Clear rounds from local DB cache if present
+    try {
+      var dbData = JSON.parse(localStorage.getItem('wg-db')) || {};
+      // Remove rounds from each user in the local DB cache
+      if (dbData.users) {
+        Object.keys(dbData.users).forEach(function(uid) {
+          if (dbData.users[uid] && dbData.users[uid].rounds) {
+            delete dbData.users[uid].rounds;
+          }
+        });
+      }
+      localStorage.setItem('wg-db', JSON.stringify(dbData));
+    } catch(e) {}
+
+    // Clear Firebase: remove rounds for all users and active rounds
+    _firebaseLoadPromise.then(function() {
+      if (!_firebaseReady || !_firebaseDB) {
+        resultEl.style.color = 'var(--bogey)';
+        resultEl.textContent = 'Local history wiped. Firebase offline — could not clear cloud data.';
+        return;
+      }
+
+      // Get all user UIDs, then delete their rounds
+      _firebaseDB.ref('users').once('value').then(function(snap) {
+        var usersData = snap.val();
+        var promises = [];
+
+        // Remove rounds for every user (keep profile and other data)
+        if (usersData) {
+          Object.keys(usersData).forEach(function(uid) {
+            promises.push(_firebaseDB.ref('users/' + uid + '/rounds').remove());
+          });
+        }
+
+        // Also remove any active group rounds
+        promises.push(_firebaseDB.ref('activeRounds').remove());
+
+        return Promise.all(promises);
+      }).then(function() {
+        resultEl.style.color = 'var(--green-accent)';
+        resultEl.textContent = 'All round history deleted — accounts preserved. Redirecting...';
+        setTimeout(function() {
+          window.location.href = 'login.html?_=' + Date.now();
+        }, 1500);
+      }).catch(function(err) {
+        resultEl.style.color = 'var(--bogey)';
+        resultEl.textContent = 'Local history wiped. Firebase error: ' + (err.message || 'Unknown error');
+      });
+    });
+  })();
+</script>
+</body>
+</html>
