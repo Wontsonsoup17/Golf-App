@@ -273,18 +273,22 @@ var FIREBASE_CONFIG = {
         try {
           window._fbSDK.initializeApp(FIREBASE_CONFIG);
           _firebaseDB = window._fbSDK.database();
-          _firebaseReady = true;
           console.log('[Firebase] Connected to real-time database');
           // Sign in anonymously so security rules (auth != null) are satisfied
+          // Don't set _firebaseReady until auth completes
           window._fbSDK.auth().signInAnonymously().then(function() {
             console.log('[Firebase] Anonymous auth OK');
+            _firebaseReady = true;
+            _firebaseLoadResolve();
           }).catch(function(e) {
             console.warn('[Firebase] Anonymous auth failed:', e.message);
+            _firebaseReady = true; // still mark ready so app works
+            _firebaseLoadResolve();
           });
         } catch(e) {
           console.warn('[Firebase] Init failed:', e.message);
+          _firebaseLoadResolve();
         }
-        _firebaseLoadResolve();
       };
       s2.onerror = function() {
         console.warn('[Firebase] DB SDK load failed');
