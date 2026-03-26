@@ -405,6 +405,7 @@ const COURSES = [
   {
     id: 'providence', name: 'Providence Golf Club',
     address: '1518 Clubhouse Boulevard, Davenport, FL 33837', phone: '(863) 424-7916', par: 72,
+    group: 'other',
     link: 'https://www.providence-golf.com/hole-by-hole/',
     overview: '',
     tees: {
