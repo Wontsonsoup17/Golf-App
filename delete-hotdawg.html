@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<style>html,body{background:#0a0f0d}</style>
+<meta charset="UTF-8">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#0a0f0d">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icon-192.png">
+<title>Delete Account - Westchester Golf</title>
+<link rel="stylesheet" href="shared.css?v=15">
+</head>
+<body>
+
+<div class="header">
+  <h1>Delete Account: hotdawg</h1>
+  <div class="subtitle">Removes the "hotdawg" account from local storage and Firebase</div>
+</div>
+
+<div class="main">
+  <div class="auth-card">
+    <div id="result" style="text-align:center;padding:12px;font-weight:600">Deleting...</div>
+    <div style="text-align:center;margin-top:16px">
+      <a href="index.html" style="color:var(--text-muted);font-size:13px">Back to app</a>
+    </div>
+  </div>
+</div>
+
+<script src="firebase-config.js?v=15"></script>
+<script>
+  (function() {
+    var TARGET = 'hotdawg';
+    var resultEl = document.getElementById('result');
+    var users = getLocalUsers();
+    var stored = users[TARGET];
+
+    if (!stored) {
+      // Not in localStorage — still try Firebase cleanup
+      resultEl.style.color = 'var(--text-muted)';
+      resultEl.textContent = 'Account "' + TARGET + '" not found in local storage. Cleaning Firebase...';
+    } else {
+      var uid = stored.uid;
+
+      // Remove from local users registry
+      delete users[TARGET];
+      saveLocalUsers(users);
+
+      // Remove from local database
+      var dbData = getLocalDB();
+      if (dbData.usernames) delete dbData.usernames[TARGET];
+      if (dbData.users) delete dbData.users[uid];
+      if (dbData.rounds) delete dbData.rounds[uid];
+      saveLocalDB(dbData);
+
+      // Remove avatar
+      localStorage.removeItem('wg-avatar-' + uid);
+
+      // Clear session if hotdawg is currently logged in
+      var session = getSession();
+      if (session && session.username && session.username.toLowerCase() === TARGET) {
+        clearSession();
+      }
+    }
+
+    // Remove from Firebase: credentials, usernames, user profile, and rounds
+    Promise.all([
+      db.ref('credentials/' + TARGET).remove().catch(function() {}),
+      db.ref('usernames/' + TARGET).remove().catch(function() {})
+    ]).then(function() {
+      // If we had a uid, also remove user data from Firebase
+      if (stored && stored.uid) {
+        return Promise.all([
+          db.ref('users/' + stored.uid).remove().catch(function() {}),
+        ]);
+      }
+    }).then(function() {
+      resultEl.style.color = 'var(--accent)';
+      resultEl.textContent = 'Account "' + TARGET + '" deleted from local storage and Firebase.';
+    }).catch(function() {
+      resultEl.style.color = 'var(--accent)';
+      resultEl.textContent = 'Account "' + TARGET + '" deleted locally. Firebase cleanup may have partially failed.';
+    });
+  })();
+</script>
+</body>
+</html>
