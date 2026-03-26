@@ -416,24 +416,24 @@ const COURSES = [
       red:   { label: 'Red',   yards: 5029, rating: 69.0, slope: 118 }
     },
     holes: [
-      { num:1,  par:4, black:413, blue:392, white:362, green:362, red:293, hcp:9  },
-      { num:2,  par:5, black:510, blue:490, white:480, green:376, red:376, hcp:11 },
-      { num:3,  par:4, black:429, blue:392, white:336, green:336, red:296, hcp:5  },
-      { num:4,  par:3, black:209, blue:173, white:147, green:147, red:131, hcp:13 },
-      { num:5,  par:4, black:301, blue:281, white:275, green:275, red:215, hcp:15 },
-      { num:6,  par:4, black:425, blue:394, white:376, green:332, red:332, hcp:1  },
-      { num:7,  par:4, black:445, blue:400, white:380, green:327, red:327, hcp:3  },
-      { num:8,  par:3, black:160, blue:140, white:130, green:130, red:75,  hcp:17 },
-      { num:9,  par:5, black:559, blue:512, white:449, green:415, red:415, hcp:7  },
-      { num:10, par:4, black:427, blue:380, white:367, green:295, red:295, hcp:12 },
-      { num:11, par:4, black:391, blue:333, white:322, green:322, red:231, hcp:16 },
-      { num:12, par:3, black:181, blue:165, white:150, green:150, red:133, hcp:14 },
-      { num:13, par:5, black:505, blue:483, white:475, green:420, red:420, hcp:10 },
-      { num:14, par:4, black:468, blue:433, white:415, green:347, red:347, hcp:2  },
-      { num:15, par:5, black:558, blue:534, white:524, green:444, red:444, hcp:4  },
-      { num:16, par:4, black:439, blue:395, white:382, green:309, red:309, hcp:6  },
-      { num:17, par:3, black:150, blue:145, white:130, green:130, red:110, hcp:18 },
-      { num:18, par:4, black:441, blue:388, white:323, green:323, red:280, hcp:8  }
+      { num:1,  par:4, black:413, blue:392, white:362, green:362, red:293, hcp:9,  img:'https://www.pebblewoodgolf.com/00062699/wp-content/uploads/sites/8703/2023/01/hole-1.jpg' },
+      { num:2,  par:5, black:510, blue:490, white:480, green:376, red:376, hcp:11, img:'https://www.pebblewoodgolf.com/00062699/wp-content/uploads/sites/8703/2023/01/hole-2.jpg' },
+      { num:3,  par:4, black:429, blue:392, white:336, green:336, red:296, hcp:5,  img:'https://www.pebblewoodgolf.com/00062699/wp-content/uploads/sites/8703/2023/01/hole-3.jpg' },
+      { num:4,  par:3, black:209, blue:173, white:147, green:147, red:131, hcp:13, img:'https://www.pebblewoodgolf.com/00062699/wp-content/uploads/sites/8703/2023/01/hole-4.jpg' },
+      { num:5,  par:4, black:301, blue:281, white:275, green:275, red:215, hcp:15, img:'https://www.pebblewoodgolf.com/00062699/wp-content/uploads/sites/8703/2023/01/hole-5.jpg' },
+      { num:6,  par:4, black:425, blue:394, white:376, green:332, red:332, hcp:1,  img:'https://www.pebblewoodgolf.com/00062699/wp-content/uploads/sites/8703/2023/01/hole-6.jpg' },
+      { num:7,  par:4, black:445, blue:400, white:380, green:327, red:327, hcp:3,  img:'https://www.pebblewoodgolf.com/00062699/wp-content/uploads/sites/8703/2023/01/hole-7.jpg' },
+      { num:8,  par:3, black:160, blue:140, white:130, green:130, red:75,  hcp:17, img:'https://www.pebblewoodgolf.com/00062699/wp-content/uploads/sites/8703/2023/01/hole-8.jpg' },
+      { num:9,  par:5, black:559, blue:512, white:449, green:415, red:415, hcp:7,  img:'https://www.pebblewoodgolf.com/00062699/wp-content/uploads/sites/8703/2023/01/hole-9.jpg' },
+      { num:10, par:4, black:427, blue:380, white:367, green:295, red:295, hcp:12, img:'https://www.pebblewoodgolf.com/00062699/wp-content/uploads/sites/8703/2023/01/hole-10.jpg' },
+      { num:11, par:4, black:391, blue:333, white:322, green:322, red:231, hcp:16, img:'https://www.pebblewoodgolf.com/00062699/wp-content/uploads/sites/8703/2023/01/hole-11.jpg' },
+      { num:12, par:3, black:181, blue:165, white:150, green:150, red:133, hcp:14, img:'https://www.pebblewoodgolf.com/00062699/wp-content/uploads/sites/8703/2023/01/hole-12.jpg' },
+      { num:13, par:5, black:505, blue:483, white:475, green:420, red:420, hcp:10, img:'https://www.pebblewoodgolf.com/00062699/wp-content/uploads/sites/8703/2023/01/hole-13.jpg' },
+      { num:14, par:4, black:468, blue:433, white:415, green:347, red:347, hcp:2,  img:'https://www.pebblewoodgolf.com/00062699/wp-content/uploads/sites/8703/2023/01/hole-14.jpg' },
+      { num:15, par:5, black:558, blue:534, white:524, green:444, red:444, hcp:4,  img:'https://www.pebblewoodgolf.com/00062699/wp-content/uploads/sites/8703/2023/01/hole-15.jpg' },
+      { num:16, par:4, black:439, blue:395, white:382, green:309, red:309, hcp:6,  img:'https://www.pebblewoodgolf.com/00062699/wp-content/uploads/sites/8703/2023/01/hole-16.jpg' },
+      { num:17, par:3, black:150, blue:145, white:130, green:130, red:110, hcp:18, img:'https://www.pebblewoodgolf.com/00062699/wp-content/uploads/sites/8703/2023/01/hole-17.jpg' },
+      { num:18, par:4, black:441, blue:388, white:323, green:323, red:280, hcp:8,  img:'https://www.pebblewoodgolf.com/00062699/wp-content/uploads/sites/8703/2023/01/hole-18.jpg' }
     ]
   }
 ];
