@@ -1,6 +1,6 @@
 // ==================== AUTO-UPDATE CHECK ====================
 // Forces a hard reload when a new version is deployed
-var APP_VERSION = '159';
+var APP_VERSION = '160';
 (function() {
   var storedVersion = localStorage.getItem('app_version');
   if (storedVersion && storedVersion !== APP_VERSION) {
@@ -400,6 +400,39 @@ const COURSES = [
       { num:16, par:5, blue:525, white:515, gold:475, red:460, hcp:4  },
       { num:17, par:4, blue:450, white:400, gold:365, red:360, hcp:6  },
       { num:18, par:4, blue:450, white:415, gold:385, red:375, hcp:2  }
+    ]
+  },
+  {
+    id: 'providence', name: 'Providence Golf Club',
+    address: '1518 Clubhouse Boulevard, Davenport, FL 33837', phone: '(863) 424-7916', par: 72,
+    link: 'https://www.providence-golf.com/hole-by-hole/',
+    overview: '',
+    tees: {
+      black: { label: 'Black', yards: 7011, rating: 74.5, slope: 132 },
+      blue:  { label: 'Blue',  yards: 6430, rating: 71.1, slope: 123 },
+      white: { label: 'White', yards: 6023, rating: 68.7, slope: 122 },
+      green: { label: 'Green', yards: 5440, rating: 66.7, slope: 118 },
+      red:   { label: 'Red',   yards: 5029, rating: 69.0, slope: 118 }
+    },
+    holes: [
+      { num:1,  par:4, black:413, blue:392, white:362, green:362, red:293, hcp:9  },
+      { num:2,  par:5, black:510, blue:490, white:480, green:376, red:376, hcp:11 },
+      { num:3,  par:4, black:429, blue:392, white:336, green:336, red:296, hcp:5  },
+      { num:4,  par:3, black:209, blue:173, white:147, green:147, red:131, hcp:13 },
+      { num:5,  par:4, black:301, blue:281, white:275, green:275, red:215, hcp:15 },
+      { num:6,  par:4, black:425, blue:394, white:376, green:332, red:332, hcp:1  },
+      { num:7,  par:4, black:445, blue:400, white:380, green:327, red:327, hcp:3  },
+      { num:8,  par:3, black:160, blue:140, white:130, green:130, red:75,  hcp:17 },
+      { num:9,  par:5, black:559, blue:512, white:449, green:415, red:415, hcp:7  },
+      { num:10, par:4, black:427, blue:380, white:367, green:295, red:295, hcp:12 },
+      { num:11, par:4, black:391, blue:333, white:322, green:322, red:231, hcp:16 },
+      { num:12, par:3, black:181, blue:165, white:150, green:150, red:133, hcp:14 },
+      { num:13, par:5, black:505, blue:483, white:475, green:420, red:420, hcp:10 },
+      { num:14, par:4, black:468, blue:433, white:415, green:347, red:347, hcp:2  },
+      { num:15, par:5, black:558, blue:534, white:524, green:444, red:444, hcp:4  },
+      { num:16, par:4, black:439, blue:395, white:382, green:309, red:309, hcp:6  },
+      { num:17, par:3, black:150, blue:145, white:130, green:130, red:110, hcp:18 },
+      { num:18, par:4, black:441, blue:388, white:323, green:323, red:280, hcp:8  }
     ]
   }
 ];
