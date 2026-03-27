@@ -49,7 +49,12 @@
     var displayName = user.displayName || 'You';
     document.getElementById('playerName').textContent = displayName + "'s personal stats";
 
-    fbLoadRounds(user.uid).then(function(rounds) {
+    // Wait for Firebase to be fully ready before loading rounds
+    // This prevents empty results when navigating here immediately after sign-in
+    var loadPromise = (typeof _firebaseLoadPromise !== 'undefined') ? _firebaseLoadPromise : Promise.resolve();
+    loadPromise.then(function() {
+      return fbLoadRounds(user.uid);
+    }).then(function(rounds) {
       renderPersonalStats(rounds, displayName);
     }).catch(function() {
       renderPersonalStats(loadRounds(), displayName);
