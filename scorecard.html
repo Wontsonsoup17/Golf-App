@@ -822,10 +822,10 @@
       }
       if (!data.meta) return;
 
-      // Detect admin-ended round for non-admin players
-      if (data.meta.status === 'ended' && data.meta.createdBy !== user.uid && !roundEndedHandled) {
+      // Detect round ended (by host OR by super admin from dashboard)
+      if (data.meta.status === 'ended' && !roundEndedHandled) {
         roundEndedHandled = true;
-        // Wrap in IIFE to avoid variable name conflicts with outer scope
+        // Save the round data before cleanup
         (function() {
           var tempR = groupDataToRound(data, groupCode);
           var endedCourse = getCourse(tempR.courseId);
@@ -861,12 +861,23 @@
           }
         })();
 
-        // Clean up and redirect
+        // Clean up listeners
         if (unsubscribe) unsubscribe();
         if (unsubConn) unsubConn();
         localStorage.removeItem('active-group-code');
-        alert('The admin has ended the round. Your scores have been saved.');
-        window.location.href = 'history.html';
+
+        // Show blocking full-screen modal
+        var endedModal = document.createElement('div');
+        endedModal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.9);z-index:9999;display:flex;align-items:center;justify-content:center;padding:24px;animation:broadcastFadeIn 0.3s ease';
+        endedModal.innerHTML =
+          '<div style="background:var(--bg-card,#1a2e1a);border:1px solid rgba(255,82,82,0.3);border-radius:16px;padding:32px 24px;max-width:400px;width:100%;text-align:center;box-shadow:0 20px 80px rgba(0,0,0,0.6)">' +
+            '<div style="font-size:48px;margin-bottom:12px">&#128721;</div>' +
+            '<h3 style="color:var(--red,#ff5252);font-size:20px;margin-bottom:8px">Round Ended</h3>' +
+            '<p style="color:var(--text-muted,#7a9e86);font-size:14px;line-height:1.5;margin-bottom:8px">The admin has ended this round for all players.</p>' +
+            '<p style="color:var(--text,#e8f5e9);font-size:13px;margin-bottom:24px">Your scores have been saved to your history.</p>' +
+            '<button onclick="window.location.href=\'history.html\'" style="width:100%;padding:14px;background:linear-gradient(135deg,#b8860b,#d4af37);color:#1a1a1a;font-size:15px;font-weight:700;border:none;border-radius:10px;cursor:pointer">View History</button>' +
+          '</div>';
+        document.body.appendChild(endedModal);
         return;
       }
 
