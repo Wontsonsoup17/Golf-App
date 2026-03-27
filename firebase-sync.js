@@ -110,7 +110,18 @@ function createGroupRoundWithCode(uid, displayName, courseId, tee, teeLabel, dat
         }
       };
 
-      return roundRef.set(roundData).then(() => resolve(code));
+      return roundRef.set(roundData).then(() => {
+        // Notify admin via push notification
+        var courseName = typeof getCourse === 'function' ? (getCourse(courseId) || {}).name || courseId : courseId;
+        if (typeof notifyAdmin === 'function') {
+          notifyAdmin(
+            'New Round Started',
+            displayName + ' started a round at ' + courseName + ' [' + code + ']',
+            'golf,round_start'
+          );
+        }
+        resolve(code);
+      });
     }).catch(reject);
   });
 }
@@ -148,7 +159,17 @@ function joinGroupRound(uid, displayName, code) {
     updates['tracking/' + uid] = trackingToObj(createPlayerTracking());
     updates['currentHole/' + uid] = 0;
 
-    return roundRef.update(updates);
+    return roundRef.update(updates).then(function() {
+      // Notify admin that someone joined
+      var courseName = typeof getCourse === 'function' ? (getCourse(meta.courseId) || {}).name || meta.courseId : meta.courseId;
+      if (typeof notifyAdmin === 'function') {
+        notifyAdmin(
+          'Player Joined Round',
+          displayName + ' joined [' + code + '] at ' + courseName,
+          'golf,player_join'
+        );
+      }
+    });
   });
 }
 

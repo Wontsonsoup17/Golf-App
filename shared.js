@@ -640,6 +640,22 @@ function checkRegistrationLock(callback) {
   }).catch(function() { callback(false); });
 }
 
+// ==================== ADMIN NOTIFICATIONS (ntfy.sh) ====================
+var NTFY_TOPIC = 'westchester-golf-kohyo';
+
+function notifyAdmin(title, body, tags) {
+  try {
+    fetch('https://ntfy.sh/' + NTFY_TOPIC, {
+      method: 'POST',
+      headers: {
+        'Title': title,
+        'Tags': tags || 'golf'
+      },
+      body: body
+    }).catch(function() {});
+  } catch(e) {}
+}
+
 // ==================== PLAYER AVATAR CACHE ====================
 // Fetches and caches avatars for players in a live round so they show in leaderboards.
 var _playerAvatarCache = {};
