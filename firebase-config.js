@@ -33,14 +33,45 @@ function clearSession() {
 }
 
 // ==================== AVATAR STORAGE ====================
+// Avatars are saved to both localStorage (fast cache) and Firebase (persistent).
+// On sign-in, if localStorage is empty, the avatar is restored from Firebase.
 function getUserAvatar(uid) {
   try { return localStorage.getItem('wg-avatar-' + uid) || null; } catch(e) { return null; }
 }
 function setUserAvatar(uid, dataUrl) {
   localStorage.setItem('wg-avatar-' + uid, dataUrl);
+  // Persist to Firebase so it survives cache clears
+  _firebaseLoadPromise.then(function() {
+    if (_firebaseReady && _firebaseDB) {
+      _firebaseDB.ref('users/' + uid + '/profile/avatar').set(dataUrl).catch(function() {});
+    }
+  });
 }
 function removeUserAvatar(uid) {
   localStorage.removeItem('wg-avatar-' + uid);
+  _firebaseLoadPromise.then(function() {
+    if (_firebaseReady && _firebaseDB) {
+      _firebaseDB.ref('users/' + uid + '/profile/avatar').remove().catch(function() {});
+    }
+  });
+}
+// Restore avatar from Firebase if missing from localStorage (e.g. after cache clear)
+function restoreAvatarFromFirebase(uid) {
+  if (getUserAvatar(uid)) return; // already have it locally
+  _firebaseLoadPromise.then(function() {
+    if (_firebaseReady && _firebaseDB) {
+      _firebaseDB.ref('users/' + uid + '/profile/avatar').once('value').then(function(snap) {
+        var dataUrl = snap.val();
+        if (dataUrl && typeof dataUrl === 'string') {
+          localStorage.setItem('wg-avatar-' + uid, dataUrl);
+          // Re-render header if it exists to show the restored avatar
+          if (typeof renderUserHeader === 'function' && auth.currentUser) {
+            renderUserHeader(auth.currentUser);
+          }
+        }
+      }).catch(function() {});
+    }
+  });
 }
 
 // ==================== AUTH API ====================
@@ -650,6 +681,8 @@ function requireAuth(callback) {
   onAuthReady(function(user) {
     if (!user) { window.location.href = 'login.html'; }
     else {
+      // Restore avatar from Firebase if missing locally (e.g. after cache clear)
+      restoreAvatarFromFirebase(user.uid);
       callback(user);
       // Check for required version update
       setTimeout(function() {
