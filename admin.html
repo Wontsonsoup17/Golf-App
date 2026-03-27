@@ -73,11 +73,18 @@
 .admin-round-meta { font-size: 11px; color: var(--text-muted); }
 .admin-round-actions { display: flex; gap: 6px; }
 
-/* User list */
-.admin-user { display: flex; align-items: center; justify-content: space-between; padding: 10px; background: var(--bg); border-radius: 8px; margin-bottom: 6px; }
+/* User list - expandable dropdown */
+.admin-user-item { background: var(--bg); border-radius: 8px; margin-bottom: 6px; overflow: hidden; }
+.admin-user-header { display: flex; align-items: center; justify-content: space-between; padding: 10px 12px; cursor: pointer; transition: background 0.15s; -webkit-tap-highlight-color: transparent; }
+.admin-user-header:active { background: rgba(255,255,255,0.04); }
 .admin-user-name { font-weight: 600; color: var(--text); font-size: 13px; }
 .admin-user-uid { font-size: 10px; color: var(--text-muted); }
-.admin-user-actions { display: flex; gap: 6px; }
+.admin-user-chevron { color: var(--text-muted); font-size: 10px; transition: transform 0.2s; }
+.admin-user-actions-drawer { display: flex; gap: 8px; padding: 0 12px 12px; animation: drawerSlide 0.15s ease; }
+@keyframes drawerSlide { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: translateY(0); } }
+
+/* Legacy admin-user for kick modal */
+.admin-user { display: flex; align-items: center; justify-content: space-between; padding: 10px; background: var(--bg); border-radius: 8px; margin-bottom: 6px; }
 
 /* Feedback */
 .admin-toast { position: fixed; bottom: 80px; left: 50%; transform: translateX(-50%); background: var(--bg-card); border: 1px solid var(--gold); color: var(--gold); padding: 10px 20px; border-radius: 10px; font-size: 13px; font-weight: 600; z-index: 9999; opacity: 0; transition: opacity 0.3s; pointer-events: none; }
@@ -120,11 +127,15 @@
     <div class="admin-tool">
       <div class="admin-tool-info">
         <div class="admin-tool-name">Broadcast Message</div>
-        <div class="admin-tool-desc">Show a banner on all users' screens</div>
+        <div class="admin-tool-desc">Show a banner on users' screens</div>
       </div>
       <button class="admin-btn admin-btn-blue admin-btn-sm" onclick="showBroadcastInput()">Send</button>
     </div>
     <div id="broadcastInputArea" style="display:none;margin-top:8px">
+      <select class="admin-select" id="broadcastScope">
+        <option value="app">&#127760; App-wide (all pages)</option>
+        <option value="round">&#127948; My Live Round only</option>
+      </select>
       <input class="admin-input" id="broadcastText" placeholder="Type your message...">
       <button class="admin-btn admin-btn-gold" style="width:100%" onclick="sendBroadcast()">Send Broadcast</button>
     </div>
@@ -347,13 +358,32 @@ function showBroadcastInput() {
 function sendBroadcast() {
   var text = document.getElementById('broadcastText').value.trim();
   if (!text) return;
-  _firebaseDB.ref('config/broadcast').set({ text: text, ts: Date.now() }).then(function() {
-    toast('Broadcast sent');
-    document.getElementById('broadcastText').value = '';
-    document.getElementById('broadcastInputArea').style.display = 'none';
-  }).catch(function(e) {
-    toast('Error: ' + e.message);
-  });
+  var scope = document.getElementById('broadcastScope').value;
+
+  if (scope === 'round') {
+    // Send to current live round only
+    var groupCode = localStorage.getItem('active-group-code');
+    if (!groupCode) {
+      toast('No active live round found');
+      return;
+    }
+    _firebaseDB.ref('activeRounds/' + groupCode + '/broadcast').set({ text: text, ts: Date.now() }).then(function() {
+      toast('Broadcast sent to round ' + groupCode);
+      document.getElementById('broadcastText').value = '';
+      document.getElementById('broadcastInputArea').style.display = 'none';
+    }).catch(function(e) {
+      toast('Error: ' + e.message);
+    });
+  } else {
+    // App-wide broadcast
+    _firebaseDB.ref('config/broadcast').set({ text: text, ts: Date.now() }).then(function() {
+      toast('App-wide broadcast sent');
+      document.getElementById('broadcastText').value = '';
+      document.getElementById('broadcastInputArea').style.display = 'none';
+    }).catch(function(e) {
+      toast('Error: ' + e.message);
+    });
+  }
 }
 
 // ==================== LOCK REGISTRATION ====================
@@ -410,18 +440,36 @@ function renderUserList(users) {
   users.forEach(function(u) {
     var isAdminUser = isAdmin(u.username);
     var nameDisplay = isAdminUser ? '<span class="admin-name">' + u.username + '</span> &#128305;' : u.username;
-    html += '<div class="admin-user">' +
-      '<div>' +
-        '<div class="admin-user-name">' + nameDisplay + '</div>' +
-        '<div class="admin-user-uid">' + u.uid + '</div>' +
+    var safeUser = u.username.replace(/'/g, "\\'");
+    html += '<div class="admin-user-item">' +
+      '<div class="admin-user-header" onclick="toggleUserActions(\'' + safeUser + '\')">' +
+        '<div>' +
+          '<div class="admin-user-name">' + nameDisplay + '</div>' +
+          '<div class="admin-user-uid">' + u.uid + '</div>' +
+        '</div>' +
+        '<span class="admin-user-chevron" id="chevron_' + safeUser + '">&#9660;</span>' +
       '</div>' +
-      '<div class="admin-user-actions">' +
-        '<button class="admin-btn admin-btn-blue admin-btn-sm" onclick="openResetPassword(\'' + u.username + '\')">Reset PW</button>' +
-        (isAdminUser ? '' : '<button class="admin-btn admin-btn-red admin-btn-sm" onclick="openDeleteAccount(\'' + u.username + '\',\'' + u.uid + '\')">Delete</button>') +
+      '<div class="admin-user-actions-drawer" id="actions_' + safeUser + '" style="display:none">' +
+        '<button class="admin-btn admin-btn-blue" style="flex:1" onclick="openResetPassword(\'' + safeUser + '\')">&#128274; Reset Password</button>' +
+        (isAdminUser ? '' : '<button class="admin-btn admin-btn-red" style="flex:1" onclick="openDeleteAccount(\'' + safeUser + '\',\'' + u.uid + '\')">&#128465; Delete Account</button>') +
       '</div>' +
     '</div>';
   });
   container.innerHTML = html;
+}
+
+function toggleUserActions(username) {
+  var drawer = document.getElementById('actions_' + username);
+  var chevron = document.getElementById('chevron_' + username);
+  if (!drawer) return;
+  var isOpen = drawer.style.display !== 'none';
+  // Close all others first
+  document.querySelectorAll('.admin-user-actions-drawer').forEach(function(d) { d.style.display = 'none'; });
+  document.querySelectorAll('.admin-user-chevron').forEach(function(c) { c.innerHTML = '&#9660;'; c.style.transform = ''; });
+  if (!isOpen) {
+    drawer.style.display = 'flex';
+    chevron.innerHTML = '&#9650;';
+  }
 }
 
 // ==================== RESET PASSWORD ====================
