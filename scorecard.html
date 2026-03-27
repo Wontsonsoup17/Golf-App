@@ -128,6 +128,8 @@
 
   requireAuth(function(user) {
     renderBottomNav('courses');
+    renderBroadcastBanner();
+    renderRoundBroadcastListener();
 
     const urlParams = new URLSearchParams(window.location.search);
     let groupCode = urlParams.get('group');

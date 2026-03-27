@@ -329,6 +329,8 @@
 <script>
   requireAuth(function(user) {
     renderBottomNav('live');
+    renderBroadcastBanner();
+    renderRoundBroadcastListener();
 
     // Show live rounds list at top
     listenToActiveRoundsCount(function(count, rounds) {

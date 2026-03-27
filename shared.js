@@ -559,6 +559,67 @@ window.dismissBroadcast = function() {
   }
 };
 
+// Listen for round-specific broadcast messages
+// Call this on any page that has an active group round
+var _roundBroadcastDismissedId = null;
+function renderRoundBroadcastListener() {
+  var groupCode = localStorage.getItem('active-group-code');
+  if (!groupCode) return;
+  function _startRoundListener() {
+    if (typeof _firebaseDB === 'undefined' || !_firebaseDB) return;
+    _firebaseDB.ref('activeRounds/' + groupCode + '/broadcast').on('value', function(snap) {
+      var msg = snap.val();
+      if (!msg || !msg.text) return;
+      // Check 20-minute expiry
+      if (msg.ts && (Date.now() - msg.ts > BROADCAST_EXPIRY_MS)) return;
+      // Don't show if already dismissed this message
+      var msgId = 'round_' + groupCode + '_' + msg.ts + '_' + msg.text;
+      if (_roundBroadcastDismissedId === msgId) return;
+      // Don't show if another broadcast modal is already visible
+      if (document.getElementById('broadcastModal')) return;
+      // Show the modal
+      _showRoundBroadcastModal(msg, msgId, groupCode);
+    });
+  }
+  if (typeof _firebaseLoadPromise !== 'undefined') {
+    _firebaseLoadPromise.then(_startRoundListener);
+  } else {
+    _startRoundListener();
+  }
+}
+
+function _showRoundBroadcastModal(msg, msgId, groupCode) {
+  var modal = document.createElement('div');
+  modal.id = 'broadcastModal';
+  modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.85);z-index:9998;display:flex;align-items:center;justify-content:center;padding:24px;animation:broadcastFadeIn 0.3s ease';
+  var elapsed = Date.now() - (msg.ts || Date.now());
+  var remaining = Math.max(0, BROADCAST_EXPIRY_MS - elapsed);
+  modal.innerHTML =
+    '<div style="background:var(--bg-card,#1a2e1a);border:1px solid rgba(64,196,255,0.3);border-radius:16px;padding:28px 24px;max-width:400px;width:100%;text-align:center;box-shadow:0 20px 80px rgba(0,0,0,0.6)">' +
+      '<div style="font-size:40px;margin-bottom:8px">&#127948;</div>' +
+      '<div style="font-size:11px;text-transform:uppercase;letter-spacing:1.5px;color:var(--gold,#ffd54f);font-weight:700;margin-bottom:4px">Round Message</div>' +
+      '<div style="font-size:10px;color:var(--text-muted,#7a9e86);margin-bottom:12px;font-family:monospace">[' + groupCode + ']</div>' +
+      '<p style="color:var(--text,#e8f5e9);font-size:16px;line-height:1.5;margin-bottom:16px;font-weight:500">' + msg.text + '</p>' +
+      '<div id="broadcastTimer" style="font-size:11px;color:var(--text-muted,#7a9e86);margin-bottom:20px">Expires in <span id="broadcastCountdown"></span></div>' +
+      '<button onclick="closeRoundBroadcast(\'' + msgId.replace(/'/g, "\\'") + '\')" style="width:100%;padding:14px;background:rgba(64,196,255,0.15);color:var(--blue,#40c4ff);font-size:14px;font-weight:700;border:1px solid rgba(64,196,255,0.3);border-radius:10px;cursor:pointer">Got it</button>' +
+      (isCurrentUserAdmin() ? '<button onclick="dismissRoundBroadcast(\'' + groupCode + '\')" style="width:100%;padding:10px;background:transparent;color:var(--text-muted,#7a9e86);font-size:12px;border:none;cursor:pointer;margin-top:8px">Remove for everyone</button>' : '') +
+    '</div>';
+  document.body.appendChild(modal);
+  _updateBroadcastCountdown(remaining);
+}
+
+window.closeRoundBroadcast = function(msgId) {
+  _roundBroadcastDismissedId = msgId;
+  _removeBroadcastModal();
+};
+
+window.dismissRoundBroadcast = function(groupCode) {
+  _removeBroadcastModal();
+  if (typeof _firebaseDB !== 'undefined' && _firebaseDB) {
+    _firebaseDB.ref('activeRounds/' + groupCode + '/broadcast').remove();
+  }
+};
+
 // Check if registration is locked
 function checkRegistrationLock(callback) {
   if (typeof _firebaseDB === 'undefined' || !_firebaseDB) { callback(false); return; }
