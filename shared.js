@@ -843,11 +843,11 @@ function renderUserHeader(user) {
       '<div class="header-menu-btn" onclick="toggleProfilePanel()" role="button" aria-label="Open menu">' +
         '<span></span><span></span><span></span>' +
       '</div>' +
-      '<div class="profile-trigger" onclick="toggleProfilePanel()">' +
-        '<div class="' + avatarClass + '">' +
+      '<div class="profile-trigger">' +
+        '<div class="' + avatarClass + '" onclick="handleChangePhoto()">' +
           avatarContent +
         '</div>' +
-        '<div><div class="user-name">' + nameHtml + '</div></div>' +
+        '<div onclick="toggleProfilePanel()"><div class="user-name">' + nameHtml + '</div></div>' +
       '</div>' +
     '</div>' +
     '<div class="header-actions" id="headerActions">' +
