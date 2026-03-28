@@ -121,9 +121,12 @@
     <div class="admin-tool">
       <div class="admin-tool-info">
         <div class="admin-tool-name">Force Update All Users</div>
-        <div class="admin-tool-desc">Bump required version — forces everyone to update</div>
+        <div class="admin-tool-desc">Force everyone to reload and get latest version</div>
       </div>
-      <button class="admin-btn admin-btn-gold admin-btn-sm" onclick="forceUpdateAll()">Push Update</button>
+      <div style="display:flex;gap:6px">
+        <button class="admin-btn admin-btn-gold admin-btn-sm" onclick="forceUpdateAll()">Push</button>
+        <button class="admin-btn admin-btn-red admin-btn-sm" onclick="resetForceUpdate()">Reset</button>
+      </div>
     </div>
 
     <!-- Broadcast Message -->
@@ -340,11 +343,23 @@ function kickPlayer(code, uid, name) {
 
 // ==================== FORCE UPDATE ====================
 function forceUpdateAll() {
-  var nextVersion = parseInt(APP_VERSION, 10) + 1;
-  if (!confirm('Force all users to update? This sets required version to ' + nextVersion + '. Users on v' + APP_VERSION + ' or below will see the update modal.')) return;
-  _firebaseDB.ref('config/requiredVersion').set(nextVersion).then(function() {
-    toast('Required version set to ' + nextVersion);
-    document.getElementById('statVersion').textContent = 'v' + APP_VERSION + ' (req: ' + nextVersion + ')';
+  var currentVer = parseInt(APP_VERSION, 10);
+  if (!confirm('Force all users to reload? This clears their cached files and forces them to get the latest version (v' + currentVer + '). Users already on v' + currentVer + ' will just get a quick reload.')) return;
+  // Set requiredVersion to current — anyone on an older cached version will be forced to update
+  // This does NOT set it higher than current, so no one gets stuck in a loop
+  _firebaseDB.ref('config/requiredVersion').set(currentVer).then(function() {
+    toast('Force update pushed (v' + currentVer + ')');
+  }).catch(function(e) {
+    toast('Error: ' + e.message);
+  });
+}
+
+// Emergency: reset requiredVersion if users are stuck in update loop
+function resetForceUpdate() {
+  var currentVer = parseInt(APP_VERSION, 10);
+  if (!confirm('Reset required version to v' + currentVer + '? This will stop the update loop for all users.')) return;
+  _firebaseDB.ref('config/requiredVersion').set(currentVer).then(function() {
+    toast('Required version reset to v' + currentVer);
   }).catch(function(e) {
     toast('Error: ' + e.message);
   });
