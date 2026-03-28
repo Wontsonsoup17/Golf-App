@@ -49,12 +49,16 @@
     var displayName = user.displayName || 'You';
     document.getElementById('playerName').textContent = displayName + "'s personal stats";
 
-    // Wait for Firebase to be fully ready before loading rounds
-    // This prevents empty results when navigating here immediately after sign-in
-    var loadPromise = (typeof _firebaseLoadPromise !== 'undefined') ? _firebaseLoadPromise : Promise.resolve();
-    loadPromise.then(function() {
-      return fbLoadRounds(user.uid);
-    }).then(function(rounds) {
+    // Load rounds from Firebase first, fall back to localStorage
+    fbLoadRounds(user.uid).then(function(rounds) {
+      // If Firebase returned empty but localStorage has rounds, use localStorage
+      if (!rounds.length) {
+        var localRounds = loadRounds();
+        if (localRounds.length) {
+          renderPersonalStats(localRounds, displayName);
+          return;
+        }
+      }
       renderPersonalStats(rounds, displayName);
     }).catch(function() {
       renderPersonalStats(loadRounds(), displayName);
