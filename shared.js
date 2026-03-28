@@ -847,7 +847,7 @@ function renderUserHeader(user) {
         '<div class="' + avatarClass + '" onclick="handleChangePhoto()">' +
           avatarContent +
         '</div>' +
-        '<div onclick="toggleProfilePanel()"><div class="user-name">' + nameHtml + '</div></div>' +
+        '<div><div class="user-name">' + nameHtml + '</div></div>' +
       '</div>' +
     '</div>' +
     '<div class="header-actions" id="headerActions">' +
