@@ -1485,6 +1485,9 @@
         saveRounds(rounds);
       }
 
+      // Block the listener from saving a second copy
+      roundEndedHandled = true;
+
       // Mark this player as finished in Firebase, then check if everyone is done
       markPlayerFinished(groupCode, user.uid).then(function() {
         return checkAndCleanupRound(groupCode);
@@ -1535,6 +1538,9 @@
         rounds.push(round);
         saveRounds(rounds);
       }
+
+      // Block the listener from saving a second copy when 'ended' status comes back
+      roundEndedHandled = true;
 
       // Set status to 'ended' — triggers all other players' listeners to save & exit
       endGroupRoundForAll(groupCode).catch(function() {}).then(function() {
