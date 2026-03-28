@@ -825,7 +825,7 @@
       // Detect round ended (by host OR by super admin from dashboard)
       if (data.meta.status === 'ended' && !roundEndedHandled) {
         roundEndedHandled = true;
-        // Save the round data before cleanup
+        // Save the round data with FINAL scores for all players
         (function() {
           var tempR = groupDataToRound(data, groupCode);
           var endedCourse = getCourse(tempR.courseId);
@@ -854,9 +854,27 @@
               incomplete: myHolesPlayed < 18
             };
 
-            fbSaveRound(user.uid, round).catch(function() {});
+            // Check if this player already saved an early copy of this round
+            // If so, REPLACE it with the final data (which has everyone's completed scores)
             var rounds = loadRounds();
-            rounds.push(round);
+            var existingIdx = -1;
+            for (var ri = rounds.length - 1; ri >= 0; ri--) {
+              if (rounds[ri].groupCode === groupCode) {
+                existingIdx = ri;
+                break;
+              }
+            }
+            if (existingIdx >= 0) {
+              // Update the existing round with final scores
+              round.id = rounds[existingIdx].id; // keep same ID
+              rounds[existingIdx] = round;
+              // Also update in Firebase
+              fbSaveRound(user.uid, round).catch(function() {});
+            } else {
+              // No existing copy — save fresh
+              fbSaveRound(user.uid, round).catch(function() {});
+              rounds.push(round);
+            }
             saveRounds(rounds);
           }
         })();
