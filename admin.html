@@ -86,6 +86,9 @@
 /* Legacy admin-user for kick modal */
 .admin-user { display: flex; align-items: center; justify-content: space-between; padding: 10px; background: var(--bg); border-radius: 8px; margin-bottom: 6px; }
 
+/* Modal backdrop */
+.modal-backdrop { position: fixed; inset: 0; background: rgba(0,0,0,0.8); z-index: 9000; display: flex; align-items: flex-start; justify-content: center; padding: 60px 16px 40px; overflow-y: auto; -webkit-overflow-scrolling: touch; }
+
 /* Feedback */
 .admin-toast { position: fixed; bottom: 80px; left: 50%; transform: translateX(-50%); background: var(--bg-card); border: 1px solid var(--gold); color: var(--gold); padding: 10px 20px; border-radius: 10px; font-size: 13px; font-weight: 600; z-index: 9999; opacity: 0; transition: opacity 0.3s; pointer-events: none; }
 .admin-toast.show { opacity: 1; }
