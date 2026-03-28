@@ -837,13 +837,17 @@ function renderUserHeader(user) {
   var avatarClass = 'user-avatar' + (avatarUrl ? ' has-image' : '') + (isAdminUser ? ' admin-avatar' : '');
   var nameHtml = isAdminUser ? '<span class="admin-name">' + name + '</span>' + adminBadge(name, 12) : name;
 
-  // Header just shows clickable avatar+name
+  // Header shows clickable avatar+name on left, utility buttons on right
   header.innerHTML =
     '<div class="profile-trigger" onclick="toggleProfilePanel()">' +
       '<div class="' + avatarClass + '">' +
         avatarContent +
       '</div>' +
       '<div><div class="user-name">' + nameHtml + '</div></div>' +
+    '</div>' +
+    '<div class="header-actions" id="headerActions">' +
+      '<div class="header-action-btn" onclick="openNukeModal()" role="button" aria-label="Clear cache">\uD83D\uDCA3</div>' +
+      '<div class="header-action-btn" onclick="openSupportModal()" role="button" aria-label="Report issue">\u26A0\uFE0F</div>' +
     '</div>' +
     '<input type="file" id="avatarInput" accept="image/*" style="display:none" onchange="handleAvatarUpload(this)">';
 
@@ -1311,45 +1315,7 @@ function processProfileImage(file) {
 }
 
 // ==================== SUPPORT / ISSUE CENTER ====================
-// Renders a floating ⚠️ button on every authenticated page.
-// Tapping opens a support modal. Tickets are saved to Firebase.
-
-(function() {
-  // Wait for auth to be ready before rendering
-  onAuthReady(function(user) {
-    if (!user) return; // Only show on authenticated pages
-
-    // Don't add if already exists
-    if (document.getElementById('supportFab')) return;
-
-    // Create the floating button container (holds both FABs)
-    var fabWrap = document.createElement('div');
-    fabWrap.className = 'fab-group';
-    fabWrap.id = 'fabGroup';
-
-    // Cache nuke button 💣
-    var nukeFab = document.createElement('div');
-    nukeFab.className = 'support-fab nuke-fab';
-    nukeFab.id = 'nukeFab';
-    nukeFab.innerHTML = '\uD83D\uDCA3';
-    nukeFab.setAttribute('role', 'button');
-    nukeFab.setAttribute('aria-label', 'Force clear cache and reload');
-    nukeFab.onclick = function() { openNukeModal(); };
-
-    // Support / issue button ⚠️
-    var fab = document.createElement('div');
-    fab.className = 'support-fab';
-    fab.id = 'supportFab';
-    fab.innerHTML = '\u26A0\uFE0F';
-    fab.setAttribute('role', 'button');
-    fab.setAttribute('aria-label', 'Report an issue');
-    fab.onclick = function() { openSupportModal(); };
-
-    fabWrap.appendChild(nukeFab);
-    fabWrap.appendChild(fab);
-    document.body.appendChild(fabWrap);
-  });
-})();
+// Buttons are now rendered inside the user header bar (renderUserHeader).
 
 window.openSupportModal = function() {
   // Remove existing if any
