@@ -837,13 +837,18 @@ function renderUserHeader(user) {
   var avatarClass = 'user-avatar' + (avatarUrl ? ' has-image' : '') + (isAdminUser ? ' admin-avatar' : '');
   var nameHtml = isAdminUser ? '<span class="admin-name">' + name + '</span>' + adminBadge(name, 12) : name;
 
-  // Header shows clickable avatar+name on left, utility buttons on right
+  // Header shows menu button + avatar+name on left, utility buttons on right
   header.innerHTML =
-    '<div class="profile-trigger" onclick="toggleProfilePanel()">' +
-      '<div class="' + avatarClass + '">' +
-        avatarContent +
+    '<div class="header-left">' +
+      '<div class="header-menu-btn" onclick="toggleProfilePanel()" role="button" aria-label="Open menu">' +
+        '<span></span><span></span><span></span>' +
       '</div>' +
-      '<div><div class="user-name">' + nameHtml + '</div></div>' +
+      '<div class="profile-trigger" onclick="toggleProfilePanel()">' +
+        '<div class="' + avatarClass + '">' +
+          avatarContent +
+        '</div>' +
+        '<div><div class="user-name">' + nameHtml + '</div></div>' +
+      '</div>' +
     '</div>' +
     '<div class="header-actions" id="headerActions">' +
       '<div class="header-action-btn" onclick="openNukeModal()" role="button" aria-label="Clear cache">\uD83D\uDCA3</div>' +
