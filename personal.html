@@ -598,22 +598,6 @@
         }
       }
 
-      // --- GIR tip ---
-      if (totalGIRChances >= 9) {
-        var girPct = Math.round(totalGIR / totalGIRChances * 100);
-        if (girPct < 20) {
-          tips.push({ icon: '🎯', title: 'Approach Shots Need Work',
-            text: 'You hit only ' + girPct + '% of greens in regulation.',
-            advice: 'Take one extra club on approach shots and focus on the center of the green — short misses kill scoring.',
-            priority: (25 - girPct) * 0.6 });
-        } else if (girPct >= 40) {
-          tips.push({ icon: '🎯', title: 'Sharp Iron Game',
-            text: 'You hit ' + girPct + '% of greens in regulation — well above average.',
-            advice: 'Your iron game is a strength. Keep converting those GIRs into pars and birdies.',
-            priority: 1 });
-        }
-      }
-
       // --- Front 9 vs Back 9 ---
       if (front9Totals.length >= 2 && back9Totals.length >= 2) {
         var f9Avg = front9Totals.reduce(function(a,b){return a+b;},0) / front9Totals.length;
