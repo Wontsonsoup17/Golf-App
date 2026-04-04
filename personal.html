@@ -297,7 +297,7 @@
       var scores = points.map(function(p) { return p.score; });
       var maxS = Math.max.apply(null, scores);
       var pad = Math.max(3, Math.round(maxS * 0.05));
-      var yMin = 0;
+      var yMin = 55;
       var yMax = maxS + pad;
 
       // Helpers — inverted Y: low scores at top, high scores at bottom
