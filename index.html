@@ -48,6 +48,7 @@
       <select id="createCourseSelect" style="width:100%;padding:10px 12px;background:var(--bg);border:1px solid var(--border-light);border-radius:var(--radius-sm);color:var(--text);font-size:14px;-webkit-appearance:none;appearance:none">
       </select>
     </div>
+    <div id="gameTypeSection" style="margin-bottom:8px"></div>
     <div style="margin-bottom:8px">
       <input type="text" id="createCodeInput" placeholder="Create a round code" maxlength="15" autocomplete="off" readonly ontouchstart="this.removeAttribute('readonly')" onmousedown="this.removeAttribute('readonly')" style="width:100%;font-family:monospace;font-size:16px;font-weight:700;letter-spacing:3px;text-transform:uppercase;text-align:center;padding:10px">
     </div>
@@ -82,6 +83,19 @@
     courseSelect.innerHTML = COURSES.map(function(c) {
       return '<option value="' + c.id + '">' + c.name + ' (Par ' + c.par + ')</option>';
     }).join('');
+
+    // Render game type section — admin only for now
+    var gameTypeSection = document.getElementById('gameTypeSection');
+    if (isCurrentUserAdmin()) {
+      gameTypeSection.innerHTML =
+        '<select id="gameTypeSelect" style="width:100%;padding:10px 12px;background:var(--bg);border:1px solid var(--border-light);border-radius:var(--radius-sm);color:var(--text);font-size:14px;-webkit-appearance:none;appearance:none">' +
+          '<option value="standard">Standard</option>' +
+          '<option value="scramble">Scramble (2v2)</option>' +
+        '</select>';
+    } else {
+      gameTypeSection.innerHTML =
+        '<div style="width:100%;padding:10px 12px;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.08);border-radius:var(--radius-sm);color:var(--text-muted);font-size:13px;font-weight:600;text-align:center;letter-spacing:0.5px;cursor:default;user-select:none">&#x26A0;&#xFE0F; Game Type Coming Soon &#x26A0;&#xFE0F;</div>';
+    }
 
     // Migrate localStorage rounds to Firebase (one-time)
     migrateLocalRounds(user.uid);
