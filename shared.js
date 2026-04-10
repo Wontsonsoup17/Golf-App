@@ -1,7 +1,7 @@
 // ==================== AUTO-UPDATE CHECK ====================
 // Forces a hard reload when a new version is deployed so users always
 // get fresh files. The popup is handled separately via checkUpdatePopup.
-var APP_VERSION = '170';
+var APP_VERSION = '171';
 (function() {
   var storedVersion = localStorage.getItem('app_version');
   if (storedVersion && storedVersion !== APP_VERSION) {
@@ -462,6 +462,39 @@ const COURSES = [
       { num:16, par:4, black:439, blue:395, white:382, green:309, red:309, hcp:6,  img:'https://www.pebblewoodgolf.com/00062699/wp-content/uploads/sites/8703/2023/01/hole-16.jpg' },
       { num:17, par:3, black:150, blue:145, white:130, green:130, red:110, hcp:18, img:'https://www.pebblewoodgolf.com/00062699/wp-content/uploads/sites/8703/2023/01/hole-17.jpg' },
       { num:18, par:4, black:441, blue:388, white:323, green:323, red:280, hcp:8,  img:'https://www.pebblewoodgolf.com/00062699/wp-content/uploads/sites/8703/2023/01/hole-18.jpg' }
+    ]
+  },
+
+  {
+    id: 'west-point', name: 'West Point Golf Course',
+    address: '1230 NY Route 218, West Point, NY 10996', phone: '(845) 938-2435', par: 70,
+    group: 'other',
+    link: 'https://westpoint.armymwr.com/programs/west-point-golf-course',
+    overview: 'https://westpoint.armymwr.com/application/files/4014/9335/3316/CourseMap.jpg',
+    tees: {
+      black:  { label: 'Black',  yards: 6036, rating: 69.9, slope: 130 },
+      silver: { label: 'Silver', yards: 5573, rating: 67.8, slope: 126 },
+      gold:   { label: 'Gold',   yards: 4647, rating: 67.9, slope: 115 }
+    },
+    holes: [
+      { num:1,  par:4, black:372, silver:323, gold:313, hcp:6  },
+      { num:2,  par:3, black:175, silver:151, gold:127, hcp:16 },
+      { num:3,  par:4, black:360, silver:342, gold:285, hcp:9  },
+      { num:4,  par:5, black:495, silver:472, gold:374, hcp:11 },
+      { num:5,  par:4, black:400, silver:365, gold:283, hcp:3  },
+      { num:6,  par:3, black:191, silver:186, gold:169, hcp:17 },
+      { num:7,  par:5, black:509, silver:498, gold:390, hcp:2  },
+      { num:8,  par:4, black:380, silver:359, gold:337, hcp:7  },
+      { num:9,  par:3, black:201, silver:185, gold:153, hcp:14 },
+      { num:10, par:4, black:326, silver:309, gold:269, hcp:12 },
+      { num:11, par:3, black:175, silver:155, gold:121, hcp:10 },
+      { num:12, par:4, black:389, silver:365, gold:300, hcp:1  },
+      { num:13, par:3, black:154, silver:132, gold:120, hcp:18 },
+      { num:14, par:4, black:418, silver:377, gold:331, hcp:5  },
+      { num:15, par:4, black:350, silver:303, gold:220, hcp:15 },
+      { num:16, par:3, black:163, silver:148, gold:117, hcp:13 },
+      { num:17, par:5, black:485, silver:429, gold:361, hcp:4  },
+      { num:18, par:5, black:493, silver:474, gold:377, hcp:8  }
     ]
   }
 ];
