@@ -3,7 +3,7 @@
 <head>
 <style>html,body{background:#0a0f0d}</style>
 <script>
-(function(){var v='167';var k='app_v';var s=localStorage.getItem(k);if(s&&s!==v){localStorage.setItem(k,v);window.location.replace(window.location.pathname+'?_='+Date.now());return;}localStorage.setItem(k,v);})();
+(function(){var v='168';var k='app_v';var s=localStorage.getItem(k);if(s&&s!==v){localStorage.setItem(k,v);window.location.replace(window.location.pathname+'?_='+Date.now());return;}localStorage.setItem(k,v);})();
 </script>
 <meta charset="UTF-8">
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
@@ -15,7 +15,7 @@
 <link rel="manifest" href="manifest.json">
 <link rel="apple-touch-icon" href="icon-192.png">
 <title>Live Round - Westchester Golf</title>
-<link rel="stylesheet" href="shared.css?v=167">
+<link rel="stylesheet" href="shared.css?v=168">
 </head>
 <body>
 
@@ -41,9 +41,9 @@
 <nav class="bottom-nav" id="bottomNav"></nav>
 <div style="text-align:center;font-size:9px;color:#333;padding:4px;opacity:0.5">v106</div>
 
-<script src="firebase-config.js?v=167"></script>
-<script src="shared.js?v=167"></script>
-<script src="firebase-sync.js?v=167"></script>
+<script src="firebase-config.js?v=168"></script>
+<script src="shared.js?v=168"></script>
+<script src="firebase-sync.js?v=168"></script>
 <script>
   // ==================== SCORE EFFECTS (emoji burst) ====================
   // Defined at script scope so both solo and group modes can access them
@@ -478,11 +478,12 @@
         html += `<div class="hole-pip ${cls}" onclick="goToHole(${i})">${i+1}</div>`;
       }
       html += '</div>';
+      html += '<button onclick="showHolePicker()" style="width:100%;padding:8px;margin:6px 0 2px;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.12);border-radius:8px;color:#bbb;font-size:13px;font-weight:600;cursor:pointer;letter-spacing:0.3px">&#8597; Jump to Hole</button>';
 
       // Hole display
       html += `
         <div class="hole-display">
-          <div class="hole-number" onclick="showHolePicker()" style="cursor:pointer;user-select:none" title="Jump to hole">${isFutureHole ? 'Preview — ' : ''}Hole ${hole.num} <span style="font-size:13px;opacity:0.5">&#9660;</span></div>
+          <div class="hole-number">${isFutureHole ? 'Preview — ' : ''}Hole ${hole.num}</div>
           <div class="hole-info-chips">
             <span class="info-chip par-chip">Par ${hole.par}</span>
             <span class="info-chip">${yardage} yds</span>
@@ -1144,11 +1145,12 @@
         html += `<div class="hole-pip ${cls}" onclick="goToHole(${i})">${i+1}</div>`;
       }
       html += '</div>';
+      html += '<button onclick="showHolePicker()" style="width:100%;padding:8px;margin:6px 0 2px;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.12);border-radius:8px;color:#bbb;font-size:13px;font-weight:600;cursor:pointer;letter-spacing:0.3px">&#8597; Jump to Hole</button>';
 
       // Hole display
       html += `
         <div class="hole-display">
-          <div class="hole-number" onclick="showHolePicker()" style="cursor:pointer;user-select:none" title="Jump to hole">${isFutureHole ? 'Preview — ' : ''}Hole ${hole.num} <span style="font-size:13px;opacity:0.5">&#9660;</span></div>
+          <div class="hole-number">${isFutureHole ? 'Preview — ' : ''}Hole ${hole.num}</div>
           <div class="hole-info-chips">
             <span class="info-chip par-chip">Par ${hole.par}</span>
             <span class="info-chip">${yardage} yds</span>
