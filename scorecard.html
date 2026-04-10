@@ -3,7 +3,7 @@
 <head>
 <style>html,body{background:#0a0f0d}</style>
 <script>
-(function(){var v='166';var k='app_v';var s=localStorage.getItem(k);if(s&&s!==v){localStorage.setItem(k,v);window.location.replace(window.location.pathname+'?_='+Date.now());return;}localStorage.setItem(k,v);})();
+(function(){var v='167';var k='app_v';var s=localStorage.getItem(k);if(s&&s!==v){localStorage.setItem(k,v);window.location.replace(window.location.pathname+'?_='+Date.now());return;}localStorage.setItem(k,v);})();
 </script>
 <meta charset="UTF-8">
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
@@ -15,7 +15,7 @@
 <link rel="manifest" href="manifest.json">
 <link rel="apple-touch-icon" href="icon-192.png">
 <title>Live Round - Westchester Golf</title>
-<link rel="stylesheet" href="shared.css?v=166">
+<link rel="stylesheet" href="shared.css?v=167">
 </head>
 <body>
 
@@ -41,9 +41,9 @@
 <nav class="bottom-nav" id="bottomNav"></nav>
 <div style="text-align:center;font-size:9px;color:#333;padding:4px;opacity:0.5">v106</div>
 
-<script src="firebase-config.js?v=166"></script>
-<script src="shared.js?v=166"></script>
-<script src="firebase-sync.js?v=166"></script>
+<script src="firebase-config.js?v=167"></script>
+<script src="shared.js?v=167"></script>
+<script src="firebase-sync.js?v=167"></script>
 <script>
   // ==================== SCORE EFFECTS (emoji burst) ====================
   // Defined at script scope so both solo and group modes can access them
@@ -125,6 +125,63 @@
 
     return container;
   }
+
+  // ===================================================================
+  // HOLE PICKER MODAL — tap the hole number to jump to any hole
+  // Each render mode sets window._hpState so this function stays generic
+  // ===================================================================
+  window._hpState = null; // { course, currentHole, scored[] }
+
+  window.showHolePicker = function() {
+    if (!window._hpState) return;
+    if (document.getElementById('holePickerModal')) return;
+
+    var state = window._hpState;
+    var course = state.course;
+    var cur = state.currentHole;
+    var scored = state.scored; // boolean[18]
+
+    var grid = '';
+    for (var i = 0; i < 18; i++) {
+      var hole = course.holes[i];
+      var isCur = i === cur;
+      var isScored = scored[i];
+      var bg, border, color;
+      if (isCur) {
+        bg = 'rgba(212,175,55,0.25)'; border = '2px solid #d4af37'; color = '#d4af37';
+      } else if (isScored) {
+        bg = 'rgba(0,230,118,0.12)'; border = '1px solid rgba(0,230,118,0.3)'; color = '#00e676';
+      } else {
+        bg = 'rgba(255,255,255,0.05)'; border = '1px solid rgba(255,255,255,0.1)'; color = '#bbb';
+      }
+      grid +=
+        '<button onclick="goToHole(' + i + ');document.getElementById(\'holePickerModal\').remove()" ' +
+        'style="width:calc(16.666% - 5px);aspect-ratio:1;display:flex;flex-direction:column;align-items:center;' +
+        'justify-content:center;border-radius:8px;cursor:pointer;background:' + bg + ';border:' + border + ';color:' + color + ';padding:0">' +
+          '<span style="font-size:15px;font-weight:700;line-height:1">' + (i + 1) + '</span>' +
+          '<span style="font-size:9px;font-weight:400;opacity:0.7;margin-top:2px">Par ' + hole.par + '</span>' +
+        '</button>';
+    }
+
+    var overlay = document.createElement('div');
+    overlay.id = 'holePickerModal';
+    overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:9999;display:flex;align-items:flex-end;justify-content:center';
+    overlay.onclick = function(e) { if (e.target === overlay) overlay.remove(); };
+    overlay.innerHTML =
+      '<div style="background:#121f14;border-radius:16px 16px 0 0;padding:16px;width:100%;max-width:460px;padding-bottom:calc(16px + env(safe-area-inset-bottom))">' +
+        '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">' +
+          '<span style="font-size:14px;font-weight:700;color:#fff">Jump to Hole</span>' +
+          '<button onclick="document.getElementById(\'holePickerModal\').remove()" style="background:none;border:none;color:#666;font-size:22px;line-height:1;cursor:pointer;padding:0">&times;</button>' +
+        '</div>' +
+        '<div style="display:flex;flex-wrap:wrap;gap:6px">' + grid + '</div>' +
+        '<div style="margin-top:10px;font-size:11px;color:#555;text-align:center">' +
+          '<span style="color:#d4af37">&#9632;</span> Current &nbsp;' +
+          '<span style="color:#00e676">&#9632;</span> Scored &nbsp;' +
+          '<span style="color:#555">&#9632;</span> Not yet played' +
+        '</div>' +
+      '</div>';
+    document.body.appendChild(overlay);
+  };
 
   requireAuth(function(user) {
     renderBottomNav('courses');
@@ -398,6 +455,15 @@
       const playableHole = getPlayableHole();
       const isFutureHole = currentHole > playableHole;
 
+      // Update hole picker state
+      window._hpState = {
+        course: course,
+        currentHole: currentHole,
+        scored: Array.from({length: 18}, function(_, i) {
+          return R.players.some(function(p) { return R.scores[p][i] > 0; });
+        })
+      };
+
       let html = '';
 
       // Leaderboard link
@@ -416,7 +482,7 @@
       // Hole display
       html += `
         <div class="hole-display">
-          <div class="hole-number">${isFutureHole ? 'Preview — ' : ''}Hole ${hole.num}</div>
+          <div class="hole-number" onclick="showHolePicker()" style="cursor:pointer;user-select:none" title="Jump to hole">${isFutureHole ? 'Preview — ' : ''}Hole ${hole.num} <span style="font-size:13px;opacity:0.5">&#9660;</span></div>
           <div class="hole-info-chips">
             <span class="info-chip par-chip">Par ${hole.par}</span>
             <span class="info-chip">${yardage} yds</span>
@@ -919,8 +985,9 @@
       document.getElementById('courseSub').textContent = `${R.teeLabel} Tees  |  Par ${course.par}  |  ${formatDate(R.date)}`;
 
       if (!initialRenderDone) {
-        // First load — fetch avatars then full render
+        // First load — set starting hole then fetch avatars then full render
         initialRenderDone = true;
+        currentHole = R._startingHole || 0;
         fetchPlayerAvatars(R._playerUids, function() {
           renderGroup();
         });
@@ -931,16 +998,19 @@
     });
     } // end startGroupListener
 
-    // Determine the current playable hole for the current user
+    // Determine the current playable hole for the current user (respects starting hole wrap-around)
     function getGroupPlayableHole() {
       const myName = R._uidToName[user.uid];
       if (!myName) return 0;
       const course = course_ref.current;
       if (!course) return 0;
-      for (let i = 0; i < 18; i++) {
+      const start = R._startingHole || 0;
+      for (let j = 0; j < 18; j++) {
+        const i = (start + j) % 18;
         if (!(R.scores[myName][i] > 0)) return i;
       }
-      return 17;
+      // All scored — return last hole in play order
+      return (start + 17) % 18;
     }
 
     // Build the players leaderboard HTML
@@ -1031,7 +1101,18 @@
       const myName = R._uidToName[user.uid];
       const isCreator = R._createdBy === user.uid;
       const playableHole = getGroupPlayableHole();
-      const isFutureHole = currentHole > playableHole;
+      const start = R._startingHole || 0;
+      function playOrderPos(idx) { return (idx - start + 18) % 18; }
+      const isFutureHole = playOrderPos(currentHole) > playOrderPos(playableHole);
+
+      // Update hole picker state
+      window._hpState = {
+        course: course,
+        currentHole: currentHole,
+        scored: Array.from({length: 18}, function(_, i) {
+          return myName ? R.scores[myName][i] > 0 : false;
+        })
+      };
 
       let html = '';
 
@@ -1059,7 +1140,7 @@
       for (let i = 0; i < 18; i++) {
         const anyScored = R.players.some(p => R.scores[p][i] > 0);
         let cls = i === currentHole ? 'active' : (anyScored ? 'scored' : '');
-        if (i > playableHole && i !== currentHole) cls += ' future';
+        if (playOrderPos(i) > playOrderPos(playableHole) && i !== currentHole) cls += ' future';
         html += `<div class="hole-pip ${cls}" onclick="goToHole(${i})">${i+1}</div>`;
       }
       html += '</div>';
@@ -1067,7 +1148,7 @@
       // Hole display
       html += `
         <div class="hole-display">
-          <div class="hole-number">${isFutureHole ? 'Preview — ' : ''}Hole ${hole.num}</div>
+          <div class="hole-number" onclick="showHolePicker()" style="cursor:pointer;user-select:none" title="Jump to hole">${isFutureHole ? 'Preview — ' : ''}Hole ${hole.num} <span style="font-size:13px;opacity:0.5">&#9660;</span></div>
           <div class="hole-info-chips">
             <span class="info-chip par-chip">Par ${hole.par}</span>
             <span class="info-chip">${yardage} yds</span>

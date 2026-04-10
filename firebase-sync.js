@@ -68,7 +68,7 @@ function createGroupRound(uid, displayName, courseId, tee, teeLabel, date) {
 }
 
 // Create a group round with a specific code
-function createGroupRoundWithCode(uid, displayName, courseId, tee, teeLabel, date, code) {
+function createGroupRoundWithCode(uid, displayName, courseId, tee, teeLabel, date, code, startingHole) {
   return new Promise((resolve, reject) => {
     const roundRef = db.ref('activeRounds/' + code);
 
@@ -91,7 +91,8 @@ function createGroupRoundWithCode(uid, displayName, courseId, tee, teeLabel, dat
           date: date,
           createdBy: uid,
           createdAt: firebase.database.ServerValue.TIMESTAMP,
-          status: 'active'
+          status: 'active',
+          startingHole: startingHole || 0
         },
         players: {
           [uid]: {
@@ -421,6 +422,7 @@ function groupDataToRound(data, code) {
     _groupCode: code,
     _createdBy: meta.createdBy,
     _status: meta.status,
+    _startingHole: meta.startingHole || 0,
     _uidToName: uidToName,
     _nameToUid: nameToUid,
     _playerUids: playerUids

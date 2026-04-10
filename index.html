@@ -3,7 +3,7 @@
 <head>
 <style>html,body{background:#0a0f0d}</style>
 <script>
-(function(){var v='166';var k='app_v';var s=localStorage.getItem(k);if(s&&s!==v){localStorage.setItem(k,v);window.location.replace(window.location.pathname+'?_='+Date.now());return;}localStorage.setItem(k,v);})();
+(function(){var v='167';var k='app_v';var s=localStorage.getItem(k);if(s&&s!==v){localStorage.setItem(k,v);window.location.replace(window.location.pathname+'?_='+Date.now());return;}localStorage.setItem(k,v);})();
 </script>
 <meta charset="UTF-8">
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
@@ -15,7 +15,7 @@
 <link rel="manifest" href="manifest.json">
 <link rel="apple-touch-icon" href="icon-192.png">
 <title>Westchester Golf</title>
-<link rel="stylesheet" href="shared.css?v=166">
+<link rel="stylesheet" href="shared.css?v=167">
 </head>
 <body>
 
@@ -50,6 +50,10 @@
     </div>
     <div id="gameTypeSection" style="margin-bottom:8px"></div>
     <div style="margin-bottom:8px">
+      <select id="startingHoleSelect" style="width:100%;padding:10px 12px;background:var(--bg);border:1px solid var(--border-light);border-radius:var(--radius-sm);color:var(--text);font-size:14px;-webkit-appearance:none;appearance:none">
+      </select>
+    </div>
+    <div style="margin-bottom:8px">
       <input type="text" id="createCodeInput" placeholder="Create a round code" maxlength="15" autocomplete="off" readonly ontouchstart="this.removeAttribute('readonly')" onmousedown="this.removeAttribute('readonly')" style="width:100%;font-family:monospace;font-size:16px;font-weight:700;letter-spacing:3px;text-transform:uppercase;text-align:center;padding:10px">
     </div>
     <div style="font-size:11px;color:var(--text-muted);margin-bottom:10px">4-15 characters. Share this code so friends can join.</div>
@@ -65,9 +69,9 @@
 
 <nav class="bottom-nav" id="bottomNav"></nav>
 
-<script src="firebase-config.js?v=166"></script>
-<script src="shared.js?v=166"></script>
-<script src="firebase-sync.js?v=166"></script>
+<script src="firebase-config.js?v=167"></script>
+<script src="shared.js?v=167"></script>
+<script src="firebase-sync.js?v=167"></script>
 <script>
   requireAuth(function(user) {
     renderBottomNav('courses');
@@ -83,6 +87,13 @@
     courseSelect.innerHTML = '<option value="" disabled selected style="color:#666">— Choose a Course —</option>' +
       COURSES.map(function(c) {
         return '<option value="' + c.id + '">' + c.name + ' (Par ' + c.par + ')</option>';
+      }).join('');
+
+    // Populate starting hole dropdown
+    var startingHoleSelect = document.getElementById('startingHoleSelect');
+    startingHoleSelect.innerHTML = '<option value="0">Starting Hole: 1 (Default)</option>' +
+      Array.from({length: 17}, function(_, i) {
+        return '<option value="' + (i+1) + '">Starting Hole: ' + (i+2) + '</option>';
       }).join('');
 
     // Render game type section — admin only for now
@@ -234,6 +245,7 @@
         var teeKey = Object.keys(course.tees)[0];
         var teeLabel = course.tees[teeKey].label;
         var date = new Date().toISOString().split('T')[0];
+        var startingHole = parseInt(document.getElementById('startingHoleSelect').value) || 0;
 
         var createTimeout = setTimeout(function() {
           btn.disabled = false;
@@ -242,7 +254,7 @@
           errorEl.style.display = 'block';
         }, 15000);
 
-        createGroupRoundWithCode(user.uid, displayName, course.id, teeKey, teeLabel, date, code)
+        createGroupRoundWithCode(user.uid, displayName, course.id, teeKey, teeLabel, date, code, startingHole)
           .then(function(createdCode) {
             clearTimeout(createTimeout);
             localStorage.setItem('active-group-code', createdCode);
@@ -262,8 +274,9 @@
         var teeKey = Object.keys(course.tees)[0];
         var teeLabel = course.tees[teeKey].label;
         var date = new Date().toISOString().split('T')[0];
+        var startingHole = parseInt(document.getElementById('startingHoleSelect').value) || 0;
 
-        createGroupRoundWithCode(user.uid, displayName, course.id, teeKey, teeLabel, date, code)
+        createGroupRoundWithCode(user.uid, displayName, course.id, teeKey, teeLabel, date, code, startingHole)
           .then(function(createdCode) {
             localStorage.setItem('active-group-code', createdCode);
             window.location.href = 'scorecard.html?group=' + createdCode;
