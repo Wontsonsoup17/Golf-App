@@ -3,7 +3,7 @@
 <head>
 <style>html,body{background:#0a0f0d}</style>
 <script>
-(function(){var v='169';var k='app_v';var s=localStorage.getItem(k);if(s&&s!==v){localStorage.setItem(k,v);window.location.replace(window.location.pathname+'?_='+Date.now());return;}localStorage.setItem(k,v);})();
+(function(){var v='170';var k='app_v';var s=localStorage.getItem(k);if(s&&s!==v){localStorage.setItem(k,v);window.location.replace(window.location.pathname+'?_='+Date.now());return;}localStorage.setItem(k,v);})();
 </script>
 <meta charset="UTF-8">
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
@@ -15,7 +15,7 @@
 <link rel="manifest" href="manifest.json">
 <link rel="apple-touch-icon" href="icon-192.png">
 <title>Stats - Westchester Golf</title>
-<link rel="stylesheet" href="shared.css?v=169">
+<link rel="stylesheet" href="shared.css?v=170">
 </head>
 <body>
 
@@ -36,9 +36,9 @@
 
 <nav class="bottom-nav" id="bottomNav"></nav>
 
-<script src="firebase-config.js?v=169"></script>
-<script src="shared.js?v=169"></script>
-<script src="firebase-sync.js?v=169"></script>
+<script src="firebase-config.js?v=170"></script>
+<script src="shared.js?v=170"></script>
+<script src="firebase-sync.js?v=170"></script>
 <script>
   requireAuth(function(user) {
     renderBottomNav('stats');
@@ -78,33 +78,49 @@
         <div class="stat-box"><div class="stat-value">${bestScore < Infinity ? bestScore : '-'}</div><div class="stat-label">Best${bestPlayer ? ' ('+bestPlayer+')' : ''}</div></div>
       `;
 
-      // Leaderboard
+      // Leaderboard — ranked by avg score-to-par for holes played
+      function parPlayed(r, p) {
+        if (!r.holePars) return r.par;
+        return r.holePars.reduce(function(acc, hp, i) { return acc + (r.scores[p][i] > 0 ? hp : 0); }, 0);
+      }
+      function fmtToPar(n) { return n === 0 ? 'E' : (n > 0 ? '+' + n : n.toString()); }
+
       const ps = {};
       rounds.forEach(r => r.players.forEach(p => {
         const total = r.scores[p].reduce((a,b)=>a+b,0);
         const played = r.scores[p].filter(s=>s>0).length;
         if (total > 0 && played >= 9) {
-          if (!ps[p]) ps[p] = { rounds:0, totalScore:0, totalPar:0, wins:0, best:Infinity };
+          const pp = parPlayed(r, p);
+          const toPar = total - pp;
+          if (!ps[p]) ps[p] = { rounds:0, totalScore:0, totalPar:0, wins:0, bestToPar:Infinity };
           ps[p].rounds++;
           ps[p].totalScore += total;
-          ps[p].totalPar += r.par;
-          if (total < ps[p].best) ps[p].best = total;
+          ps[p].totalPar += pp;
+          if (toPar < ps[p].bestToPar) ps[p].bestToPar = toPar;
         }
       }));
 
+      // Win = lowest score-to-par in each round
       rounds.forEach(r => {
-        let min = Infinity, winners = [];
+        let minToPar = Infinity, winners = [];
         r.players.forEach(p => {
           const t = r.scores[p].reduce((a,b)=>a+b,0);
-          if (t > 0 && t < min) { min = t; winners = [p]; }
-          else if (t === min && t > 0) winners.push(p);
+          const played = r.scores[p].filter(s=>s>0).length;
+          if (t > 0 && played >= 9) {
+            const tp = t - parPlayed(r, p);
+            if (tp < minToPar) { minToPar = tp; winners = [p]; }
+            else if (tp === minToPar) winners.push(p);
+          }
         });
         winners.forEach(w => { if (ps[w]) ps[w].wins++; });
       });
 
       const sorted = Object.entries(ps)
-        .map(([name,s]) => ({ name, avg:(s.totalScore/s.rounds).toFixed(1), rounds:s.rounds, wins:s.wins, best:s.best }))
-        .sort((a,b) => parseFloat(a.avg) - parseFloat(b.avg));
+        .map(([name,s]) => {
+          const avgToPar = (s.totalScore - s.totalPar) / s.rounds;
+          return { name, avgToPar, avgToParStr: (avgToPar >= 0 ? '+' : '') + avgToPar.toFixed(1), rounds:s.rounds, wins:s.wins, bestToPar:s.bestToPar };
+        })
+        .sort((a,b) => a.avgToPar - b.avgToPar);
 
       let lbHtml = '<div class="leaderboard"><h3>Player Leaderboard</h3>';
       if (!sorted.length) {
@@ -116,8 +132,8 @@
             <div class="lb-row">
               <div class="lb-rank ${rc}">${i+1}</div>
               <span class="lb-name">${isAdmin(p.name) ? '<span class="admin-name">' + p.name + '</span>' + adminBadge(p.name, 12) : p.name}</span>
-              <span class="lb-meta">${p.rounds}R &bull; ${p.wins}W<br>Best: ${p.best}</span>
-              <span class="lb-stat">${p.avg}</span>
+              <span class="lb-meta">${p.rounds}R &bull; ${p.wins}W<br>Best: ${fmtToPar(p.bestToPar)}</span>
+              <span class="lb-stat">${p.avgToParStr} avg</span>
             </div>
           `;
         });
