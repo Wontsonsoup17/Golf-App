@@ -3,7 +3,7 @@
 <head>
 <style>html,body{background:#0a0f0d}</style>
 <script>
-(function(){var v='168';var k='app_v';var s=localStorage.getItem(k);if(s&&s!==v){localStorage.setItem(k,v);window.location.replace(window.location.pathname+'?_='+Date.now());return;}localStorage.setItem(k,v);})();
+(function(){var v='169';var k='app_v';var s=localStorage.getItem(k);if(s&&s!==v){localStorage.setItem(k,v);window.location.replace(window.location.pathname+'?_='+Date.now());return;}localStorage.setItem(k,v);})();
 </script>
 <meta charset="UTF-8">
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
@@ -15,7 +15,7 @@
 <link rel="manifest" href="manifest.json">
 <link rel="apple-touch-icon" href="icon-192.png">
 <title>Live Round - Westchester Golf</title>
-<link rel="stylesheet" href="shared.css?v=168">
+<link rel="stylesheet" href="shared.css?v=169">
 </head>
 <body>
 
@@ -41,9 +41,9 @@
 <nav class="bottom-nav" id="bottomNav"></nav>
 <div style="text-align:center;font-size:9px;color:#333;padding:4px;opacity:0.5">v106</div>
 
-<script src="firebase-config.js?v=168"></script>
-<script src="shared.js?v=168"></script>
-<script src="firebase-sync.js?v=168"></script>
+<script src="firebase-config.js?v=169"></script>
+<script src="shared.js?v=169"></script>
+<script src="firebase-sync.js?v=169"></script>
 <script>
   // ==================== SCORE EFFECTS (emoji burst) ====================
   // Defined at script scope so both solo and group modes can access them
@@ -453,7 +453,6 @@
       const teeKey = R.tee;
       const yardage = hole[teeKey] || '—';
       const playableHole = getPlayableHole();
-      const isFutureHole = currentHole > playableHole;
 
       // Update hole picker state
       window._hpState = {
@@ -483,7 +482,7 @@
       // Hole display
       html += `
         <div class="hole-display">
-          <div class="hole-number">${isFutureHole ? 'Preview — ' : ''}Hole ${hole.num}</div>
+          <div class="hole-number">Hole ${hole.num}</div>
           <div class="hole-info-chips">
             <span class="info-chip par-chip">Par ${hole.par}</span>
             <span class="info-chip">${yardage} yds</span>
@@ -491,18 +490,6 @@
           </div>
         </div>
       `;
-
-      // Future hole preview banner
-      if (isFutureHole) {
-        html += `<div class="preview-banner">
-          <span class="preview-banner-icon">&#128065;</span>
-          <div>
-            <div class="preview-banner-title">Hole Preview</div>
-            <div class="preview-banner-sub">You're previewing a future hole. Score input is available when you reach this hole.</div>
-          </div>
-          <button class="preview-back-btn" onclick="goToHole(${playableHole})">Go to Hole ${playableHole + 1} &#8594;</button>
-        </div>`;
-      }
 
       // Hole layout image
       if (hole.img) {
@@ -532,9 +519,8 @@
         </div>`;
       }
 
-      // Player cards — only show if NOT a future hole
-      if (!isFutureHole) {
-        R.players.forEach((p, pIdx) => {
+      // Player cards
+      R.players.forEach((p, pIdx) => {
           const score = R.scores[p][currentHole];
           const scoreClass = getScoreClass(score, hole.par);
           const label = getScoreLabel(score, hole.par);
@@ -606,16 +592,13 @@
             html += '</div>';
           }
         });
-      }
 
-      if (!isFutureHole) {
-        html += `
-          <div class="finish-section">
-            <button class="btn-gold" onclick="finishRound()">Save & Finish</button>
-            <button class="btn-secondary" onclick="cancelRound()">Cancel</button>
-          </div>
-        `;
-      }
+      html += `
+        <div class="finish-section">
+          <button class="btn-gold" onclick="finishRound()">Save & Finish</button>
+          <button class="btn-secondary" onclick="cancelRound()">Cancel</button>
+        </div>
+      `;
 
       document.getElementById('mainContent').innerHTML = html;
 
@@ -1104,7 +1087,6 @@
       const playableHole = getGroupPlayableHole();
       const start = R._startingHole || 0;
       function playOrderPos(idx) { return (idx - start + 18) % 18; }
-      const isFutureHole = playOrderPos(currentHole) > playOrderPos(playableHole);
 
       // Update hole picker state
       window._hpState = {
@@ -1150,7 +1132,7 @@
       // Hole display
       html += `
         <div class="hole-display">
-          <div class="hole-number">${isFutureHole ? 'Preview — ' : ''}Hole ${hole.num}</div>
+          <div class="hole-number">Hole ${hole.num}</div>
           <div class="hole-info-chips">
             <span class="info-chip par-chip">Par ${hole.par}</span>
             <span class="info-chip">${yardage} yds</span>
@@ -1158,18 +1140,6 @@
           </div>
         </div>
       `;
-
-      // Future hole preview banner
-      if (isFutureHole) {
-        html += `<div class="preview-banner">
-          <span class="preview-banner-icon">&#128065;</span>
-          <div>
-            <div class="preview-banner-title">Hole Preview</div>
-            <div class="preview-banner-sub">You're previewing a future hole. Score input is available when you reach this hole.</div>
-          </div>
-          <button class="preview-back-btn" onclick="goToHole(${playableHole})">Go to Hole ${playableHole + 1} &#8594;</button>
-        </div>`;
-      }
 
       // Hole layout image
       if (hole.img) {
@@ -1199,8 +1169,8 @@
         </div>`;
       }
 
-      // YOUR score card — only show if NOT a future hole
-      if (!isFutureHole && myName) {
+      // YOUR score card
+      if (myName) {
         const score = R.scores[myName][currentHole];
         const scoreClass = getScoreClass(score, hole.par);
         const label = getScoreLabel(score, hole.par);
@@ -1256,21 +1226,19 @@
         html += '</div>'; // close player card
       }
 
-      // Hole nav buttons — right under YOUR score counter
-      if (!isFutureHole) {
-        html += '<div class="hole-nav-row">';
-        if (currentHole > 0) {
-          html += `<button class="hole-nav-btn prev" onclick="goToHole(${currentHole - 1})">&larr; Hole ${currentHole}</button>`;
-        } else {
-          html += '<div></div>';
-        }
-        if (currentHole < 17) {
-          html += `<button class="hole-nav-btn next" onclick="goToHole(${currentHole + 1})">Hole ${currentHole + 2} &rarr;</button>`;
-        } else {
-          html += `<button class="hole-nav-btn next" onclick="finishGroupRoundAction()" style="background:var(--gold);color:#1a1a1a;">Finish Round</button>`;
-        }
-        html += '</div>';
+      // Hole nav buttons
+      html += '<div class="hole-nav-row">';
+      if (currentHole > 0) {
+        html += `<button class="hole-nav-btn prev" onclick="goToHole(${currentHole - 1})">&larr; Hole ${currentHole}</button>`;
+      } else {
+        html += '<div></div>';
       }
+      if (currentHole < 17) {
+        html += `<button class="hole-nav-btn next" onclick="goToHole(${currentHole + 1})">Hole ${currentHole + 2} &rarr;</button>`;
+      } else {
+        html += `<button class="hole-nav-btn next" onclick="finishGroupRoundAction()" style="background:var(--gold);color:#1a1a1a;">Finish Round</button>`;
+      }
+      html += '</div>';
 
       // Live players leaderboard — updates in real-time
       html += buildPlayersLeaderboard(R, course, myName);
@@ -1288,15 +1256,13 @@
       `;
 
       // Finish / Leave — every player can save their own round
-      if (!isFutureHole) {
-        html += '<div class="finish-section">';
-        html += '<button class="btn-gold" onclick="finishGroupRoundAction()">Save & Finish</button>';
-        if (R._createdBy === user.uid) {
-          html += '<button class="btn-danger" onclick="endRoundForAll()" style="background:#c0392b;color:#fff;border:none;padding:12px 24px;border-radius:var(--radius);font-weight:700;font-size:14px;cursor:pointer;width:100%">End Round for All</button>';
-        }
-        html += '<button class="btn-secondary" onclick="leaveGroupRound()">Leave</button>';
-        html += '</div>';
+      html += '<div class="finish-section">';
+      html += '<button class="btn-gold" onclick="finishGroupRoundAction()">Save & Finish</button>';
+      if (R._createdBy === user.uid) {
+        html += '<button class="btn-danger" onclick="endRoundForAll()" style="background:#c0392b;color:#fff;border:none;padding:12px 24px;border-radius:var(--radius);font-weight:700;font-size:14px;cursor:pointer;width:100%">End Round for All</button>';
       }
+      html += '<button class="btn-secondary" onclick="leaveGroupRound()">Leave</button>';
+      html += '</div>';
 
       document.getElementById('mainContent').innerHTML = html;
 
