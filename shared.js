@@ -1,7 +1,7 @@
 // ==================== AUTO-UPDATE CHECK ====================
 // Forces a hard reload when a new version is deployed so users always
 // get fresh files. The popup is handled separately via checkUpdatePopup.
-var APP_VERSION = '174';
+var APP_VERSION = '175';
 (function() {
   var storedVersion = localStorage.getItem('app_version');
   if (storedVersion && storedVersion !== APP_VERSION) {
@@ -24,12 +24,17 @@ var APP_VERSION = '174';
 // Firebase is the source of truth for the latest version.
 // When admin (kohyo) logs in, they publish APP_VERSION to config/latestVersion.
 // checkUpdatePopup reads that value and shows the popup to anyone behind it.
+// _latestVersionSeen: module-level so forceVersionUpdate can write app_v_notified before redirecting.
+var _latestVersionSeen = 0;
+
 window.checkUpdatePopup = function() {
   if (document.getElementById('versionUpdateModal')) return;
 
   function showPopup(latestVersion) {
     var notifiedNum = parseInt(localStorage.getItem('app_v_notified'), 10) || 0;
     if (notifiedNum >= latestVersion) return;
+
+    _latestVersionSeen = latestVersion;
 
     var modal = document.createElement('div');
     modal.id = 'versionUpdateModal';
@@ -89,6 +94,11 @@ window.checkRequiredVersion = function() {
 };
 
 window.forceVersionUpdate = function() {
+  // Mark this version as notified BEFORE redirecting so the popup
+  // never re-appears when the user comes back after updating.
+  var vToMark = _latestVersionSeen || parseInt(APP_VERSION, 10);
+  localStorage.setItem('app_v_notified', vToMark);
+
   if (typeof auth !== 'undefined' && auth.signOut) {
     auth.signOut().then(function() {
       window.location.href = 'force-update.html';
