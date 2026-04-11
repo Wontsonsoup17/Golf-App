@@ -1,7 +1,7 @@
 // ==================== AUTO-UPDATE CHECK ====================
 // Forces a hard reload when a new version is deployed so users always
 // get fresh files. The popup is handled separately via checkUpdatePopup.
-var APP_VERSION = '176';
+var APP_VERSION = '177';
 (function() {
   var storedVersion = localStorage.getItem('app_version');
   if (storedVersion && storedVersion !== APP_VERSION) {
@@ -31,6 +31,13 @@ window.checkUpdatePopup = function() {
   if (document.getElementById('versionUpdateModal')) return;
 
   function showPopup(latestVersion) {
+    // Primary guard: the inline version script always sets app_v to the currently
+    // running code version. After a successful update + fresh reload, app_v will
+    // equal latestVersion, so we never show the popup again — regardless of what
+    // happened to app_v_notified during localStorage.clear() in force-update.html.
+    var runningV = parseInt(localStorage.getItem('app_v'), 10) || 0;
+    if (runningV >= latestVersion) return;
+    // Secondary guard: user dismissed via "Maybe Later" for this version.
     var notifiedNum = parseInt(localStorage.getItem('app_v_notified'), 10) || 0;
     if (notifiedNum >= latestVersion) return;
 
