@@ -3,7 +3,7 @@
 <head>
 <style>html,body{background:#0a0f0d}</style>
 <script>
-(function(){var v='172';var k='app_v';var s=localStorage.getItem(k);if(s&&s!==v){localStorage.setItem(k,v);window.location.replace(window.location.pathname+'?_='+Date.now());return;}localStorage.setItem(k,v);})();
+(function(){var v='173';var k='app_v';var s=localStorage.getItem(k);if(s&&s!==v){localStorage.setItem(k,v);window.location.replace(window.location.pathname+'?_='+Date.now());return;}localStorage.setItem(k,v);})();
 </script>
 <meta charset="UTF-8">
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
@@ -15,7 +15,7 @@
 <link rel="manifest" href="manifest.json">
 <link rel="apple-touch-icon" href="icon-192.png">
 <title>My Stats - Westchester Golf</title>
-<link rel="stylesheet" href="shared.css?v=172">
+<link rel="stylesheet" href="shared.css?v=173">
 </head>
 <body>
 
@@ -38,9 +38,9 @@
 
 <nav class="bottom-nav" id="bottomNav"></nav>
 
-<script src="firebase-config.js?v=172"></script>
-<script src="shared.js?v=172"></script>
-<script src="firebase-sync.js?v=172"></script>
+<script src="firebase-config.js?v=173"></script>
+<script src="shared.js?v=173"></script>
+<script src="firebase-sync.js?v=173"></script>
 <script>
   requireAuth(function(user) {
     renderBottomNav('personal');
@@ -92,6 +92,13 @@
       return null;
     }
 
+    // Shared helpers — used by renderPersonalStats, renderScoreChart, and renderTips
+    function getParPlayed(r, me) {
+      if (!r.holePars) return r.par || 72;
+      return r.holePars.reduce(function(acc, hp, i) { return acc + (r.scores[me][i] > 0 ? hp : 0); }, 0);
+    }
+    function fmtToPar(n) { return n === 0 ? 'E' : (n > 0 ? '+' + n : n.toString()); }
+
     function renderPersonalStats(rounds, myName) {
       if (!rounds.length) {
         document.getElementById('statGrid').innerHTML = '';
@@ -101,11 +108,6 @@
       }
 
       // Find my stats across all rounds — all score comparisons use score-to-par for holes played
-      function getParPlayed(r, me) {
-        if (!r.holePars) return r.par || 72;
-        return r.holePars.reduce(function(acc, hp, i) { return acc + (r.scores[me][i] > 0 ? hp : 0); }, 0);
-      }
-      function fmtToPar(n) { return n === 0 ? 'E' : (n > 0 ? '+' + n : n.toString()); }
 
       var myRounds = 0, myTotalScore = 0, myTotalPar = 0, myBestToPar = Infinity, coursesPlayed = new Set();
 
