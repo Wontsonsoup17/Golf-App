@@ -1,7 +1,7 @@
 // ==================== AUTO-UPDATE CHECK ====================
 // Forces a hard reload when a new version is deployed so users always
 // get fresh files. The popup is handled separately via checkUpdatePopup.
-var APP_VERSION = '175';
+var APP_VERSION = '176';
 (function() {
   var storedVersion = localStorage.getItem('app_version');
   if (storedVersion && storedVersion !== APP_VERSION) {
@@ -94,20 +94,20 @@ window.checkRequiredVersion = function() {
 };
 
 window.forceVersionUpdate = function() {
-  // Mark this version as notified BEFORE redirecting so the popup
-  // never re-appears when the user comes back after updating.
+  // Pass the version as a URL param — force-update.html clears all localStorage,
+  // so it must restore app_v_notified afterward to prevent the popup from looping.
   var vToMark = _latestVersionSeen || parseInt(APP_VERSION, 10);
-  localStorage.setItem('app_v_notified', vToMark);
+  var dest = 'force-update.html?notified=' + vToMark;
 
   if (typeof auth !== 'undefined' && auth.signOut) {
     auth.signOut().then(function() {
-      window.location.href = 'force-update.html';
+      window.location.href = dest;
     }).catch(function() {
-      window.location.href = 'force-update.html';
+      window.location.href = dest;
     });
   } else {
     localStorage.removeItem('wg-session');
-    window.location.href = 'force-update.html';
+    window.location.href = dest;
   }
 };
 

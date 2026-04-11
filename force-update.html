@@ -69,8 +69,13 @@
   swPromise.then(function() {
     setStatus('Clearing all cached data...');
 
-    // Step 2: Clear ALL localStorage
+    // Step 2: Clear ALL localStorage, then restore app_v_notified so the
+    // update popup doesn't re-fire when the user returns after updating.
+    var notifiedVersion = new URLSearchParams(window.location.search).get('notified');
     try { localStorage.clear(); } catch(e) {}
+    if (notifiedVersion) {
+      try { localStorage.setItem('app_v_notified', notifiedVersion); } catch(e) {}
+    }
 
     // Step 3: Clear ALL sessionStorage
     try { sessionStorage.clear(); } catch(e) {}
