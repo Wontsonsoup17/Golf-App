@@ -684,10 +684,16 @@ function requireAuth(callback) {
       // Restore avatar from Firebase if missing locally (e.g. after cache clear)
       restoreAvatarFromFirebase(user.uid);
       callback(user);
+      // If admin, publish current version to Firebase so all users get the popup
+      if (user.displayName && user.displayName.toLowerCase() === 'kohyo') {
+        _firebaseLoadPromise.then(function() {
+          _firebaseDB.ref('config/latestVersion').set(parseInt(APP_VERSION, 10)).catch(function(){});
+        });
+      }
       // Show update popup automatically if a new version was just installed
       setTimeout(function() {
         if (typeof checkUpdatePopup === 'function') checkUpdatePopup();
-      }, 800);
+      }, 1200);
       // Emergency override: Firebase-controlled forced update
       setTimeout(function() {
         if (typeof checkRequiredVersion === 'function') checkRequiredVersion();

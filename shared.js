@@ -1,7 +1,7 @@
 // ==================== AUTO-UPDATE CHECK ====================
 // Forces a hard reload when a new version is deployed so users always
 // get fresh files. The popup is handled separately via checkUpdatePopup.
-var APP_VERSION = '173';
+var APP_VERSION = '174';
 (function() {
   var storedVersion = localStorage.getItem('app_version');
   if (storedVersion && storedVersion !== APP_VERSION) {
@@ -21,36 +21,42 @@ var APP_VERSION = '173';
 })();
 
 // ==================== UPDATE POPUP ====================
-// Shows once per version bump, on every login, until the user taps Apply Update.
-// Compares APP_VERSION against app_v_notified (last version user was notified about).
-// Just bump APP_VERSION above to trigger the popup for all users on next login.
+// Firebase is the source of truth for the latest version.
+// When admin (kohyo) logs in, they publish APP_VERSION to config/latestVersion.
+// checkUpdatePopup reads that value and shows the popup to anyone behind it.
 window.checkUpdatePopup = function() {
-  var notified = localStorage.getItem('app_v_notified');
-
-  // First-ever install — set silently, no popup
-  if (!notified) {
-    localStorage.setItem('app_v_notified', APP_VERSION);
-    return;
-  }
-
-  // Already up to date
-  if (notified === APP_VERSION) return;
-
-  // New version detected — show popup
   if (document.getElementById('versionUpdateModal')) return;
 
-  var modal = document.createElement('div');
-  modal.id = 'versionUpdateModal';
-  modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.85);z-index:9999;display:flex;align-items:center;justify-content:center;padding:24px';
-  modal.innerHTML =
-    '<div style="background:var(--card-bg,#1a2e1a);border:1px solid rgba(212,175,55,0.3);border-radius:16px;padding:32px 24px;max-width:380px;width:100%;text-align:center;box-shadow:0 20px 80px rgba(0,0,0,0.6)">' +
-      '<div style="font-size:48px;margin-bottom:12px">&#x1F504;</div>' +
-      '<h3 style="color:#fff;font-size:20px;margin-bottom:8px">New Update Available</h3>' +
-      '<p style="color:var(--text-muted,#999);font-size:13px;line-height:1.6;margin-bottom:24px">A new version of Westchester Golf is ready. Tap below to apply the update and get the latest features.</p>' +
-      '<button onclick="forceVersionUpdate()" style="width:100%;padding:14px;background:linear-gradient(135deg,#b8860b,#d4af37);color:#1a1a1a;font-size:15px;font-weight:700;border:none;border-radius:10px;cursor:pointer;margin-bottom:10px">&#x1F504; Apply Update</button>' +
-      '<button onclick="localStorage.setItem(\'app_v_notified\',\'' + APP_VERSION + '\');document.getElementById(\'versionUpdateModal\').remove()" style="width:100%;padding:10px;background:transparent;color:var(--text-muted,#999);font-size:13px;border:none;cursor:pointer">Maybe Later</button>' +
-    '</div>';
-  document.body.appendChild(modal);
+  function showPopup(latestVersion) {
+    var notifiedNum = parseInt(localStorage.getItem('app_v_notified'), 10) || 0;
+    if (notifiedNum >= latestVersion) return;
+
+    var modal = document.createElement('div');
+    modal.id = 'versionUpdateModal';
+    modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.85);z-index:9999;display:flex;align-items:center;justify-content:center;padding:24px';
+    modal.innerHTML =
+      '<div style="background:var(--card-bg,#1a2e1a);border:1px solid rgba(212,175,55,0.3);border-radius:16px;padding:32px 24px;max-width:380px;width:100%;text-align:center;box-shadow:0 20px 80px rgba(0,0,0,0.6)">' +
+        '<div style="font-size:48px;margin-bottom:12px">&#x1F504;</div>' +
+        '<h3 style="color:#fff;font-size:20px;margin-bottom:8px">New Update Available</h3>' +
+        '<p style="color:var(--text-muted,#999);font-size:13px;line-height:1.6;margin-bottom:24px">A new version of Westchester Golf is ready. Tap below to apply the update and get the latest features.</p>' +
+        '<button onclick="forceVersionUpdate()" style="width:100%;padding:14px;background:linear-gradient(135deg,#b8860b,#d4af37);color:#1a1a1a;font-size:15px;font-weight:700;border:none;border-radius:10px;cursor:pointer;margin-bottom:10px">&#x1F504; Apply Update</button>' +
+        '<button onclick="localStorage.setItem(\'app_v_notified\',\'' + latestVersion + '\');document.getElementById(\'versionUpdateModal\').remove()" style="width:100%;padding:10px;background:transparent;color:var(--text-muted,#999);font-size:13px;border:none;cursor:pointer">Maybe Later</button>' +
+      '</div>';
+    document.body.appendChild(modal);
+  }
+
+  // Read the admin-published latest version from Firebase
+  if (typeof _firebaseDB !== 'undefined' && _firebaseDB) {
+    _firebaseDB.ref('config/latestVersion').once('value').then(function(snap) {
+      var latest = snap.exists() ? parseInt(snap.val(), 10) : parseInt(APP_VERSION, 10);
+      showPopup(latest);
+    }).catch(function() {
+      // Firebase unavailable — fall back to local version
+      showPopup(parseInt(APP_VERSION, 10));
+    });
+  } else {
+    showPopup(parseInt(APP_VERSION, 10));
+  }
 };
 
 // ==================== FIREBASE VERSION CHECK ====================
