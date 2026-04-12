@@ -119,7 +119,8 @@ const auth = {
         const u = getLocalUsers();
         if (u[username]) { u[username].displayName = profile.displayName; saveLocalUsers(u); }
         setSession({ uid, username: profile.displayName });
-        // Update displayName in Firebase credentials (awaited)
+        // Update displayName in Firebase credentials and nameIndex
+        db.ref('nameIndex/' + profile.displayName).set(uid).catch(function() {});
         return db.ref('credentials/' + username + '/displayName').set(profile.displayName).catch(function() {});
       }
       return Promise.resolve();
@@ -152,7 +153,8 @@ const auth = {
       self.currentUser = user;
       setSession({ uid: stored.uid, username: user.displayName });
       self._notifyListeners();
-      // Sync to Firebase if not already there
+      // Sync to Firebase if not already there + update nameIndex
+      db.ref('nameIndex/' + user.displayName).set(user.uid).catch(function() {});
       db.ref('credentials/' + username).once('value').then(function(snap) {
         if (!snap.exists()) {
           db.ref('credentials/' + username).set(stored).catch(function() {});
@@ -179,6 +181,7 @@ const auth = {
       self.currentUser = user;
       setSession({ uid: fbCred.uid, username: user.displayName });
       self._notifyListeners();
+      db.ref('nameIndex/' + user.displayName).set(user.uid).catch(function() {});
       return { user: user };
     });
   },

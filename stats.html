@@ -3,7 +3,7 @@
 <head>
 <style>html,body{background:#0a0f0d}</style>
 <script>
-(function(){var v='186';var k='app_v';var s=localStorage.getItem(k);if(s&&s!==v){localStorage.setItem(k,v);window.location.replace(window.location.pathname+'?_='+Date.now());return;}localStorage.setItem(k,v);})();
+(function(){var v='187';var k='app_v';var s=localStorage.getItem(k);if(s&&s!==v){localStorage.setItem(k,v);window.location.replace(window.location.pathname+'?_='+Date.now());return;}localStorage.setItem(k,v);})();
 </script>
 <meta charset="UTF-8">
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
@@ -15,7 +15,7 @@
 <link rel="manifest" href="manifest.json">
 <link rel="apple-touch-icon" href="icon-192.png">
 <title>Leaderboard - Westchester Golf</title>
-<link rel="stylesheet" href="shared.css?v=186">
+<link rel="stylesheet" href="shared.css?v=187">
 <style>
 /* ===== LEAGUE TABLE ===== */
 .lb-table { width: 100%; border-collapse: collapse; }
@@ -126,6 +126,10 @@
 .podium-avg {
   font-size: 13px; font-weight: 800; margin-bottom: 6px;
 }
+.podium-avatar-img {
+  width: 100%; height: 100%; border-radius: 50%; object-fit: cover;
+  position: absolute; top: 0; left: 0;
+}
 .podium-avg.under { color: var(--green-accent); }
 .podium-avg.even  { color: var(--par-color); }
 .podium-avg.over  { color: var(--bogey); }
@@ -218,9 +222,9 @@ body { display: flex; flex-direction: column; }
 
 <nav class="bottom-nav" id="bottomNav"></nav>
 
-<script src="firebase-config.js?v=186"></script>
-<script src="shared.js?v=186"></script>
-<script src="firebase-sync.js?v=186"></script>
+<script src="firebase-config.js?v=187"></script>
+<script src="shared.js?v=187"></script>
+<script src="firebase-sync.js?v=187"></script>
 <script>
 requireAuth(function(user) {
   renderBottomNav('stats');
@@ -644,8 +648,9 @@ requireAuth(function(user) {
           var avgStr = (p.avg >= 0 ? '+' : '') + p.avg.toFixed(1);
           var avgClass = p.avg < 0 ? 'under' : p.avg === 0 ? 'even' : 'over';
           var crown = pos === 1 ? '<span class="podium-crown">&#128081;</span>' : '';
+          var safeId = 'podium-av-' + p.name.replace(/[^a-zA-Z0-9]/g, '_');
           return '<div class="podium-slot">' +
-            '<div class="podium-avatar ' + posClass + '">' + crown + initials + '</div>' +
+            '<div class="podium-avatar ' + posClass + '" id="' + safeId + '">' + crown + '<span class="podium-initials">' + initials + '</span></div>' +
             '<div class="podium-name">' + p.name + '</div>' +
             '<div class="podium-avg ' + avgClass + '">' + avgStr + '</div>' +
             '<div class="podium-block ' + posClass + '">' + pos + '</div>' +
@@ -659,11 +664,50 @@ requireAuth(function(user) {
             podiumSlot(byMonthlyAvg[0], 1) +
             podiumSlot(byMonthlyAvg[2], 3) +
           '</div>';
+
+        // Async: load avatars for top 3 via nameIndex → uid → avatar
+        window._loadPodiumAvatars = function(players) {
+          players.forEach(function(p) {
+            var safeId = 'podium-av-' + p.name.replace(/[^a-zA-Z0-9]/g, '_');
+            _firebaseDB.ref('nameIndex/' + p.name).once('value').then(function(snap) {
+              var uid = snap.val();
+              if (!uid) return;
+              // Check localStorage cache first
+              var cached = localStorage.getItem('wg-avatar-' + uid);
+              if (cached) { injectPodiumPhoto(safeId, cached); return; }
+              return _firebaseDB.ref('users/' + uid + '/profile/avatar').once('value').then(function(aSnap) {
+                var dataUrl = aSnap.val();
+                if (dataUrl) {
+                  localStorage.setItem('wg-avatar-' + uid, dataUrl);
+                  injectPodiumPhoto(safeId, dataUrl);
+                }
+              });
+            }).catch(function() {});
+          });
+        };
+
+        function injectPodiumPhoto(elId, dataUrl) {
+          var el = document.getElementById(elId);
+          if (!el) return;
+          var initEl = el.querySelector('.podium-initials');
+          if (initEl) initEl.style.display = 'none';
+          if (!el.querySelector('.podium-avatar-img')) {
+            var img = document.createElement('img');
+            img.className = 'podium-avatar-img';
+            img.src = dataUrl;
+            el.appendChild(img);
+          }
+        }
       }
 
       document.getElementById('leaderboardSection').innerHTML = players.length
         ? podiumHtml + lbHtml + champHtml + parSpecHtml
         : '<p style="color:var(--text-muted);font-size:13px;padding:12px 0">Complete a round with 9+ holes.</p>';
+
+      // Load podium photos after DOM is set
+      if (byMonthlyAvg.length >= 3 && typeof window._loadPodiumAvatars === 'function' && typeof _firebaseDB !== 'undefined' && _firebaseDB) {
+        window._loadPodiumAvatars(byMonthlyAvg.slice(0, 3));
+      }
     }
 
     renderLb();
