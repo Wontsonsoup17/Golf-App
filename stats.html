@@ -3,7 +3,7 @@
 <head>
 <style>html,body{background:#0a0f0d}</style>
 <script>
-(function(){var v='188';var k='app_v';var s=localStorage.getItem(k);if(s&&s!==v){localStorage.setItem(k,v);window.location.replace(window.location.pathname+'?_='+Date.now());return;}localStorage.setItem(k,v);})();
+(function(){var v='189';var k='app_v';var s=localStorage.getItem(k);if(s&&s!==v){localStorage.setItem(k,v);window.location.replace(window.location.pathname+'?_='+Date.now());return;}localStorage.setItem(k,v);})();
 </script>
 <meta charset="UTF-8">
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
@@ -15,7 +15,7 @@
 <link rel="manifest" href="manifest.json">
 <link rel="apple-touch-icon" href="icon-192.png">
 <title>Leaderboard - Westchester Golf</title>
-<link rel="stylesheet" href="shared.css?v=188">
+<link rel="stylesheet" href="shared.css?v=189">
 <style>
 /* ===== LEAGUE TABLE ===== */
 .lb-table { width: 100%; border-collapse: collapse; }
@@ -222,9 +222,9 @@ body { display: flex; flex-direction: column; }
 
 <nav class="bottom-nav" id="bottomNav"></nav>
 
-<script src="firebase-config.js?v=188"></script>
-<script src="shared.js?v=188"></script>
-<script src="firebase-sync.js?v=188"></script>
+<script src="firebase-config.js?v=189"></script>
+<script src="shared.js?v=189"></script>
+<script src="firebase-sync.js?v=189"></script>
 <script>
 requireAuth(function(user) {
   renderBottomNav('stats');
@@ -667,29 +667,40 @@ requireAuth(function(user) {
 
         // Async: load avatars for top 3 via nameIndex → uid → avatar
         window._loadPodiumAvatars = function(players) {
-          // Scan credentials to build displayName→uid for all existing users
-          db.ref('credentials').once('value').then(function(snap) {
-            var creds = snap.val() || {};
-            var nameToUid = {};
-            Object.keys(creds).forEach(function(uname) {
-              var c = creds[uname];
-              if (c && c.uid) nameToUid[c.displayName || c.username || uname] = c.uid;
+          // Firebase rules block reading credentials root, but allow individual
+          // credentials/{username} reads. Try common username variants of each display name.
+          function findUidByName(displayName) {
+            var dn = displayName;
+            var seen = {}, candidates = [];
+            [dn, dn.toLowerCase(), dn.toLowerCase().replace(/_/g,''), dn.toLowerCase().replace(/\s+/g,''), dn.toLowerCase().replace(/[^a-z0-9]/g,'')].forEach(function(c) {
+              if (c && !seen[c]) { seen[c] = true; candidates.push(c); }
             });
-            players.forEach(function(p) {
-              var uid = nameToUid[p.name];
+            return candidates.reduce(function(p, cand) {
+              return p.then(function(found) {
+                if (found) return found;
+                return db.ref('credentials/' + cand).once('value').then(function(snap) {
+                  var d = snap.val();
+                  return (d && d.uid && (!d.displayName || d.displayName === displayName)) ? d.uid : null;
+                }).catch(function() { return null; });
+              });
+            }, Promise.resolve(null));
+          }
+
+          players.forEach(function(p) {
+            var safeId = 'podium-av-' + p.name.replace(/[^a-zA-Z0-9]/g, '_');
+            findUidByName(p.name).then(function(uid) {
               if (!uid) return;
-              var safeId = 'podium-av-' + p.name.replace(/[^a-zA-Z0-9]/g, '_');
               var cached = localStorage.getItem('wg-avatar-' + uid);
               if (cached) { injectPodiumPhoto(safeId, cached); return; }
-              db.ref('users/' + uid + '/profile/avatar').once('value').then(function(aSnap) {
+              return db.ref('users/' + uid + '/profile/avatar').once('value').then(function(aSnap) {
                 var dataUrl = aSnap.val();
                 if (dataUrl) {
                   localStorage.setItem('wg-avatar-' + uid, dataUrl);
                   injectPodiumPhoto(safeId, dataUrl);
                 }
-              }).catch(function() {});
-            });
-          }).catch(function() {});
+              });
+            }).catch(function() {});
+          });
         };
 
         function injectPodiumPhoto(elId, dataUrl) {
