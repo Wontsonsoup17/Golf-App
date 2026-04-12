@@ -3,7 +3,7 @@
 <head>
 <style>html,body{background:#0a0f0d}</style>
 <script>
-(function(){var v='189';var k='app_v';var s=localStorage.getItem(k);if(s&&s!==v){localStorage.setItem(k,v);window.location.replace(window.location.pathname+'?_='+Date.now());return;}localStorage.setItem(k,v);})();
+(function(){var v='190';var k='app_v';var s=localStorage.getItem(k);if(s&&s!==v){localStorage.setItem(k,v);window.location.replace(window.location.pathname+'?_='+Date.now());return;}localStorage.setItem(k,v);})();
 </script>
 <meta charset="UTF-8">
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
@@ -15,7 +15,46 @@
 <link rel="manifest" href="manifest.json">
 <link rel="apple-touch-icon" href="icon-192.png">
 <title>Live Round - Westchester Golf</title>
-<link rel="stylesheet" href="shared.css?v=189">
+<link rel="stylesheet" href="shared.css?v=190">
+<style>
+/* ===== SCRAMBLE MODE ===== */
+.scramble-lobby { padding: 0; }
+.lobby-team-box { background: rgba(255,255,255,0.04); border: 1px solid var(--border); border-radius: 12px; padding: 14px; }
+.lobby-player-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
+.lobby-assign-btn { padding: 5px 10px; border-radius: 8px; font-size: 11px; font-weight: 700; border: 1px solid; cursor: pointer; background: none; }
+.scramble-card { background: var(--bg-card); border: 1px solid var(--border-light); border-radius: var(--radius); overflow: hidden; margin-bottom: 12px; }
+.scramble-hole-header { background: linear-gradient(135deg, rgba(0,230,118,0.12), rgba(0,230,118,0.04)); padding: 12px 16px; text-align: center; border-bottom: 1px solid var(--border); }
+.scramble-hole-num { font-size: 22px; font-weight: 900; color: var(--text); }
+.scramble-hole-meta { font-size: 12px; color: var(--text-muted); margin-top: 2px; }
+.team-score-section { padding: 16px; }
+.team-score-section.mine { border-bottom: 1px solid var(--border); }
+.team-score-section.opp { background: rgba(255,255,255,0.02); }
+.team-badge { font-size: 11px; font-weight: 700; letter-spacing: 0.8px; text-transform: uppercase; margin-bottom: 12px; display: flex; align-items: center; gap: 6px; }
+.team-badge.mine { color: var(--green-accent); }
+.team-badge.opp { color: var(--text-muted); }
+.scramble-stepper { display: flex; align-items: center; justify-content: center; gap: 20px; }
+.scramble-step-btn { width: 44px; height: 44px; border-radius: 50%; border: 2px solid var(--border-light); background: rgba(255,255,255,0.05); font-size: 24px; font-weight: 300; cursor: pointer; display: flex; align-items: center; justify-content: center; color: var(--text); -webkit-tap-highlight-color: transparent; }
+.scramble-step-btn:active { background: rgba(255,255,255,0.12); }
+.scramble-score-display { font-size: 52px; font-weight: 900; min-width: 60px; text-align: center; line-height: 1; }
+.scramble-score-label { text-align: center; font-size: 13px; font-weight: 700; margin-top: 6px; }
+.opp-score-row { display: flex; align-items: center; justify-content: space-between; }
+.opp-score-num { font-size: 28px; font-weight: 900; }
+.opp-score-label { font-size: 12px; color: var(--text-muted); margin-top: 2px; }
+.confirm-section { padding: 14px 16px; border-top: 1px solid var(--border); }
+.confirm-row { display: flex; gap: 8px; margin-bottom: 12px; }
+.confirm-chip { flex: 1; padding: 10px 8px; border-radius: 10px; text-align: center; font-size: 12px; font-weight: 700; border: 1px solid; }
+.confirm-chip.done { background: rgba(0,230,118,0.12); border-color: rgba(0,230,118,0.3); color: var(--green-accent); }
+.confirm-chip.waiting { background: rgba(255,255,255,0.04); border-color: var(--border); color: var(--text-muted); }
+.scramble-confirm-btn { width: 100%; padding: 14px; background: var(--green-accent); color: #0a0f0d; font-size: 15px; font-weight: 800; border: none; border-radius: 10px; cursor: pointer; -webkit-tap-highlight-color: transparent; }
+.scramble-confirm-btn:disabled { background: #333; color: #666; cursor: not-allowed; }
+.scramble-confirm-btn.already { background: rgba(0,230,118,0.15); color: var(--green-accent); border: 1px solid rgba(0,230,118,0.3); }
+.scramble-lb { background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; margin-bottom: 80px; }
+.scramble-lb-header { padding: 10px 16px; font-size: 10px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; border-bottom: 1px solid var(--border); }
+.scramble-lb-row { display: flex; align-items: center; justify-content: space-between; padding: 12px 16px; border-bottom: 1px solid var(--border); }
+.scramble-lb-row:last-child { border-bottom: none; }
+.team-name-modal { position: fixed; inset: 0; background: rgba(0,0,0,0.88); z-index: 500; display: flex; align-items: center; justify-content: center; padding: 24px; }
+.team-name-box { background: var(--bg-card); border: 1px solid var(--border); border-radius: 16px; padding: 28px 24px; max-width: 360px; width: 100%; text-align: center; }
+</style>
 </head>
 <body>
 
@@ -41,9 +80,9 @@
 <nav class="bottom-nav" id="bottomNav"></nav>
 <div style="text-align:center;font-size:9px;color:#333;padding:4px;opacity:0.5">v106</div>
 
-<script src="firebase-config.js?v=189"></script>
-<script src="shared.js?v=189"></script>
-<script src="firebase-sync.js?v=189"></script>
+<script src="firebase-config.js?v=190"></script>
+<script src="shared.js?v=190"></script>
+<script src="firebase-sync.js?v=190"></script>
 <script>
   // ==================== SCORE EFFECTS (emoji burst) ====================
   // Defined at script scope so both solo and group modes can access them
@@ -872,6 +911,12 @@
       }
       if (!data.meta) return;
 
+      // SCRAMBLE MODE — completely separate code path
+      if (data.meta.gameType === 'scramble') {
+        handleScrambleData(data);
+        return;
+      }
+
       // Detect round ended (by host OR by super admin from dashboard)
       if (data.meta.status === 'ended' && !roundEndedHandled) {
         roundEndedHandled = true;
@@ -981,6 +1026,442 @@
       }
     });
     } // end startGroupListener
+
+    // ==================== SCRAMBLE MODE ====================
+    var scrambleTeamKey = null; // 'teamA' or 'teamB'
+    var scrambleNameModalShown = false;
+
+    function handleScrambleData(data) {
+      var status = data.meta.status;
+      var course = getCourse(data.meta.courseId);
+      course_ref.current = course;
+
+      if (course) {
+        if (course.group === 'other') {
+          document.body.classList.add('sunset-theme');
+          document.querySelector('meta[name="theme-color"]').content = '#0f0a07';
+        }
+        document.getElementById('courseName').textContent = course.name;
+        document.getElementById('courseSub').textContent = (data.meta.teeLabel || '') + ' Tees | Par ' + course.par + ' | ' + formatDate(data.meta.date);
+      }
+
+      if (status === 'lobby') {
+        renderScrambleLobby(data);
+        return;
+      }
+
+      if (status === 'ended' && !roundEndedHandled) {
+        roundEndedHandled = true;
+        saveScrambleRound(data);
+        if (unsubscribe) unsubscribe();
+        if (unsubConn) unsubConn();
+        localStorage.removeItem('active-group-code');
+        var endedModal = document.createElement('div');
+        endedModal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.9);z-index:9999;display:flex;align-items:center;justify-content:center;padding:24px';
+        endedModal.innerHTML = '<div style="background:var(--bg-card);border:1px solid rgba(255,82,82,0.3);border-radius:16px;padding:32px 24px;max-width:400px;width:100%;text-align:center"><div style="font-size:48px;margin-bottom:12px">🏁</div><h3 style="color:var(--red,#ff5252);font-size:20px;margin-bottom:8px">Round Ended</h3><p style="color:var(--text-muted);font-size:14px;margin-bottom:24px">The admin ended the scramble. Scores saved.</p><button onclick="window.location.href=\'history.html\'" style="width:100%;padding:14px;background:linear-gradient(135deg,#b8860b,#d4af37);color:#1a1a1a;font-size:15px;font-weight:700;border:none;border-radius:10px;cursor:pointer">View History</button></div>';
+        document.body.appendChild(endedModal);
+        return;
+      }
+
+      if (status === 'active' || status === 'finished') {
+        // Find my team
+        var teams = (data.meta.teams) || { teamA: { members: [] }, teamB: { members: [] } };
+        var teamAMembers = teams.teamA.members || [];
+        var teamBMembers = teams.teamB.members || [];
+        if (teamAMembers.indexOf(user.uid) >= 0) scrambleTeamKey = 'teamA';
+        else if (teamBMembers.indexOf(user.uid) >= 0) scrambleTeamKey = 'teamB';
+
+        var myTeam = scrambleTeamKey ? teams[scrambleTeamKey] : null;
+        if (myTeam && !myTeam.name && !scrambleNameModalShown) {
+          scrambleNameModalShown = true;
+          renderScrambleNameModal(scrambleTeamKey);
+        } else if (myTeam && myTeam.name) {
+          var existingModal = document.getElementById('teamNameModal');
+          if (existingModal) existingModal.parentNode.removeChild(existingModal);
+        }
+
+        renderScrambleGame(data);
+        return;
+      }
+    }
+
+    function renderScrambleLobby(data) {
+      var players = data.players || {};
+      var teams = data.meta.teams || { teamA: { name: '', members: [] }, teamB: { name: '', members: [] } };
+      var isCreator = data.meta.createdBy === user.uid;
+      var teamAuids = teams.teamA.members || [];
+      var teamBuids = teams.teamB.members || [];
+      var assignedUids = teamAuids.concat(teamBuids);
+      var unassigned = Object.keys(players).filter(function(u) { return assignedUids.indexOf(u) < 0; });
+
+      var html = '<div class="scramble-lobby">';
+      // Header
+      html += '<div style="text-align:center;padding:20px 0 16px">';
+      html += '<div style="font-size:36px;margin-bottom:8px">🏌️</div>';
+      html += '<h2 style="font-size:20px;color:var(--text);margin-bottom:6px">Scramble Setup</h2>';
+      html += '<div style="font-size:12px;color:var(--text-muted)">Code: <span style="font-family:monospace;font-weight:800;color:var(--gold);letter-spacing:3px">' + groupCode + '</span> <button onclick="copyCode()" class="copy-code-btn" style="background:none;border:none;color:var(--text-muted);font-size:11px;text-decoration:underline;cursor:pointer">Copy</button></div>';
+      html += '<div style="font-size:12px;color:var(--text-muted);margin-top:4px">' + Object.keys(players).length + '/4 players joined</div>';
+      html += '</div>';
+
+      // Teams grid
+      html += '<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px">';
+      ['teamA', 'teamB'].forEach(function(tk) {
+        var memberUids = teams[tk].members || [];
+        var color = tk === 'teamA' ? '#64b5f6' : '#ef9a9a';
+        var borderColor = tk === 'teamA' ? 'rgba(100,181,246,0.3)' : 'rgba(239,154,154,0.3)';
+        var bg = tk === 'teamA' ? 'rgba(100,181,246,0.08)' : 'rgba(239,154,154,0.08)';
+        html += '<div style="background:' + bg + ';border:1px solid ' + borderColor + ';border-radius:12px;padding:12px">';
+        html += '<div style="font-size:10px;font-weight:800;letter-spacing:1px;text-transform:uppercase;color:' + color + ';margin-bottom:10px">' + (tk === 'teamA' ? '🔵 Team A' : '🔴 Team B') + ' (' + memberUids.length + '/2)</div>';
+        memberUids.forEach(function(uid) {
+          if (!players[uid]) return;
+          html += '<div class="lobby-player-row">';
+          html += '<span style="font-size:13px;font-weight:600;color:var(--text)">' + players[uid].name + '</span>';
+          if (isCreator) {
+            html += '<button onclick="removeFromTeam(\'' + uid + '\',\'' + tk + '\')" style="background:none;border:none;color:#ff5252;font-size:18px;cursor:pointer;line-height:1;padding:0 2px">×</button>';
+          }
+          html += '</div>';
+        });
+        if (memberUids.length < 2) {
+          html += '<div style="font-size:12px;color:var(--text-muted);font-style:italic;padding:4px 0">' + (2 - memberUids.length) + ' slot' + (2 - memberUids.length > 1 ? 's' : '') + ' open</div>';
+        }
+        html += '</div>';
+      });
+      html += '</div>';
+
+      // Unassigned
+      if (unassigned.length > 0) {
+        html += '<div style="background:rgba(255,255,255,0.04);border:1px solid var(--border);border-radius:12px;padding:12px;margin-bottom:14px">';
+        html += '<div style="font-size:10px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:10px">Waiting to Assign</div>';
+        unassigned.forEach(function(uid) {
+          if (!players[uid]) return;
+          html += '<div class="lobby-player-row" style="margin-bottom:10px">';
+          html += '<span style="font-size:14px;font-weight:600;color:var(--text)">' + players[uid].name + '</span>';
+          if (isCreator) {
+            html += '<div style="display:flex;gap:6px">';
+            html += '<button onclick="assignToTeam(\'' + uid + '\',\'teamA\')" style="padding:6px 10px;background:rgba(100,181,246,0.15);border:1px solid rgba(100,181,246,0.4);border-radius:8px;color:#64b5f6;font-size:11px;font-weight:700;cursor:pointer">Team A</button>';
+            html += '<button onclick="assignToTeam(\'' + uid + '\',\'teamB\')" style="padding:6px 10px;background:rgba(239,154,154,0.15);border:1px solid rgba(239,154,154,0.4);border-radius:8px;color:#ef9a9a;font-size:11px;font-weight:700;cursor:pointer">Team B</button>';
+            html += '</div>';
+          }
+          html += '</div>';
+        });
+        html += '</div>';
+      }
+
+      if (isCreator) {
+        var canStart = teamAuids.length === 2 && teamBuids.length === 2;
+        html += '<button onclick="startScramble()" ' + (canStart ? '' : 'disabled') + ' style="width:100%;padding:16px;background:' + (canStart ? 'var(--green-accent)' : 'rgba(255,255,255,0.06)') + ';color:' + (canStart ? '#0a0f0d' : '#555') + ';font-size:16px;font-weight:800;border:none;border-radius:12px;cursor:' + (canStart ? 'pointer' : 'not-allowed') + ';margin-bottom:12px">';
+        html += canStart ? '🚀 Start Round' : 'Assign all 4 players to start';
+        html += '</button>';
+        html += '<button onclick="leaveGroupRound()" style="width:100%;padding:12px;background:none;border:1px solid var(--border);border-radius:10px;color:var(--text-muted);font-size:13px;cursor:pointer">Cancel Round</button>';
+      } else {
+        html += '<div style="text-align:center;padding:20px;color:var(--text-muted);font-size:14px">Waiting for admin to set up teams...</div>';
+        html += '<div style="display:flex;justify-content:center;margin-bottom:12px"><span class="spinner" style="width:28px;height:28px;border-width:3px"></span></div>';
+        html += '<button onclick="leaveGroupRound()" style="width:100%;padding:12px;background:none;border:1px solid var(--border);border-radius:10px;color:var(--text-muted);font-size:13px;cursor:pointer">Leave Round</button>';
+      }
+
+      html += '</div>';
+      document.getElementById('mainContent').innerHTML = html;
+    }
+
+    function renderScrambleGame(data) {
+      var course = course_ref.current;
+      if (!course) return;
+      var teams = data.meta.teams || { teamA: { name: '', members: [] }, teamB: { name: '', members: [] } };
+      var myTeamKey = scrambleTeamKey;
+      var oppTeamKey = myTeamKey === 'teamA' ? 'teamB' : 'teamA';
+      var myTeam = teams[myTeamKey] || { name: '', members: [] };
+      var oppTeam = teams[oppTeamKey] || { name: '', members: [] };
+      var teamScores = data.teamScores || { teamA: {}, teamB: {} };
+      var teamHole = data.teamHole || { teamA: 0, teamB: 0 };
+      var teamHoleConfirmed = data.teamHoleConfirmed || { teamA: {}, teamB: {} };
+      var myHoleIdx = teamHole[myTeamKey] || 0;
+      var myConfirmed = teamHoleConfirmed[myTeamKey] || {};
+      var myTeamMembers = myTeam.members || [];
+      currentHole = myHoleIdx;
+
+      var hole = course.holes[myHoleIdx];
+      var myScore = (teamScores[myTeamKey] && teamScores[myTeamKey][myHoleIdx]) ? teamScores[myTeamKey][myHoleIdx] : 0;
+      var oppHoleIdx = teamHole[oppTeamKey] || 0;
+      var oppScore = (teamScores[oppTeamKey] && teamScores[oppTeamKey][oppHoleIdx > 0 ? oppHoleIdx - 1 : 0]) || 0;
+      // Actually show opp team current hole score
+      var oppCurrentScore = (teamScores[oppTeamKey] && teamScores[oppTeamKey][oppHoleIdx]) ? teamScores[oppTeamKey][oppHoleIdx] : 0;
+
+      var myScoreClass = myScore > 0 ? getScoreClass(myScore, hole.par) : '';
+      var myScoreLabel = myScore > 0 ? getScoreLabel(myScore, hole.par) : '—';
+      var iConfirmed = myConfirmed[user.uid] === true;
+      var isLastHole = myHoleIdx >= 17;
+      var isCreator = data.meta.createdBy === user.uid;
+
+      var myTeamName = myTeam.name || (myTeamKey === 'teamA' ? 'Team A' : 'Team B');
+      var oppTeamName = oppTeam.name || (oppTeamKey === 'teamA' ? 'Team A' : 'Team B');
+      var myColor = myTeamKey === 'teamA' ? '#64b5f6' : '#ef9a9a';
+      var oppColor = oppTeamKey === 'teamA' ? '#64b5f6' : '#ef9a9a';
+
+      var html = '';
+
+      // Hole card
+      html += '<div class="scramble-card">';
+      html += '<div class="scramble-hole-header">';
+      html += '<div class="scramble-hole-num">Hole ' + (myHoleIdx + 1) + ' &bull; Par ' + hole.par + '</div>';
+      html += '<div class="scramble-hole-meta">' + (hole.yards || '—') + ' yds</div>';
+      html += '</div>';
+
+      // My team score
+      html += '<div class="team-score-section mine">';
+      html += '<div class="team-badge mine" style="color:' + myColor + '">🏌️ ' + myTeamName + ' &mdash; YOUR TEAM</div>';
+      html += '<div class="scramble-stepper">';
+      html += '<button class="scramble-step-btn" onclick="scrambleAdj(-1)">&#8722;</button>';
+      html += '<div class="scramble-score-display ' + myScoreClass + '">' + (myScore || 0) + '</div>';
+      html += '<button class="scramble-step-btn" onclick="scrambleAdj(1)">+</button>';
+      html += '</div>';
+      html += '<div class="scramble-score-label ' + myScoreClass + '">' + myScoreLabel + '</div>';
+      html += '</div>';
+
+      // Opponent score
+      html += '<div class="team-score-section opp">';
+      html += '<div class="team-badge opp" style="color:' + oppColor + '">' + oppTeamName + '</div>';
+      html += '<div class="opp-score-row">';
+      html += '<div>';
+      var oppHoleScore = (teamScores[oppTeamKey] && teamScores[oppTeamKey][oppHoleIdx]) ? teamScores[oppTeamKey][oppHoleIdx] : 0;
+      var oppPar = course.holes[oppHoleIdx] ? course.holes[oppHoleIdx].par : hole.par;
+      var oppScoreClass = oppHoleScore > 0 ? getScoreClass(oppHoleScore, oppPar) : '';
+      var oppScoreLabel = oppHoleScore > 0 ? getScoreLabel(oppHoleScore, oppPar) : 'No score yet';
+      html += '<div class="opp-score-num ' + oppScoreClass + '">' + (oppHoleScore || '—') + '</div>';
+      html += '<div class="opp-score-label">Hole ' + (oppHoleIdx + 1) + ' &bull; ' + oppScoreLabel + '</div>';
+      html += '</div>';
+      html += '</div>';
+      html += '</div>';
+
+      // Confirmation row
+      html += '<div class="confirm-section">';
+      html += '<div class="confirm-row">';
+      myTeamMembers.forEach(function(uid) {
+        var pName = (data.players && data.players[uid]) ? data.players[uid].name : uid;
+        var done = myConfirmed[uid] === true;
+        html += '<div class="confirm-chip ' + (done ? 'done' : 'waiting') + '">' + pName + (done ? ' ✓' : ' ...') + '</div>';
+      });
+      html += '</div>';
+
+      if (isLastHole) {
+        if (iConfirmed) {
+          html += '<button class="scramble-confirm-btn already" disabled>Score Confirmed ✓</button>';
+        } else {
+          html += '<button class="scramble-confirm-btn" onclick="scrambleConfirmFinish()">Confirm & Finish Round ✓</button>';
+        }
+      } else {
+        if (iConfirmed) {
+          html += '<button class="scramble-confirm-btn already" onclick="scrambleUndoConfirm()">Confirmed — Tap to Undo</button>';
+        } else {
+          html += '<button class="scramble-confirm-btn" onclick="scrambleConfirmHole()" ' + (myScore <= 0 ? 'disabled' : '') + '>Confirm Score &rarr;</button>';
+        }
+      }
+      html += '</div>';
+      html += '</div>'; // end scramble-card
+
+      // Team leaderboard
+      html += '<div class="scramble-lb">';
+      html += '<div class="scramble-lb-header">🏆 Scramble Leaderboard</div>';
+      [myTeamKey, oppTeamKey].forEach(function(tk) {
+        var tScores = teamScores[tk] || {};
+        var tHole = teamHole[tk] || 0;
+        var teamTotal = 0, teamPar = 0;
+        for (var h = 0; h < tHole; h++) {
+          teamTotal += (tScores[h] || 0);
+          teamPar += (course.holes[h] ? course.holes[h].par : 4);
+        }
+        var toPar = tHole > 0 ? teamTotal - teamPar : null;
+        var toParStr = toPar === null ? '—' : (toPar === 0 ? 'E' : (toPar > 0 ? '+' + toPar : toPar));
+        var toParColor = toPar === null ? 'var(--text-muted)' : toPar < 0 ? 'var(--green-accent)' : toPar > 0 ? 'var(--bogey)' : 'var(--par-color)';
+        var tName = teams[tk] ? (teams[tk].name || (tk === 'teamA' ? 'Team A' : 'Team B')) : tk;
+        var tColor = tk === 'teamA' ? '#64b5f6' : '#ef9a9a';
+        var isMe = tk === myTeamKey;
+        html += '<div class="scramble-lb-row" style="' + (isMe ? 'background:rgba(0,230,118,0.05)' : '') + '">';
+        html += '<div style="font-size:14px;font-weight:700;color:' + tColor + '">' + tName + (isMe ? ' (You)' : '') + '</div>';
+        html += '<div style="text-align:right">';
+        html += '<div style="font-size:18px;font-weight:900;color:' + toParColor + '">' + toParStr + '</div>';
+        html += '<div style="font-size:11px;color:var(--text-muted)">Thru ' + tHole + '</div>';
+        html += '</div>';
+        html += '</div>';
+      });
+      html += '</div>';
+
+      // Admin controls
+      if (isCreator) {
+        html += '<div style="margin-bottom:80px">';
+        html += '<button onclick="scrambleEndForAll()" style="width:100%;padding:12px;background:none;border:1px solid rgba(255,82,82,0.3);border-radius:10px;color:#ff5252;font-size:13px;cursor:pointer">End Round for All</button>';
+        html += '</div>';
+      } else {
+        html += '<div style="margin-bottom:80px"></div>';
+      }
+
+      document.getElementById('mainContent').innerHTML = html;
+    }
+
+    function renderScrambleNameModal(teamKey) {
+      var existing = document.getElementById('teamNameModal');
+      if (existing) return;
+      var modal = document.createElement('div');
+      modal.id = 'teamNameModal';
+      modal.className = 'team-name-modal';
+      modal.innerHTML =
+        '<div class="team-name-box">' +
+          '<div style="font-size:40px;margin-bottom:12px">🏆</div>' +
+          '<h3 style="font-size:18px;color:var(--text);margin-bottom:6px">Name Your Team</h3>' +
+          '<p style="font-size:13px;color:var(--text-muted);margin-bottom:20px">First player to submit sets the name — choose wisely!</p>' +
+          '<input type="text" id="teamNameInput" placeholder="Team name..." maxlength="20" style="width:100%;padding:12px;background:var(--bg);border:1px solid var(--border-light);border-radius:10px;color:var(--text);font-size:18px;font-weight:700;text-align:center;margin-bottom:12px" autocomplete="off">' +
+          '<button onclick="submitTeamName(\'' + teamKey + '\')" style="width:100%;padding:14px;background:var(--green-accent);color:#0a0f0d;font-size:15px;font-weight:800;border:none;border-radius:10px;cursor:pointer">Set Team Name</button>' +
+        '</div>';
+      document.body.appendChild(modal);
+      setTimeout(function() { var inp = document.getElementById('teamNameInput'); if (inp) inp.focus(); }, 200);
+    }
+
+    window.submitTeamName = function(teamKey) {
+      var inp = document.getElementById('teamNameInput');
+      var name = inp ? inp.value.trim() : '';
+      if (!name) { alert('Please enter a team name.'); return; }
+      setScrambleTeamName(groupCode, teamKey, name).then(function() {
+        var modal = document.getElementById('teamNameModal');
+        if (modal) modal.parentNode.removeChild(modal);
+      }).catch(function() { alert('Could not set name. Try again.'); });
+    };
+
+    window.assignToTeam = function(uid, teamKey) {
+      var base = 'activeRounds/' + groupCode + '/meta/teams/' + teamKey;
+      db.ref(base + '/members').once('value').then(function(snap) {
+        var members = snap.val() || [];
+        if (members.indexOf(uid) >= 0) return;
+        if (members.length >= 2) { alert('Team already has 2 players.'); return; }
+        members.push(uid);
+        return db.ref(base + '/members').set(members);
+      }).catch(function() {});
+    };
+
+    window.removeFromTeam = function(uid, teamKey) {
+      var base = 'activeRounds/' + groupCode + '/meta/teams/' + teamKey;
+      db.ref(base + '/members').once('value').then(function(snap) {
+        var members = (snap.val() || []).filter(function(u) { return u !== uid; });
+        return db.ref(base + '/members').set(members);
+      }).catch(function() {});
+    };
+
+    window.startScramble = function() {
+      startScrambleRound(groupCode).catch(function(e) { alert('Could not start round.'); });
+    };
+
+    window.scrambleAdj = function(delta) {
+      if (!scrambleTeamKey) return;
+      var data = window._lastScrambleData;
+      if (!data) return;
+      var teamScores = data.teamScores || {};
+      var teamHole = data.teamHole || {};
+      var holeIdx = teamHole[scrambleTeamKey] || 0;
+      var cur = (teamScores[scrambleTeamKey] && teamScores[scrambleTeamKey][holeIdx]) || 0;
+      var next = Math.max(0, Math.min(20, cur + delta));
+      if (next === cur) return;
+      // Reset confirmations when score changes
+      resetScrambleConfirmations(groupCode, scrambleTeamKey).catch(function() {});
+      updateScrambleScore(groupCode, scrambleTeamKey, holeIdx, next).catch(function() {});
+    };
+
+    window.scrambleConfirmHole = function() {
+      if (!scrambleTeamKey) return;
+      var data = window._lastScrambleData;
+      if (!data) return;
+      var teams = data.meta.teams || {};
+      var myTeam = teams[scrambleTeamKey] || {};
+      var allMembers = myTeam.members || [];
+      var teamHole = data.teamHole || {};
+      var holeIdx = teamHole[scrambleTeamKey] || 0;
+      var teamScores = data.teamScores || {};
+      var myScore = (teamScores[scrambleTeamKey] && teamScores[scrambleTeamKey][holeIdx]) || 0;
+      var course = course_ref.current;
+      var holePar = course ? course.holes[holeIdx].par : 4;
+
+      // Show score effect
+      showScoreEffect(myScore, holePar, function() {});
+      confirmScrambleHole(groupCode, scrambleTeamKey, user.uid, allMembers).catch(function() {});
+    };
+
+    window.scrambleUndoConfirm = function() {
+      if (!scrambleTeamKey) return;
+      resetScrambleConfirmations(groupCode, scrambleTeamKey).catch(function() {});
+    };
+
+    window.scrambleConfirmFinish = function() {
+      if (!scrambleTeamKey) return;
+      var data = window._lastScrambleData;
+      if (!data) return;
+      if (!confirm('Confirm your team\'s final score and finish the round?')) return;
+      var teams = data.meta.teams || {};
+      var allMembers = (teams[scrambleTeamKey] || {}).members || [];
+      confirmScrambleHole(groupCode, scrambleTeamKey, user.uid, allMembers).then(function() {
+        // Check if both teams are on hole 17 (index) and confirmed
+        saveScrambleRound(data);
+        markPlayerFinished(groupCode, user.uid).catch(function() {});
+        if (unsubscribe) unsubscribe();
+        if (unsubConn) unsubConn();
+        localStorage.removeItem('active-group-code');
+        window.location.href = 'live-game.html?group=' + groupCode;
+      }).catch(function() {});
+    };
+
+    window.scrambleEndForAll = function() {
+      if (!confirm('End the round for all players? All scores will be saved.')) return;
+      var data = window._lastScrambleData;
+      if (data) saveScrambleRound(data);
+      roundEndedHandled = true;
+      endScrambleRound(groupCode).then(function() {
+        if (unsubscribe) unsubscribe();
+        if (unsubConn) unsubConn();
+        localStorage.removeItem('active-group-code');
+        window.location.href = 'history.html';
+      }).catch(function() {});
+    };
+
+    function saveScrambleRound(data) {
+      var course = course_ref.current;
+      if (!course) return;
+      var teams = data.meta.teams || {};
+      var teamScores = data.teamScores || {};
+      var teamHole = data.teamHole || {};
+      var round = {
+        id: Date.now().toString(),
+        courseId: course.id,
+        courseName: course.name,
+        tee: data.meta.tee,
+        teeLabel: data.meta.teeLabel,
+        par: course.par,
+        date: data.meta.date,
+        gameType: 'scramble',
+        groupCode: groupCode,
+        players: Object.keys(data.players || {}).map(function(u) { return data.players[u].name; }),
+        scores: {}, // empty — scramble uses teamScores
+        tracking: {},
+        holePars: course.holes.map(function(h) { return h.par; }),
+        teamScores: JSON.parse(JSON.stringify(teamScores)),
+        teams: JSON.parse(JSON.stringify(teams))
+      };
+      fbSaveRound(user.uid, round).catch(function() {});
+      var rounds = loadRounds();
+      var exists = false;
+      for (var i = rounds.length - 1; i >= 0; i--) {
+        if (rounds[i].groupCode === groupCode && rounds[i].gameType === 'scramble') {
+          round.id = rounds[i].id;
+          rounds[i] = round;
+          exists = true;
+          break;
+        }
+      }
+      if (!exists) rounds.push(round);
+      saveRounds(rounds);
+    }
+
+    // Store latest scramble data for interaction handlers
+    var _origHandleScramble = handleScrambleData;
+    handleScrambleData = function(data) {
+      window._lastScrambleData = data;
+      _origHandleScramble(data);
+    };
 
     // Determine the current playable hole for the current user (respects starting hole wrap-around)
     function getGroupPlayableHole() {

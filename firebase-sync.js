@@ -68,9 +68,10 @@ function createGroupRound(uid, displayName, courseId, tee, teeLabel, date) {
 }
 
 // Create a group round with a specific code
-function createGroupRoundWithCode(uid, displayName, courseId, tee, teeLabel, date, code, startingHole) {
+function createGroupRoundWithCode(uid, displayName, courseId, tee, teeLabel, date, code, startingHole, gameType) {
   return new Promise((resolve, reject) => {
     const roundRef = db.ref('activeRounds/' + code);
+    var isScramble = gameType === 'scramble';
 
     roundRef.once('value').then(snap => {
       if (snap.exists()) {
@@ -80,44 +81,63 @@ function createGroupRoundWithCode(uid, displayName, courseId, tee, teeLabel, dat
           reject(new Error('That code is already in use. Try a different one.'));
           return;
         }
-        // Round is finished/ended — remove old data and reuse the code
       }
 
-      const roundData = {
-        meta: {
-          courseId: courseId,
-          tee: tee,
-          teeLabel: teeLabel,
-          date: date,
-          createdBy: uid,
-          createdAt: firebase.database.ServerValue.TIMESTAMP,
-          status: 'active',
-          startingHole: startingHole || 0
-        },
-        players: {
-          [uid]: {
-            name: displayName,
-            joinedAt: firebase.database.ServerValue.TIMESTAMP
-          }
-        },
-        scores: {
-          [uid]: arrayToObj(new Array(18).fill(0))
-        },
-        tracking: {
-          [uid]: trackingToObj(createPlayerTracking())
-        },
-        currentHole: {
-          [uid]: 0
-        }
-      };
+      var roundData;
+      if (isScramble) {
+        roundData = {
+          meta: {
+            courseId: courseId,
+            tee: tee,
+            teeLabel: teeLabel,
+            date: date,
+            createdBy: uid,
+            createdAt: firebase.database.ServerValue.TIMESTAMP,
+            status: 'lobby',
+            gameType: 'scramble',
+            startingHole: startingHole || 0,
+            teams: {
+              teamA: { name: '', members: [] },
+              teamB: { name: '', members: [] }
+            }
+          },
+          players: {
+            [uid]: { name: displayName, joinedAt: firebase.database.ServerValue.TIMESTAMP }
+          },
+          teamScores: {
+            teamA: arrayToObj(new Array(18).fill(0)),
+            teamB: arrayToObj(new Array(18).fill(0))
+          },
+          teamHole: { teamA: startingHole || 0, teamB: startingHole || 0 },
+          teamHoleConfirmed: { teamA: {}, teamB: {} }
+        };
+      } else {
+        roundData = {
+          meta: {
+            courseId: courseId,
+            tee: tee,
+            teeLabel: teeLabel,
+            date: date,
+            createdBy: uid,
+            createdAt: firebase.database.ServerValue.TIMESTAMP,
+            status: 'active',
+            startingHole: startingHole || 0
+          },
+          players: {
+            [uid]: { name: displayName, joinedAt: firebase.database.ServerValue.TIMESTAMP }
+          },
+          scores: { [uid]: arrayToObj(new Array(18).fill(0)) },
+          tracking: { [uid]: trackingToObj(createPlayerTracking()) },
+          currentHole: { [uid]: 0 }
+        };
+      }
 
       return roundRef.set(roundData).then(() => {
-        // Notify admin via push notification
         var courseName = typeof getCourse === 'function' ? (getCourse(courseId) || {}).name || courseId : courseId;
         if (typeof notifyAdmin === 'function') {
           notifyAdmin(
             'New Round Started',
-            displayName + ' started a round at ' + courseName + ' [' + code + ']',
+            displayName + ' started a ' + (isScramble ? 'scramble ' : '') + 'round at ' + courseName + ' [' + code + ']',
             'golf,round_start'
           );
         }
@@ -138,7 +158,12 @@ function joinGroupRound(uid, displayName, code) {
     var roundData = snap.val();
     var meta = roundData.meta;
     if (!meta) throw new Error('Round data is corrupted. Please create a new round.');
-    if (meta.status !== 'active') throw new Error('This round has already finished');
+    var isScramble = meta.gameType === 'scramble';
+    if (isScramble) {
+      if (meta.status !== 'lobby' && meta.status !== 'active') throw new Error('This round has already finished');
+    } else {
+      if (meta.status !== 'active') throw new Error('This round has already finished');
+    }
 
     // Check if this player already finished this round
     if (roundData.finishedPlayers && roundData.finishedPlayers[uid]) {
@@ -156,9 +181,11 @@ function joinGroupRound(uid, displayName, code) {
       name: displayName,
       joinedAt: firebase.database.ServerValue.TIMESTAMP
     };
-    updates['scores/' + uid] = arrayToObj(new Array(18).fill(0));
-    updates['tracking/' + uid] = trackingToObj(createPlayerTracking());
-    updates['currentHole/' + uid] = 0;
+    if (!isScramble) {
+      updates['scores/' + uid] = arrayToObj(new Array(18).fill(0));
+      updates['tracking/' + uid] = trackingToObj(createPlayerTracking());
+      updates['currentHole/' + uid] = 0;
+    }
 
     return roundRef.update(updates).then(function() {
       // Notify admin that someone joined
@@ -425,8 +452,79 @@ function groupDataToRound(data, code) {
     _startingHole: meta.startingHole || 0,
     _uidToName: uidToName,
     _nameToUid: nameToUid,
-    _playerUids: playerUids
+    _playerUids: playerUids,
+    _gameType: meta.gameType || 'standard',
+    _teams: meta.teams || null,
+    _teamScores: data.teamScores || null,
+    _teamHole: data.teamHole || null,
+    _teamHoleConfirmed: data.teamHoleConfirmed || null
   };
+}
+
+// ==================== SCRAMBLE GAME MODE ====================
+
+// Assign players to teams in a scramble lobby
+function setScrambleTeams(code, teamAuids, teamBuids) {
+  return db.ref('activeRounds/' + code + '/meta/teams').update({
+    teamA: { name: '', members: teamAuids },
+    teamB: { name: '', members: teamBuids }
+  });
+}
+
+// Start the scramble round (lobby → active)
+function startScrambleRound(code) {
+  return db.ref('activeRounds/' + code + '/meta/status').set('active');
+}
+
+// Set team name — only writes if not already set (first response wins)
+function setScrambleTeamName(code, teamKey, name) {
+  var ref = db.ref('activeRounds/' + code + '/meta/teams/' + teamKey + '/name');
+  return ref.once('value').then(function(snap) {
+    if (!snap.val()) return ref.set(name);
+  });
+}
+
+// Update a team's score for a hole
+function updateScrambleScore(code, teamKey, holeIndex, score) {
+  return db.ref('activeRounds/' + code + '/teamScores/' + teamKey + '/' + holeIndex).set(score);
+}
+
+// Reset confirmations when score changes
+function resetScrambleConfirmations(code, teamKey) {
+  return db.ref('activeRounds/' + code + '/teamHoleConfirmed/' + teamKey).set({});
+}
+
+// Confirm hole score — advances teamHole when all team members confirm
+function confirmScrambleHole(code, teamKey, uid, allTeamUids) {
+  var base = 'activeRounds/' + code;
+  return db.ref(base + '/teamHoleConfirmed/' + teamKey + '/' + uid).set(true).then(function() {
+    return db.ref(base + '/teamHoleConfirmed/' + teamKey).once('value').then(function(snap) {
+      var confirmed = snap.val() || {};
+      var allDone = allTeamUids.every(function(u) { return confirmed[u] === true; });
+      if (allDone) {
+        return db.ref(base + '/teamHole/' + teamKey).once('value').then(function(hSnap) {
+          var cur = hSnap.val() || 0;
+          if (cur >= 17) return; // Already on last hole — finish handled separately
+          var updates = {};
+          updates['teamHole/' + teamKey] = cur + 1;
+          updates['teamHoleConfirmed/' + teamKey] = {};
+          return db.ref(base).update(updates);
+        });
+      }
+    });
+  });
+}
+
+// End scramble round (admin ends for all)
+function endScrambleRound(code) {
+  return db.ref('activeRounds/' + code + '/meta').update({
+    status: 'ended',
+    finishedAt: firebase.database.ServerValue.TIMESTAMP
+  }).then(function() {
+    setTimeout(function() {
+      db.ref('activeRounds/' + code).remove().catch(function() {});
+    }, 300000);
+  });
 }
 
 // ==================== CONNECTION STATUS ====================

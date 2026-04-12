@@ -3,7 +3,7 @@
 <head>
 <style>html,body{background:#0a0f0d}</style>
 <script>
-(function(){var v='189';var k='app_v';var s=localStorage.getItem(k);if(s&&s!==v){localStorage.setItem(k,v);window.location.replace(window.location.pathname+'?_='+Date.now());return;}localStorage.setItem(k,v);})();
+(function(){var v='190';var k='app_v';var s=localStorage.getItem(k);if(s&&s!==v){localStorage.setItem(k,v);window.location.replace(window.location.pathname+'?_='+Date.now());return;}localStorage.setItem(k,v);})();
 </script>
 <meta charset="UTF-8">
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
@@ -15,7 +15,7 @@
 <link rel="manifest" href="manifest.json">
 <link rel="apple-touch-icon" href="icon-192.png">
 <title>Westchester Golf</title>
-<link rel="stylesheet" href="shared.css?v=189">
+<link rel="stylesheet" href="shared.css?v=190">
 </head>
 <body>
 
@@ -69,9 +69,9 @@
 
 <nav class="bottom-nav" id="bottomNav"></nav>
 
-<script src="firebase-config.js?v=189"></script>
-<script src="shared.js?v=189"></script>
-<script src="firebase-sync.js?v=189"></script>
+<script src="firebase-config.js?v=190"></script>
+<script src="shared.js?v=190"></script>
+<script src="firebase-sync.js?v=190"></script>
 <script>
   requireAuth(function(user) {
     renderBottomNav('courses');
@@ -259,7 +259,10 @@
           errorEl.style.display = 'block';
         }, 15000);
 
-        createGroupRoundWithCode(user.uid, displayName, course.id, teeKey, teeLabel, date, code, startingHole)
+        var gameTypeEl = document.getElementById('gameTypeSelect');
+        var gameType = gameTypeEl ? gameTypeEl.value : 'standard';
+
+        createGroupRoundWithCode(user.uid, displayName, course.id, teeKey, teeLabel, date, code, startingHole, gameType)
           .then(function(createdCode) {
             clearTimeout(createTimeout);
             localStorage.setItem('active-group-code', createdCode);
@@ -280,8 +283,10 @@
         var teeLabel = course.tees[teeKey].label;
         var date = new Date().toISOString().split('T')[0];
         var startingHole = parseInt(document.getElementById('startingHoleSelect').value) || 0;
+        var gameTypeEl2 = document.getElementById('gameTypeSelect');
+        var gameType2 = gameTypeEl2 ? gameTypeEl2.value : 'standard';
 
-        createGroupRoundWithCode(user.uid, displayName, course.id, teeKey, teeLabel, date, code, startingHole)
+        createGroupRoundWithCode(user.uid, displayName, course.id, teeKey, teeLabel, date, code, startingHole, gameType2)
           .then(function(createdCode) {
             localStorage.setItem('active-group-code', createdCode);
             window.location.href = 'scorecard.html?group=' + createdCode;
