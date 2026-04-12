@@ -532,7 +532,8 @@ function isSharedPath(path) {
     path === 'activeRounds' || path.startsWith('activeRounds/') ||
     path === 'users' || path.startsWith('users/') ||
     path === 'credentials' || path.startsWith('credentials/') ||
-    path === 'usernames' || path.startsWith('usernames/')
+    path === 'usernames' || path.startsWith('usernames/') ||
+    path === 'nameIndex' || path.startsWith('nameIndex/')
   );
 }
 

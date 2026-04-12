@@ -3,7 +3,7 @@
 <head>
 <style>html,body{background:#0a0f0d}</style>
 <script>
-(function(){var v='187';var k='app_v';var s=localStorage.getItem(k);if(s&&s!==v){localStorage.setItem(k,v);window.location.replace(window.location.pathname+'?_='+Date.now());return;}localStorage.setItem(k,v);})();
+(function(){var v='188';var k='app_v';var s=localStorage.getItem(k);if(s&&s!==v){localStorage.setItem(k,v);window.location.replace(window.location.pathname+'?_='+Date.now());return;}localStorage.setItem(k,v);})();
 </script>
 <meta charset="UTF-8">
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
@@ -15,7 +15,7 @@
 <link rel="manifest" href="manifest.json">
 <link rel="apple-touch-icon" href="icon-192.png">
 <title>Leaderboard - Westchester Golf</title>
-<link rel="stylesheet" href="shared.css?v=187">
+<link rel="stylesheet" href="shared.css?v=188">
 <style>
 /* ===== LEAGUE TABLE ===== */
 .lb-table { width: 100%; border-collapse: collapse; }
@@ -222,9 +222,9 @@ body { display: flex; flex-direction: column; }
 
 <nav class="bottom-nav" id="bottomNav"></nav>
 
-<script src="firebase-config.js?v=187"></script>
-<script src="shared.js?v=187"></script>
-<script src="firebase-sync.js?v=187"></script>
+<script src="firebase-config.js?v=188"></script>
+<script src="shared.js?v=188"></script>
+<script src="firebase-sync.js?v=188"></script>
 <script>
 requireAuth(function(user) {
   renderBottomNav('stats');
@@ -667,23 +667,29 @@ requireAuth(function(user) {
 
         // Async: load avatars for top 3 via nameIndex → uid → avatar
         window._loadPodiumAvatars = function(players) {
-          players.forEach(function(p) {
-            var safeId = 'podium-av-' + p.name.replace(/[^a-zA-Z0-9]/g, '_');
-            _firebaseDB.ref('nameIndex/' + p.name).once('value').then(function(snap) {
-              var uid = snap.val();
+          // Scan credentials to build displayName→uid for all existing users
+          db.ref('credentials').once('value').then(function(snap) {
+            var creds = snap.val() || {};
+            var nameToUid = {};
+            Object.keys(creds).forEach(function(uname) {
+              var c = creds[uname];
+              if (c && c.uid) nameToUid[c.displayName || c.username || uname] = c.uid;
+            });
+            players.forEach(function(p) {
+              var uid = nameToUid[p.name];
               if (!uid) return;
-              // Check localStorage cache first
+              var safeId = 'podium-av-' + p.name.replace(/[^a-zA-Z0-9]/g, '_');
               var cached = localStorage.getItem('wg-avatar-' + uid);
               if (cached) { injectPodiumPhoto(safeId, cached); return; }
-              return _firebaseDB.ref('users/' + uid + '/profile/avatar').once('value').then(function(aSnap) {
+              db.ref('users/' + uid + '/profile/avatar').once('value').then(function(aSnap) {
                 var dataUrl = aSnap.val();
                 if (dataUrl) {
                   localStorage.setItem('wg-avatar-' + uid, dataUrl);
                   injectPodiumPhoto(safeId, dataUrl);
                 }
-              });
-            }).catch(function() {});
-          });
+              }).catch(function() {});
+            });
+          }).catch(function() {});
         };
 
         function injectPodiumPhoto(elId, dataUrl) {
@@ -705,7 +711,7 @@ requireAuth(function(user) {
         : '<p style="color:var(--text-muted);font-size:13px;padding:12px 0">Complete a round with 9+ holes.</p>';
 
       // Load podium photos after DOM is set
-      if (byMonthlyAvg.length >= 3 && typeof window._loadPodiumAvatars === 'function' && typeof _firebaseDB !== 'undefined' && _firebaseDB) {
+      if (byMonthlyAvg.length >= 3 && typeof window._loadPodiumAvatars === 'function') {
         window._loadPodiumAvatars(byMonthlyAvg.slice(0, 3));
       }
     }
