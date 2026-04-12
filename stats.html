@@ -3,7 +3,7 @@
 <head>
 <style>html,body{background:#0a0f0d}</style>
 <script>
-(function(){var v='181';var k='app_v';var s=localStorage.getItem(k);if(s&&s!==v){localStorage.setItem(k,v);window.location.replace(window.location.pathname+'?_='+Date.now());return;}localStorage.setItem(k,v);})();
+(function(){var v='182';var k='app_v';var s=localStorage.getItem(k);if(s&&s!==v){localStorage.setItem(k,v);window.location.replace(window.location.pathname+'?_='+Date.now());return;}localStorage.setItem(k,v);})();
 </script>
 <meta charset="UTF-8">
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
@@ -15,7 +15,7 @@
 <link rel="manifest" href="manifest.json">
 <link rel="apple-touch-icon" href="icon-192.png">
 <title>Leaderboard - Westchester Golf</title>
-<link rel="stylesheet" href="shared.css?v=181">
+<link rel="stylesheet" href="shared.css?v=182">
 <style>
 /* ===== LEAGUE TABLE ===== */
 .lb-table { width: 100%; border-collapse: collapse; }
@@ -43,6 +43,82 @@
 /* Achievement badges */
 .badge-strip { display: flex; gap: 3px; margin-top: 4px; flex-wrap: wrap; }
 .ach-badge { font-size: 13px; cursor: default; line-height: 1; }
+
+/* ===== MONTHLY CHAMPION ===== */
+.monthly-card {
+  background: linear-gradient(135deg, rgba(212,175,55,0.1) 0%, rgba(212,175,55,0.04) 100%);
+  border: 1px solid rgba(212,175,55,0.35);
+  border-radius: var(--radius-sm);
+  padding: 14px 16px;
+  margin-bottom: 16px;
+  position: relative;
+  overflow: hidden;
+}
+.monthly-card::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 2px;
+  background: linear-gradient(90deg, var(--gold), transparent);
+}
+.monthly-label {
+  font-size: 10px;
+  color: var(--gold);
+  font-weight: 700;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  margin-bottom: 6px;
+}
+.monthly-name {
+  font-size: 20px;
+  font-weight: 800;
+  color: var(--text);
+  margin-bottom: 2px;
+}
+.monthly-score {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--green-accent);
+}
+.monthly-meta {
+  font-size: 11px;
+  color: var(--text-muted);
+  margin-top: 2px;
+}
+
+/* ===== PAR SPECIALISTS ===== */
+.par-spec-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+.par-spec-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 10px 8px;
+  text-align: center;
+}
+.par-spec-type {
+  font-size: 10px;
+  color: var(--text-muted);
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  margin-bottom: 4px;
+}
+.par-spec-score {
+  font-size: 18px;
+  font-weight: 900;
+  line-height: 1;
+  margin-bottom: 3px;
+  font-family: 'Inter', sans-serif;
+}
+.par-spec-score.under { color: var(--green-accent); }
+.par-spec-score.even  { color: var(--par-color); }
+.par-spec-score.over  { color: var(--bogey); }
+.par-spec-player { font-size: 11px; color: var(--text-dim); font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
 /* ===== COURSE CHAMPIONS ===== */
 .champ-grid {
@@ -117,9 +193,9 @@
 
 <nav class="bottom-nav" id="bottomNav"></nav>
 
-<script src="firebase-config.js?v=181"></script>
-<script src="shared.js?v=181"></script>
-<script src="firebase-sync.js?v=181"></script>
+<script src="firebase-config.js?v=182"></script>
+<script src="shared.js?v=182"></script>
+<script src="firebase-sync.js?v=182"></script>
 <script>
 requireAuth(function(user) {
   renderBottomNav('stats');
@@ -298,6 +374,68 @@ requireAuth(function(user) {
       });
     });
 
+    // ── Monthly Champion (last 30 days) ──────────────────────
+    var now = new Date();
+    var thirtyDaysAgo = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 30);
+    var monthlyPs = {};
+    sortedRounds.forEach(function(r) {
+      if (!r.date) return;
+      var rDate = new Date(r.date);
+      if (rDate < thirtyDaysAgo) return;
+      r.players.forEach(function(p) {
+        if (!validEntry(r, p)) return;
+        var pp = parPlayed(r, p);
+        var total = r.scores[p].reduce(function(a, b) { return a + b; }, 0);
+        if (!monthlyPs[p]) monthlyPs[p] = { totalScore: 0, totalPar: 0, rounds: 0 };
+        monthlyPs[p].totalScore += total;
+        monthlyPs[p].totalPar += pp;
+        monthlyPs[p].rounds++;
+      });
+    });
+    var monthlyChamp = null;
+    var monthlyPlayerCount = Object.keys(monthlyPs).length;
+    if (monthlyPlayerCount >= 2) {
+      var bestAvg = Infinity, bestName = null;
+      Object.keys(monthlyPs).forEach(function(p) {
+        var avg = (monthlyPs[p].totalScore - monthlyPs[p].totalPar) / monthlyPs[p].rounds;
+        if (avg < bestAvg) { bestAvg = avg; bestName = p; }
+      });
+      if (bestName) monthlyChamp = { name: bestName, avg: bestAvg, rounds: monthlyPs[bestName].rounds };
+    }
+
+    // ── Par Type Specialists ──────────────────────────────────
+    // par3Stats[player] = { strokes, par, holes }
+    var parTypeStats = { 3: {}, 4: {}, 5: {} };
+    sortedRounds.forEach(function(r) {
+      if (!r.holePars) return;
+      r.players.forEach(function(p) {
+        if (!validEntry(r, p)) return;
+        r.holePars.forEach(function(hp, i) {
+          var s = r.scores[p][i];
+          if (s <= 0 || !hp || hp < 3 || hp > 5) return;
+          if (!parTypeStats[hp][p]) parTypeStats[hp][p] = { strokes: 0, par: 0, holes: 0 };
+          parTypeStats[hp][p].strokes += s;
+          parTypeStats[hp][p].par += hp;
+          parTypeStats[hp][p].holes++;
+        });
+      });
+    });
+    // Find best player per par type (min avg-to-par per hole, require 2+ players & 3+ holes)
+    var parSpecialists = {};
+    [3, 4, 5].forEach(function(pt) {
+      var stats = parTypeStats[pt];
+      var eligible = Object.keys(stats).filter(function(p) { return stats[p].holes >= 3; });
+      if (eligible.length < 2) return;
+      eligible.sort(function(a, b) {
+        var avgA = (stats[a].strokes - stats[a].par) / stats[a].holes;
+        var avgB = (stats[b].strokes - stats[b].par) / stats[b].holes;
+        return avgA - avgB;
+      });
+      var best = eligible[0];
+      var avgPerHole = (stats[best].strokes - stats[best].par) / stats[best].holes;
+      parSpecialists[pt] = { name: best, avgPerHole: avgPerHole };
+    });
+
     // ── Leaderboard section ───────────────────────────────────
     var lbSort = { col: 'avg', dir: 1 };
 
@@ -451,8 +589,50 @@ requireAuth(function(user) {
         champHtml += '</div>';
       }
 
+      // Monthly Champion card
+      var monthlyHtml = '';
+      if (monthlyChamp) {
+        var mAvgStr = (monthlyChamp.avg >= 0 ? '+' : '') + monthlyChamp.avg.toFixed(1);
+        var mNameHtml = isAdmin(monthlyChamp.name)
+          ? '<span class="admin-name">' + monthlyChamp.name + '</span>'
+          : monthlyChamp.name;
+        monthlyHtml =
+          '<div class="monthly-card">' +
+            '<div class="monthly-label">&#127881; Champion of the Month</div>' +
+            '<div class="monthly-name">' + mNameHtml + '</div>' +
+            '<div class="monthly-score">' + mAvgStr + ' avg this month</div>' +
+            '<div class="monthly-meta">' + monthlyChamp.rounds + ' round' + (monthlyChamp.rounds !== 1 ? 's' : '') + ' in last 30 days</div>' +
+          '</div>';
+      }
+
+      // Par Specialists
+      var parSpecHtml = '';
+      var parTypes = [3, 4, 5].filter(function(pt) { return !!parSpecialists[pt]; });
+      if (parTypes.length >= 2) {
+        parSpecHtml += '<div class="section-title" style="margin-top:20px">&#127992; Par Specialists</div>';
+        parSpecHtml += '<div class="par-spec-grid">';
+        [3, 4, 5].forEach(function(pt) {
+          if (!parSpecialists[pt]) {
+            parSpecHtml += '<div class="par-spec-card" style="opacity:0.35"><div class="par-spec-type">Par ' + pt + '</div><div class="par-spec-score over">—</div><div class="par-spec-player">No data</div></div>';
+            return;
+          }
+          var sp = parSpecialists[pt];
+          var avg = sp.avgPerHole;
+          var avgStr = avg === 0 ? 'E' : (avg > 0 ? '+' : '') + avg.toFixed(2);
+          var scoreClass = avg < 0 ? 'under' : avg === 0 ? 'even' : 'over';
+          var spNameHtml = isAdmin(sp.name) ? '<span class="admin-name">' + sp.name + '</span>' : sp.name;
+          parSpecHtml +=
+            '<div class="par-spec-card">' +
+              '<div class="par-spec-type">Par ' + pt + '</div>' +
+              '<div class="par-spec-score ' + scoreClass + '">' + avgStr + '</div>' +
+              '<div class="par-spec-player">' + spNameHtml + '</div>' +
+            '</div>';
+        });
+        parSpecHtml += '</div>';
+      }
+
       document.getElementById('leaderboardSection').innerHTML = players.length
-        ? lbHtml + champHtml
+        ? monthlyHtml + lbHtml + champHtml + parSpecHtml
         : '<p style="color:var(--text-muted);font-size:13px;padding:12px 0">Complete a round with 9+ holes.</p>';
     }
 
