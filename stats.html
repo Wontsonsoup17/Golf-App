@@ -3,7 +3,7 @@
 <head>
 <style>html,body{background:#0a0f0d}</style>
 <script>
-(function(){var v='184';var k='app_v';var s=localStorage.getItem(k);if(s&&s!==v){localStorage.setItem(k,v);window.location.replace(window.location.pathname+'?_='+Date.now());return;}localStorage.setItem(k,v);})();
+(function(){var v='185';var k='app_v';var s=localStorage.getItem(k);if(s&&s!==v){localStorage.setItem(k,v);window.location.replace(window.location.pathname+'?_='+Date.now());return;}localStorage.setItem(k,v);})();
 </script>
 <meta charset="UTF-8">
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
@@ -15,7 +15,7 @@
 <link rel="manifest" href="manifest.json">
 <link rel="apple-touch-icon" href="icon-192.png">
 <title>Leaderboard - Westchester Golf</title>
-<link rel="stylesheet" href="shared.css?v=184">
+<link rel="stylesheet" href="shared.css?v=185">
 <style>
 /* ===== LEAGUE TABLE ===== */
 .lb-table { width: 100%; border-collapse: collapse; }
@@ -233,6 +233,13 @@
 .champ-player { font-size: 12px; color: var(--text-dim); font-weight: 600; }
 .champ-date   { font-size: 10px; color: var(--text-muted); margin-top: 1px; }
 
+/* ===== FIXED LAYOUT — prevents iOS fixed-nav scroll bug ===== */
+html, body { height: 100%; overflow: hidden; }
+body { display: flex; flex-direction: column; }
+.header { flex: 0 0 auto; position: relative; top: auto; backdrop-filter: none; -webkit-backdrop-filter: none; }
+.main { flex: 1 1 auto; overflow-y: scroll; -webkit-overflow-scrolling: touch; padding-bottom: calc(90px + env(safe-area-inset-bottom)); }
+.bottom-nav { flex: 0 0 auto; position: relative; bottom: auto; -webkit-transform: none; transform: none; will-change: auto; }
+#broadcastBanner, #activeRoundBanner { flex: 0 0 auto; }
 </style>
 </head>
 <body>
@@ -253,9 +260,9 @@
 
 <nav class="bottom-nav" id="bottomNav"></nav>
 
-<script src="firebase-config.js?v=184"></script>
-<script src="shared.js?v=184"></script>
-<script src="firebase-sync.js?v=184"></script>
+<script src="firebase-config.js?v=185"></script>
+<script src="shared.js?v=185"></script>
+<script src="firebase-sync.js?v=185"></script>
 <script>
 requireAuth(function(user) {
   renderBottomNav('stats');
