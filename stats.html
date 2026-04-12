@@ -3,7 +3,7 @@
 <head>
 <style>html,body{background:#0a0f0d}</style>
 <script>
-(function(){var v='180';var k='app_v';var s=localStorage.getItem(k);if(s&&s!==v){localStorage.setItem(k,v);window.location.replace(window.location.pathname+'?_='+Date.now());return;}localStorage.setItem(k,v);})();
+(function(){var v='181';var k='app_v';var s=localStorage.getItem(k);if(s&&s!==v){localStorage.setItem(k,v);window.location.replace(window.location.pathname+'?_='+Date.now());return;}localStorage.setItem(k,v);})();
 </script>
 <meta charset="UTF-8">
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
@@ -15,7 +15,7 @@
 <link rel="manifest" href="manifest.json">
 <link rel="apple-touch-icon" href="icon-192.png">
 <title>Leaderboard - Westchester Golf</title>
-<link rel="stylesheet" href="shared.css?v=180">
+<link rel="stylesheet" href="shared.css?v=181">
 <style>
 /* ===== LEAGUE TABLE ===== */
 .lb-table { width: 100%; border-collapse: collapse; }
@@ -117,9 +117,9 @@
 
 <nav class="bottom-nav" id="bottomNav"></nav>
 
-<script src="firebase-config.js?v=180"></script>
-<script src="shared.js?v=180"></script>
-<script src="firebase-sync.js?v=180"></script>
+<script src="firebase-config.js?v=181"></script>
+<script src="shared.js?v=181"></script>
+<script src="firebase-sync.js?v=181"></script>
 <script>
 requireAuth(function(user) {
   renderBottomNav('stats');
@@ -250,8 +250,8 @@ requireAuth(function(user) {
     Object.keys(ps).forEach(function(p) {
       if (ps[p].eagles >= 1)
         badgesMap[p].push({ icon: '🦅', title: 'Eagle Club — ' + ps[p].eagles + ' eagle' + (ps[p].eagles !== 1 ? 's' : '') });
-      if (ps[p].birdies >= 5)
-        badgesMap[p].push({ icon: '🐦', title: 'Birdie Machine — ' + ps[p].birdies + ' birdies' });
+      if (ps[p].birdies >= 1)
+        badgesMap[p].push({ icon: '🐦', title: 'Birdie Machine — ' + ps[p].birdies + ' birdie' + (ps[p].birdies !== 1 ? 's' : '') });
       var streak = computeWinStreak(p);
       if (streak >= 3)
         badgesMap[p].push({ icon: '⚡', title: streak + '-Round Win Streak' });
@@ -386,14 +386,20 @@ requireAuth(function(user) {
 
       var badgeLegend =
         '<div style="margin-top:10px;padding-top:10px;border-top:1px solid var(--border)">' +
-          '<table style="width:100%;border-collapse:collapse">' +
-            '<tr><td style="padding:3px 8px 3px 0;font-size:15px;width:24px">🏆</td><td style="font-size:12px;color:var(--text-muted);padding:3px 0">Most Wins in the group</td></tr>' +
-            '<tr><td style="padding:3px 8px 3px 0;font-size:15px">⚡</td><td style="font-size:12px;color:var(--text-muted);padding:3px 0">3+ round win streak</td></tr>' +
-            '<tr><td style="padding:3px 8px 3px 0;font-size:15px">🔥</td><td style="font-size:12px;color:var(--text-muted);padding:3px 0">Improving every round (last 3)</td></tr>' +
-            '<tr><td style="padding:3px 8px 3px 0;font-size:15px">🦅</td><td style="font-size:12px;color:var(--text-muted);padding:3px 0">Eagle Club — scored an eagle</td></tr>' +
-            '<tr><td style="padding:3px 8px 3px 0;font-size:15px">🐦</td><td style="font-size:12px;color:var(--text-muted);padding:3px 0">Birdie Machine — 5+ birdies</td></tr>' +
-            '<tr><td style="padding:3px 8px 3px 0;font-size:15px">📈</td><td style="font-size:12px;color:var(--text-muted);padding:3px 0">Most Improved — best recent trend</td></tr>' +
-          '</table>' +
+          '<button onclick="(function(b){var t=b.parentNode.querySelector(\'.badge-legend-body\');var open=t.style.display!==\'none\';t.style.display=open?\'none\':\'block\';b.querySelector(\'.badge-legend-arrow\').textContent=open?\'▾\':\'▴\';})(this)" style="width:100%;background:none;border:none;cursor:pointer;display:flex;align-items:center;justify-content:space-between;padding:0;color:var(--text-muted);font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;-webkit-tap-highlight-color:transparent">' +
+            '<span>Badge Guide</span>' +
+            '<span class="badge-legend-arrow">▾</span>' +
+          '</button>' +
+          '<div class="badge-legend-body" style="display:none;margin-top:8px">' +
+            '<table style="width:100%;border-collapse:collapse">' +
+              '<tr><td style="padding:3px 8px 3px 0;font-size:15px;width:24px">🏆</td><td style="font-size:12px;color:var(--text-muted);padding:3px 0">Most Wins in the group</td></tr>' +
+              '<tr><td style="padding:3px 8px 3px 0;font-size:15px">⚡</td><td style="font-size:12px;color:var(--text-muted);padding:3px 0">3+ round win streak</td></tr>' +
+              '<tr><td style="padding:3px 8px 3px 0;font-size:15px">🔥</td><td style="font-size:12px;color:var(--text-muted);padding:3px 0">Improving every round (last 3)</td></tr>' +
+              '<tr><td style="padding:3px 8px 3px 0;font-size:15px">🦅</td><td style="font-size:12px;color:var(--text-muted);padding:3px 0">Eagle Club — scored an eagle</td></tr>' +
+              '<tr><td style="padding:3px 8px 3px 0;font-size:15px">🐦</td><td style="font-size:12px;color:var(--text-muted);padding:3px 0">Birdie — scored at least 1 birdie</td></tr>' +
+              '<tr><td style="padding:3px 8px 3px 0;font-size:15px">📈</td><td style="font-size:12px;color:var(--text-muted);padding:3px 0">Most Improved — best recent trend</td></tr>' +
+            '</table>' +
+          '</div>' +
         '</div>';
 
       var lbHtml =
