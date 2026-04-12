@@ -99,6 +99,9 @@ body {
   border-top: 1px solid var(--border-light);
   z-index: 100;
   padding-bottom: env(safe-area-inset-bottom);
+  -webkit-transform: translateZ(0);
+  transform: translateZ(0);
+  will-change: transform;
 }
 .bottom-nav a {
   flex: 1;
