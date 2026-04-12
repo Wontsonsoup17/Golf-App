@@ -3,7 +3,7 @@
 <head>
 <style>html,body{background:#0a0f0d}</style>
 <script>
-(function(){var v='185';var k='app_v';var s=localStorage.getItem(k);if(s&&s!==v){localStorage.setItem(k,v);window.location.replace(window.location.pathname+'?_='+Date.now());return;}localStorage.setItem(k,v);})();
+(function(){var v='186';var k='app_v';var s=localStorage.getItem(k);if(s&&s!==v){localStorage.setItem(k,v);window.location.replace(window.location.pathname+'?_='+Date.now());return;}localStorage.setItem(k,v);})();
 </script>
 <meta charset="UTF-8">
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
@@ -15,7 +15,7 @@
 <link rel="manifest" href="manifest.json">
 <link rel="apple-touch-icon" href="icon-192.png">
 <title>Leaderboard - Westchester Golf</title>
-<link rel="stylesheet" href="shared.css?v=185">
+<link rel="stylesheet" href="shared.css?v=186">
 <style>
 /* ===== LEAGUE TABLE ===== */
 .lb-table { width: 100%; border-collapse: collapse; }
@@ -43,48 +43,6 @@
 /* Achievement badges */
 .badge-strip { display: flex; gap: 3px; margin-top: 4px; flex-wrap: wrap; }
 .ach-badge { font-size: 13px; cursor: default; line-height: 1; }
-
-/* ===== MONTHLY CHAMPION ===== */
-.monthly-card {
-  background: linear-gradient(135deg, rgba(212,175,55,0.1) 0%, rgba(212,175,55,0.04) 100%);
-  border: 1px solid rgba(212,175,55,0.35);
-  border-radius: var(--radius-sm);
-  padding: 14px 16px;
-  margin-bottom: 16px;
-  position: relative;
-  overflow: hidden;
-}
-.monthly-card::before {
-  content: '';
-  position: absolute;
-  top: 0; left: 0; right: 0;
-  height: 2px;
-  background: linear-gradient(90deg, var(--gold), transparent);
-}
-.monthly-label {
-  font-size: 10px;
-  color: var(--gold);
-  font-weight: 700;
-  letter-spacing: 1px;
-  text-transform: uppercase;
-  margin-bottom: 6px;
-}
-.monthly-name {
-  font-size: 20px;
-  font-weight: 800;
-  color: var(--text);
-  margin-bottom: 2px;
-}
-.monthly-score {
-  font-size: 14px;
-  font-weight: 700;
-  color: var(--green-accent);
-}
-.monthly-meta {
-  font-size: 11px;
-  color: var(--text-muted);
-  margin-top: 2px;
-}
 
 /* ===== PAR SPECIALISTS ===== */
 .par-spec-grid {
@@ -260,9 +218,9 @@ body { display: flex; flex-direction: column; }
 
 <nav class="bottom-nav" id="bottomNav"></nav>
 
-<script src="firebase-config.js?v=185"></script>
-<script src="shared.js?v=185"></script>
-<script src="firebase-sync.js?v=185"></script>
+<script src="firebase-config.js?v=186"></script>
+<script src="shared.js?v=186"></script>
+<script src="firebase-sync.js?v=186"></script>
 <script>
 requireAuth(function(user) {
   renderBottomNav('stats');
@@ -459,16 +417,6 @@ requireAuth(function(user) {
         monthlyPs[p].rounds++;
       });
     });
-    var monthlyChamp = null;
-    var monthlyPlayerCount = Object.keys(monthlyPs).length;
-    if (monthlyPlayerCount >= 2) {
-      var bestAvg = Infinity, bestName = null;
-      Object.keys(monthlyPs).forEach(function(p) {
-        var avg = (monthlyPs[p].totalScore - monthlyPs[p].totalPar) / monthlyPs[p].rounds;
-        if (avg < bestAvg) { bestAvg = avg; bestName = p; }
-      });
-      if (bestName) monthlyChamp = { name: bestName, avg: bestAvg, rounds: monthlyPs[bestName].rounds };
-    }
 
     // ── Par Type Specialists ──────────────────────────────────
     // par3Stats[player] = { strokes, par, holes }
@@ -656,22 +604,6 @@ requireAuth(function(user) {
         champHtml += '</div>';
       }
 
-      // Monthly Champion card
-      var monthlyHtml = '';
-      if (monthlyChamp) {
-        var mAvgStr = (monthlyChamp.avg >= 0 ? '+' : '') + monthlyChamp.avg.toFixed(1);
-        var mNameHtml = isAdmin(monthlyChamp.name)
-          ? '<span class="admin-name">' + monthlyChamp.name + '</span>'
-          : monthlyChamp.name;
-        monthlyHtml =
-          '<div class="monthly-card">' +
-            '<div class="monthly-label">&#127881; Champion of the Month</div>' +
-            '<div class="monthly-name">' + mNameHtml + '</div>' +
-            '<div class="monthly-score">' + mAvgStr + ' avg this month</div>' +
-            '<div class="monthly-meta">' + monthlyChamp.rounds + ' round' + (monthlyChamp.rounds !== 1 ? 's' : '') + ' in last 30 days</div>' +
-          '</div>';
-      }
-
       // Par Specialists
       var parSpecHtml = '';
       var parTypes = [3, 4, 5].filter(function(pt) { return !!parSpecialists[pt]; });
@@ -698,9 +630,14 @@ requireAuth(function(user) {
         parSpecHtml += '</div>';
       }
 
-      // Podium — top 3 by avg, only if 3+ players
+      // Podium — top 3 by monthly avg (last 30 days), only if 3+ players this month
       var podiumHtml = '';
-      if (byAvg.length >= 3) {
+      var byMonthlyAvg = Object.keys(monthlyPs).map(function(p) {
+        var avg = (monthlyPs[p].totalScore - monthlyPs[p].totalPar) / monthlyPs[p].rounds;
+        return { name: p, avg: avg, rounds: monthlyPs[p].rounds };
+      }).sort(function(a, b) { return a.avg - b.avg; });
+
+      if (byMonthlyAvg.length >= 3) {
         function podiumSlot(p, pos) {
           var posClass = 'p' + pos;
           var initials = p.name.slice(0, 2).toUpperCase();
@@ -716,16 +653,16 @@ requireAuth(function(user) {
         }
         // Order: 2nd left, 1st center, 3rd right
         podiumHtml =
-          '<div class="section-title" style="margin-bottom:16px">&#127942; Top 3 Podium</div>' +
+          '<div class="section-title" style="margin-bottom:16px">&#127881; This Month\'s Top 3</div>' +
           '<div class="podium-wrap">' +
-            podiumSlot(byAvg[1], 2) +
-            podiumSlot(byAvg[0], 1) +
-            podiumSlot(byAvg[2], 3) +
+            podiumSlot(byMonthlyAvg[1], 2) +
+            podiumSlot(byMonthlyAvg[0], 1) +
+            podiumSlot(byMonthlyAvg[2], 3) +
           '</div>';
       }
 
       document.getElementById('leaderboardSection').innerHTML = players.length
-        ? monthlyHtml + podiumHtml + lbHtml + champHtml + parSpecHtml
+        ? podiumHtml + lbHtml + champHtml + parSpecHtml
         : '<p style="color:var(--text-muted);font-size:13px;padding:12px 0">Complete a round with 9+ holes.</p>';
     }
 
