@@ -3,7 +3,7 @@
 <head>
 <style>html,body{background:#0a0f0d}</style>
 <script>
-(function(){var v='178';var k='app_v';var s=localStorage.getItem(k);if(s&&s!==v){localStorage.setItem(k,v);window.location.replace(window.location.pathname+'?_='+Date.now());return;}localStorage.setItem(k,v);})();
+(function(){var v='179';var k='app_v';var s=localStorage.getItem(k);if(s&&s!==v){localStorage.setItem(k,v);window.location.replace(window.location.pathname+'?_='+Date.now());return;}localStorage.setItem(k,v);})();
 </script>
 <meta charset="UTF-8">
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
@@ -15,7 +15,7 @@
 <link rel="manifest" href="manifest.json">
 <link rel="apple-touch-icon" href="icon-192.png">
 <title>Leaderboard - Westchester Golf</title>
-<link rel="stylesheet" href="shared.css?v=178">
+<link rel="stylesheet" href="shared.css?v=179">
 <style>
 /* ===== LEAGUE TABLE ===== */
 .lb-table { width: 100%; border-collapse: collapse; }
@@ -39,18 +39,6 @@
 .lb-tr:last-child { border-bottom: none; }
 .lb-td { padding: 10px 6px 10px 0; vertical-align: middle; text-align: right; font-size: 13px; }
 .lb-td:first-child { text-align: left; }
-
-/* Form dots */
-.form-dots { display: flex; gap: 4px; margin-top: 4px; align-items: center; }
-.form-dot {
-  width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0;
-}
-.form-dot.under { background: var(--green-accent); box-shadow: 0 0 4px rgba(0,230,118,0.5); }
-.form-dot.even  { background: var(--par-color); box-shadow: 0 0 4px rgba(64,196,255,0.4); }
-.form-dot.over  { background: var(--bogey); }
-.fire-tag {
-  font-size: 11px; margin-left: 2px;
-}
 
 /* Achievement badges */
 .badge-strip { display: flex; gap: 3px; margin-top: 4px; flex-wrap: wrap; }
@@ -109,18 +97,6 @@
 .champ-player { font-size: 12px; color: var(--text-dim); font-weight: 600; }
 .champ-date   { font-size: 10px; color: var(--text-muted); margin-top: 1px; }
 
-/* ===== FORM LEGEND ===== */
-.form-legend {
-  display: flex;
-  gap: 12px;
-  align-items: center;
-  font-size: 10px;
-  color: var(--text-muted);
-  margin-top: 10px;
-  padding-top: 10px;
-  border-top: 1px solid var(--border);
-}
-.form-legend-item { display: flex; align-items: center; gap: 4px; }
 </style>
 </head>
 <body>
@@ -134,7 +110,6 @@
 <div id="activeRoundBanner"></div>
 
 <div class="main">
-  <div class="stat-grid" id="statGrid"></div>
   <div id="leaderboardSection">
     <div class="waiting-players"><span class="spinner"></span> Loading stats...</div>
   </div>
@@ -142,9 +117,9 @@
 
 <nav class="bottom-nav" id="bottomNav"></nav>
 
-<script src="firebase-config.js?v=178"></script>
-<script src="shared.js?v=178"></script>
-<script src="firebase-sync.js?v=178"></script>
+<script src="firebase-config.js?v=179"></script>
+<script src="shared.js?v=179"></script>
+<script src="firebase-sync.js?v=179"></script>
 <script>
 requireAuth(function(user) {
   renderBottomNav('stats');
@@ -191,15 +166,6 @@ requireAuth(function(user) {
     function toPar(r, p) {
       var total = r.scores[p].reduce(function(a, b) { return a + b; }, 0);
       return total - parPlayed(r, p);
-    }
-
-    // Last 3 valid rounds for player → form dot classes
-    function getFormDots(p) {
-      var recent = sortedRounds.filter(function(r) { return validEntry(r, p); }).slice(-3);
-      return recent.map(function(r) {
-        var tp = toPar(r, p);
-        return tp < 0 ? 'under' : tp === 0 ? 'even' : 'over';
-      });
     }
 
     // True if last 3 rounds are strictly improving
@@ -313,13 +279,17 @@ requireAuth(function(user) {
     }
 
     // ── Course Champions ──────────────────────────────────────
-    var courseChamps = {}; // courseId → {player, bestToPar, date, roundCount}
+    // Track distinct players per course — only show courses with 2+ different players
+    var courseChamps = {};
+    var courseUniquePlayers = {}; // courseId → Set of player names
     var courseRoundCounts = {};
     sortedRounds.forEach(function(r) {
       var cid = r.courseId;
+      if (!courseUniquePlayers[cid]) courseUniquePlayers[cid] = {};
       if (!courseRoundCounts[cid]) courseRoundCounts[cid] = 0;
       r.players.forEach(function(p) {
         if (!validEntry(r, p)) return;
+        courseUniquePlayers[cid][p] = true;
         courseRoundCounts[cid]++;
         var tp = toPar(r, p);
         if (!courseChamps[cid] || tp < courseChamps[cid].bestToPar) {
@@ -327,27 +297,6 @@ requireAuth(function(user) {
         }
       });
     });
-
-    // ── Stat grid ─────────────────────────────────────────────
-    var totalRounds = rounds.length;
-    var allPlayers = new Set();
-    rounds.forEach(function(r) { r.players.forEach(function(p) { allPlayers.add(p); }); });
-    var courseCount = new Set(rounds.map(function(r) { return r.courseId; })).size;
-
-    var commBestTP = Infinity, commBestPlayer = '';
-    sortedRounds.forEach(function(r) {
-      r.players.forEach(function(p) {
-        if (!validEntry(r, p)) return;
-        var tp = toPar(r, p);
-        if (tp < commBestTP) { commBestTP = tp; commBestPlayer = p; }
-      });
-    });
-
-    document.getElementById('statGrid').innerHTML =
-      '<div class="stat-box"><div class="stat-value">' + totalRounds + '</div><div class="stat-label">Rounds</div></div>' +
-      '<div class="stat-box"><div class="stat-value">' + courseCount + '</div><div class="stat-label">Courses</div></div>' +
-      '<div class="stat-box"><div class="stat-value">' + allPlayers.size + '</div><div class="stat-label">Players</div></div>' +
-      '<div class="stat-box"><div class="stat-value">' + (commBestTP < Infinity ? fmtToPar(commBestTP) : '—') + '</div><div class="stat-label">Best' + (commBestPlayer ? '<br><span style="font-size:10px;font-weight:600">' + commBestPlayer + '</span>' : '') + '</div></div>';
 
     // ── Leaderboard section ───────────────────────────────────
     var lbSort = { col: 'avg', dir: 1 };
@@ -403,18 +352,8 @@ requireAuth(function(user) {
         var bestStr = fmtToPar(p.best);
         var bestColor = p.best < 0 ? 'var(--green-accent)' : p.best === 0 ? 'var(--par-color)' : 'var(--text-muted)';
 
-        var formDots = getFormDots(p.name);
         var onFire = isOnFire(p.name);
         var badges = badgesMap[p.name] || [];
-
-        var dotsHtml = '';
-        if (formDots.length) {
-          dotsHtml = '<div class="form-dots">' +
-            formDots.map(function(d) { return '<span class="form-dot ' + d + '"></span>'; }).join('') +
-            (onFire ? '<span class="fire-tag">🔥</span>' : '') +
-            '</div>';
-        }
-
         var badgesHtml = '';
         if (badges.length) {
           badgesHtml = '<div class="badge-strip">' +
@@ -434,7 +373,6 @@ requireAuth(function(user) {
               '<div class="lb-rank ' + rankClass + '" style="flex-shrink:0">' + rank + '</div>' +
               '<div>' +
                 '<div style="font-weight:600;font-size:14px;line-height:1.2">' + nameHtml + '</div>' +
-                dotsHtml +
                 badgesHtml +
               '</div>' +
             '</div>' +
@@ -446,15 +384,6 @@ requireAuth(function(user) {
         '</tr>';
       }).join('');
 
-      // Form dot legend
-      var legendHtml =
-        '<div class="form-legend">' +
-          '<span style="font-weight:700;margin-right:2px">Last 3:</span>' +
-          '<span class="form-legend-item"><span class="form-dot under" style="width:7px;height:7px"></span> Under</span>' +
-          '<span class="form-legend-item"><span class="form-dot even" style="width:7px;height:7px"></span> Even</span>' +
-          '<span class="form-legend-item"><span class="form-dot over" style="width:7px;height:7px"></span> Over</span>' +
-        '</div>';
-
       var lbHtml =
         '<div class="leaderboard">' +
           '<h3>Player Leaderboard <span style="font-size:10px;color:var(--text-muted);font-weight:500;margin-left:4px">tap column to sort</span></h3>' +
@@ -462,11 +391,12 @@ requireAuth(function(user) {
             '<table class="lb-table"><thead><tr class="lb-thead-row">' + thHtml + '</tr></thead>' +
             '<tbody>' + rowsHtml + '</tbody></table>' +
           '</div>' +
-          legendHtml +
         '</div>';
 
-      // Course Champions
-      var champCourseIds = Object.keys(courseChamps).sort(function(a, b) {
+      // Course Champions — only courses with 2+ distinct players
+      var champCourseIds = Object.keys(courseChamps).filter(function(cid) {
+        return Object.keys(courseUniquePlayers[cid] || {}).length >= 2;
+      }).sort(function(a, b) {
         return (courseRoundCounts[b] || 0) - (courseRoundCounts[a] || 0);
       });
 
