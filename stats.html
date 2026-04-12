@@ -3,7 +3,7 @@
 <head>
 <style>html,body{background:#0a0f0d}</style>
 <script>
-(function(){var v='177';var k='app_v';var s=localStorage.getItem(k);if(s&&s!==v){localStorage.setItem(k,v);window.location.replace(window.location.pathname+'?_='+Date.now());return;}localStorage.setItem(k,v);})();
+(function(){var v='178';var k='app_v';var s=localStorage.getItem(k);if(s&&s!==v){localStorage.setItem(k,v);window.location.replace(window.location.pathname+'?_='+Date.now());return;}localStorage.setItem(k,v);})();
 </script>
 <meta charset="UTF-8">
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
@@ -14,14 +14,120 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <link rel="manifest" href="manifest.json">
 <link rel="apple-touch-icon" href="icon-192.png">
-<title>Stats - Westchester Golf</title>
-<link rel="stylesheet" href="shared.css?v=177">
+<title>Leaderboard - Westchester Golf</title>
+<link rel="stylesheet" href="shared.css?v=178">
+<style>
+/* ===== LEAGUE TABLE ===== */
+.lb-table { width: 100%; border-collapse: collapse; }
+.lb-thead-row { border-bottom: 1px solid var(--border-light); }
+.lb-th {
+  padding: 8px 6px 8px 0;
+  font-size: 10px;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  font-weight: 700;
+  cursor: pointer;
+  user-select: none;
+  text-align: right;
+  white-space: nowrap;
+  -webkit-tap-highlight-color: transparent;
+}
+.lb-th:first-child { text-align: left; padding-left: 0; }
+.lb-th.sort-active { color: var(--green-accent); }
+.lb-tr { border-bottom: 1px solid var(--border); transition: background 0.1s; }
+.lb-tr:last-child { border-bottom: none; }
+.lb-td { padding: 10px 6px 10px 0; vertical-align: middle; text-align: right; font-size: 13px; }
+.lb-td:first-child { text-align: left; }
+
+/* Form dots */
+.form-dots { display: flex; gap: 4px; margin-top: 4px; align-items: center; }
+.form-dot {
+  width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0;
+}
+.form-dot.under { background: var(--green-accent); box-shadow: 0 0 4px rgba(0,230,118,0.5); }
+.form-dot.even  { background: var(--par-color); box-shadow: 0 0 4px rgba(64,196,255,0.4); }
+.form-dot.over  { background: var(--bogey); }
+.fire-tag {
+  font-size: 11px; margin-left: 2px;
+}
+
+/* Achievement badges */
+.badge-strip { display: flex; gap: 3px; margin-top: 4px; flex-wrap: wrap; }
+.ach-badge { font-size: 13px; cursor: default; line-height: 1; }
+
+/* ===== COURSE CHAMPIONS ===== */
+.champ-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-bottom: 16px;
+}
+.champ-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 12px 10px;
+  position: relative;
+  overflow: hidden;
+}
+.champ-card::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 2px;
+  background: linear-gradient(90deg, var(--gold), transparent);
+}
+.champ-trophy {
+  font-size: 10px;
+  color: var(--gold);
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  margin-bottom: 2px;
+}
+.champ-course {
+  font-size: 11px;
+  color: var(--text-muted);
+  font-weight: 600;
+  letter-spacing: 0.3px;
+  margin-bottom: 6px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.champ-score {
+  font-size: 26px;
+  font-weight: 900;
+  line-height: 1;
+  margin-bottom: 3px;
+  font-family: 'Inter', sans-serif;
+}
+.champ-score.under { color: var(--green-accent); }
+.champ-score.even  { color: var(--par-color); }
+.champ-score.over  { color: var(--bogey); }
+.champ-player { font-size: 12px; color: var(--text-dim); font-weight: 600; }
+.champ-date   { font-size: 10px; color: var(--text-muted); margin-top: 1px; }
+
+/* ===== FORM LEGEND ===== */
+.form-legend {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  font-size: 10px;
+  color: var(--text-muted);
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px solid var(--border);
+}
+.form-legend-item { display: flex; align-items: center; gap: 4px; }
+</style>
 </head>
 <body>
 
 <div class="header">
   <h1>Leaderboard</h1>
-  <div class="subtitle">Community rankings</div>
+  <div class="subtitle">Community Rankings</div>
 </div>
 
 <div id="broadcastBanner"></div>
@@ -36,112 +142,374 @@
 
 <nav class="bottom-nav" id="bottomNav"></nav>
 
-<script src="firebase-config.js?v=177"></script>
-<script src="shared.js?v=177"></script>
-<script src="firebase-sync.js?v=177"></script>
+<script src="firebase-config.js?v=178"></script>
+<script src="shared.js?v=178"></script>
+<script src="firebase-sync.js?v=178"></script>
 <script>
-  requireAuth(function(user) {
-    renderBottomNav('stats');
-    renderActiveRoundBanner();
-    renderBroadcastBanner();
+requireAuth(function(user) {
+  renderBottomNav('stats');
+  renderActiveRoundBanner();
+  renderBroadcastBanner();
 
-    // Load from Firebase
-    fbLoadRounds(user.uid).then(rounds => {
-      renderStats(rounds);
-    }).catch(() => {
-      renderStats(loadRounds());
+  fbLoadRounds(user.uid).then(function(rounds) {
+    renderStats(rounds);
+  }).catch(function() {
+    renderStats(loadRounds());
+  });
+
+  function renderStats(rounds) {
+    if (!rounds.length) {
+      document.getElementById('statGrid').innerHTML = '';
+      document.getElementById('leaderboardSection').innerHTML =
+        '<div class="empty-state"><div class="icon">&#128202;</div><p>Play some rounds to see your stats!<br><a href="index.html">Get started</a></p></div>';
+      return;
+    }
+
+    // Sort rounds chronologically for form/streak calculations
+    var sortedRounds = rounds.slice().sort(function(a, b) {
+      return (a.date || '') < (b.date || '') ? -1 : 1;
     });
 
-    function renderStats(rounds) {
-      if (!rounds.length) {
-        document.getElementById('statGrid').innerHTML = '';
-        document.getElementById('leaderboardSection').innerHTML = `<div class="empty-state"><div class="icon">&#128202;</div><p>Play some rounds to see your stats!<br><a href="index.html">Get started</a></p></div>`;
-        return;
-      }
+    // ── Helpers ──────────────────────────────────────────────
+    function parPlayed(r, p) {
+      if (!r.holePars) return r.par || 72;
+      return r.holePars.reduce(function(acc, hp, i) {
+        return acc + (r.scores[p][i] > 0 ? hp : 0);
+      }, 0);
+    }
+    function fmtToPar(n) { return n === 0 ? 'E' : (n > 0 ? '+' + n : n.toString()); }
+    function fmtToParFixed(n) { return n === 0 ? 'E' : (n > 0 ? '+' : '') + n.toFixed(1); }
 
-      const totalRounds = rounds.length;
-      const allPlayers = new Set();
-      rounds.forEach(r => r.players.forEach(p => allPlayers.add(p)));
-      const courseCount = new Set(rounds.map(r => r.courseId)).size;
+    function validEntry(r, p) {
+      var sc = r.scores[p];
+      if (!sc) return false;
+      var total = sc.reduce(function(a, b) { return a + b; }, 0);
+      var played = sc.filter(function(s) { return s > 0; }).length;
+      return total > 0 && played >= 9;
+    }
 
-      let bestScore = Infinity, bestPlayer = '';
-      rounds.forEach(r => r.players.forEach(p => {
-        const total = r.scores[p].reduce((a,b)=>a+b,0);
-        const played = r.scores[p].filter(s=>s>0).length;
-        if (played >= 9 && total > 0 && total < bestScore) { bestScore = total; bestPlayer = p; }
-      }));
+    function toPar(r, p) {
+      var total = r.scores[p].reduce(function(a, b) { return a + b; }, 0);
+      return total - parPlayed(r, p);
+    }
 
-      document.getElementById('statGrid').innerHTML = `
-        <div class="stat-box"><div class="stat-value">${totalRounds}</div><div class="stat-label">Rounds</div></div>
-        <div class="stat-box"><div class="stat-value">${courseCount}</div><div class="stat-label">Courses</div></div>
-        <div class="stat-box"><div class="stat-value">${allPlayers.size}</div><div class="stat-label">Players</div></div>
-        <div class="stat-box"><div class="stat-value">${bestScore < Infinity ? bestScore : '-'}</div><div class="stat-label">Best${bestPlayer ? ' ('+bestPlayer+')' : ''}</div></div>
-      `;
+    // Last 3 valid rounds for player → form dot classes
+    function getFormDots(p) {
+      var recent = sortedRounds.filter(function(r) { return validEntry(r, p); }).slice(-3);
+      return recent.map(function(r) {
+        var tp = toPar(r, p);
+        return tp < 0 ? 'under' : tp === 0 ? 'even' : 'over';
+      });
+    }
 
-      // Leaderboard — ranked by avg score-to-par for holes played
-      function parPlayed(r, p) {
-        if (!r.holePars) return r.par;
-        return r.holePars.reduce(function(acc, hp, i) { return acc + (r.scores[p][i] > 0 ? hp : 0); }, 0);
-      }
-      function fmtToPar(n) { return n === 0 ? 'E' : (n > 0 ? '+' + n : n.toString()); }
+    // True if last 3 rounds are strictly improving
+    function isOnFire(p) {
+      var recent = sortedRounds.filter(function(r) { return validEntry(r, p); }).slice(-3);
+      if (recent.length < 3) return false;
+      var pars = recent.map(function(r) { return toPar(r, p); });
+      return pars[1] < pars[0] && pars[2] < pars[1];
+    }
 
-      const ps = {};
-      rounds.forEach(r => r.players.forEach(p => {
-        const total = r.scores[p].reduce((a,b)=>a+b,0);
-        const played = r.scores[p].filter(s=>s>0).length;
-        if (total > 0 && played >= 9) {
-          const pp = parPlayed(r, p);
-          const toPar = total - pp;
-          if (!ps[p]) ps[p] = { rounds:0, totalScore:0, totalPar:0, wins:0, bestToPar:Infinity };
-          ps[p].rounds++;
-          ps[p].totalScore += total;
-          ps[p].totalPar += pp;
-          if (toPar < ps[p].bestToPar) ps[p].bestToPar = toPar;
-        }
-      }));
-
-      // Win = lowest score-to-par in each round
-      rounds.forEach(r => {
-        let minToPar = Infinity, winners = [];
-        r.players.forEach(p => {
-          const t = r.scores[p].reduce((a,b)=>a+b,0);
-          const played = r.scores[p].filter(s=>s>0).length;
-          if (t > 0 && played >= 9) {
-            const tp = t - parPlayed(r, p);
-            if (tp < minToPar) { minToPar = tp; winners = [p]; }
-            else if (tp === minToPar) winners.push(p);
+    // Consecutive wins from most recent round
+    function computeWinStreak(p) {
+      var streak = 0;
+      for (var i = sortedRounds.length - 1; i >= 0; i--) {
+        var r = sortedRounds[i];
+        if (!validEntry(r, p)) continue;
+        var myTP = toPar(r, p);
+        var minTP = Infinity;
+        r.players.forEach(function(q) {
+          if (validEntry(r, q)) {
+            var qTP = toPar(r, q);
+            if (qTP < minTP) minTP = qTP;
           }
         });
-        winners.forEach(w => { if (ps[w]) ps[w].wins++; });
+        if (myTP === minTP) streak++;
+        else break;
+      }
+      return streak;
+    }
+
+    // Improvement delta: (last-3 avg) − (all-time avg). Negative = improved.
+    function getMostImprovedDelta(p) {
+      var playerRounds = sortedRounds.filter(function(r) { return validEntry(r, p); });
+      if (playerRounds.length < 4) return null;
+      var all = playerRounds.map(function(r) { return toPar(r, p); });
+      var overallAvg = all.reduce(function(a, b) { return a + b; }, 0) / all.length;
+      var last3Avg = all.slice(-3).reduce(function(a, b) { return a + b; }, 0) / 3;
+      return last3Avg - overallAvg;
+    }
+
+    // ── Build player stats ────────────────────────────────────
+    var ps = {};
+    sortedRounds.forEach(function(r) {
+      r.players.forEach(function(p) {
+        if (!validEntry(r, p)) return;
+        var pp = parPlayed(r, p);
+        var total = r.scores[p].reduce(function(a, b) { return a + b; }, 0);
+        var tp = total - pp;
+        if (!ps[p]) ps[p] = { rounds: 0, totalScore: 0, totalPar: 0, wins: 0, bestToPar: Infinity, eagles: 0, birdies: 0 };
+        ps[p].rounds++;
+        ps[p].totalScore += total;
+        ps[p].totalPar += pp;
+        if (tp < ps[p].bestToPar) ps[p].bestToPar = tp;
+        // Eagle / birdie counts
+        if (r.holePars) {
+          r.scores[p].forEach(function(s, i) {
+            if (s > 0 && r.holePars[i]) {
+              if (s <= r.holePars[i] - 2) ps[p].eagles++;
+              else if (s === r.holePars[i] - 1) ps[p].birdies++;
+            }
+          });
+        }
+      });
+    });
+
+    // ── Determine winners per round ───────────────────────────
+    sortedRounds.forEach(function(r) {
+      var minTP = Infinity, winners = [];
+      r.players.forEach(function(p) {
+        if (!validEntry(r, p)) return;
+        var tp = toPar(r, p);
+        if (tp < minTP) { minTP = tp; winners = [p]; }
+        else if (tp === minTP) winners.push(p);
+      });
+      winners.forEach(function(w) { if (ps[w]) ps[w].wins++; });
+    });
+
+    // ── Build badge map ───────────────────────────────────────
+    var badgesMap = {};
+    Object.keys(ps).forEach(function(p) { badgesMap[p] = []; });
+
+    Object.keys(ps).forEach(function(p) {
+      if (ps[p].eagles >= 1)
+        badgesMap[p].push({ icon: '🦅', title: 'Eagle Club — ' + ps[p].eagles + ' eagle' + (ps[p].eagles !== 1 ? 's' : '') });
+      if (ps[p].birdies >= 5)
+        badgesMap[p].push({ icon: '🐦', title: 'Birdie Machine — ' + ps[p].birdies + ' birdies' });
+      var streak = computeWinStreak(p);
+      if (streak >= 3)
+        badgesMap[p].push({ icon: '⚡', title: streak + '-Round Win Streak' });
+      if (isOnFire(p) && streak < 3)
+        badgesMap[p].push({ icon: '🔥', title: 'On Fire — 3 straight improvements' });
+    });
+
+    // Most Wins — exclusive to top winner (need at least 2 wins to qualify)
+    var maxWins = 0;
+    Object.keys(ps).forEach(function(p) { if (ps[p].wins > maxWins) maxWins = ps[p].wins; });
+    if (maxWins >= 2) {
+      var topWinners = Object.keys(ps).filter(function(p) { return ps[p].wins === maxWins; });
+      if (topWinners.length === 1)
+        badgesMap[topWinners[0]].push({ icon: '🏆', title: 'Most Wins — ' + maxWins + ' wins' });
+    }
+
+    // Most Improved — exclusive
+    var improvements = Object.keys(ps).map(function(p) {
+      return { p: p, delta: getMostImprovedDelta(p) };
+    }).filter(function(x) { return x.delta !== null; });
+    if (improvements.length) {
+      improvements.sort(function(a, b) { return a.delta - b.delta; });
+      if (improvements[0].delta < -0.5)
+        badgesMap[improvements[0].p].push({ icon: '📈', title: 'Most Improved — best recent trend' });
+    }
+
+    // ── Course Champions ──────────────────────────────────────
+    var courseChamps = {}; // courseId → {player, bestToPar, date, roundCount}
+    var courseRoundCounts = {};
+    sortedRounds.forEach(function(r) {
+      var cid = r.courseId;
+      if (!courseRoundCounts[cid]) courseRoundCounts[cid] = 0;
+      r.players.forEach(function(p) {
+        if (!validEntry(r, p)) return;
+        courseRoundCounts[cid]++;
+        var tp = toPar(r, p);
+        if (!courseChamps[cid] || tp < courseChamps[cid].bestToPar) {
+          courseChamps[cid] = { player: p, bestToPar: tp, date: r.date || '' };
+        }
+      });
+    });
+
+    // ── Stat grid ─────────────────────────────────────────────
+    var totalRounds = rounds.length;
+    var allPlayers = new Set();
+    rounds.forEach(function(r) { r.players.forEach(function(p) { allPlayers.add(p); }); });
+    var courseCount = new Set(rounds.map(function(r) { return r.courseId; })).size;
+
+    var commBestTP = Infinity, commBestPlayer = '';
+    sortedRounds.forEach(function(r) {
+      r.players.forEach(function(p) {
+        if (!validEntry(r, p)) return;
+        var tp = toPar(r, p);
+        if (tp < commBestTP) { commBestTP = tp; commBestPlayer = p; }
+      });
+    });
+
+    document.getElementById('statGrid').innerHTML =
+      '<div class="stat-box"><div class="stat-value">' + totalRounds + '</div><div class="stat-label">Rounds</div></div>' +
+      '<div class="stat-box"><div class="stat-value">' + courseCount + '</div><div class="stat-label">Courses</div></div>' +
+      '<div class="stat-box"><div class="stat-value">' + allPlayers.size + '</div><div class="stat-label">Players</div></div>' +
+      '<div class="stat-box"><div class="stat-value">' + (commBestTP < Infinity ? fmtToPar(commBestTP) : '—') + '</div><div class="stat-label">Best' + (commBestPlayer ? '<br><span style="font-size:10px;font-weight:600">' + commBestPlayer + '</span>' : '') + '</div></div>';
+
+    // ── Leaderboard section ───────────────────────────────────
+    var lbSort = { col: 'avg', dir: 1 };
+
+    window._lbSort = function(col) {
+      if (lbSort.col === col) {
+        lbSort.dir *= -1;
+      } else {
+        lbSort.col = col;
+        // For rounds/wins, default desc (more = better); for avg/best, default asc (lower = better)
+        lbSort.dir = (col === 'rounds' || col === 'wins') ? -1 : 1;
+      }
+      renderLb();
+    };
+
+    function renderLb() {
+      // Build sorted player list
+      var players = Object.keys(ps).map(function(name) {
+        var d = ps[name];
+        var avg = (d.totalScore - d.totalPar) / d.rounds;
+        return { name: name, rounds: d.rounds, wins: d.wins, avg: avg, best: d.bestToPar };
       });
 
-      const sorted = Object.entries(ps)
-        .map(([name,s]) => {
-          const avgToPar = (s.totalScore - s.totalPar) / s.rounds;
-          return { name, avgToPar, avgToParStr: (avgToPar >= 0 ? '+' : '') + avgToPar.toFixed(1), rounds:s.rounds, wins:s.wins, bestToPar:s.bestToPar };
-        })
-        .sort((a,b) => a.avgToPar - b.avgToPar);
+      // Rank by avg always (for rank badge)
+      var byAvg = players.slice().sort(function(a, b) { return a.avg - b.avg; });
+      var rankMap = {};
+      byAvg.forEach(function(p, i) { rankMap[p.name] = i + 1; });
 
-      let lbHtml = '<div class="leaderboard"><h3>Player Leaderboard</h3>';
-      if (!sorted.length) {
-        lbHtml += '<p style="color:var(--text-muted);font-size:13px">Complete a round with 9+ holes.</p>';
-      } else {
-        sorted.forEach((p, i) => {
-          const rc = i===0?'':i===1?'r2':i===2?'r3':'r4';
-          lbHtml += `
-            <div class="lb-row">
-              <div class="lb-rank ${rc}">${i+1}</div>
-              <span class="lb-name">${isAdmin(p.name) ? '<span class="admin-name">' + p.name + '</span>' + adminBadge(p.name, 12) : p.name}</span>
-              <span class="lb-meta">${p.rounds}R &bull; ${p.wins}W<br>Best: ${fmtToPar(p.bestToPar)}</span>
-              <span class="lb-stat">${p.avgToParStr} avg</span>
-            </div>
-          `;
+      // Apply chosen sort
+      players.sort(function(a, b) {
+        return lbSort.dir * (a[lbSort.col] - b[lbSort.col]);
+      });
+
+      var cols = [
+        { key: 'rounds', label: 'R' },
+        { key: 'wins',   label: 'W' },
+        { key: 'avg',    label: 'Avg' },
+        { key: 'best',   label: 'Best' }
+      ];
+
+      var thHtml = '<th class="lb-th" style="text-align:left">Player</th>' +
+        cols.map(function(c) {
+          var active = lbSort.col === c.key;
+          var arrow = active ? (lbSort.dir === 1 ? ' ↑' : ' ↓') : '';
+          return '<th class="lb-th' + (active ? ' sort-active' : '') + '" onclick="_lbSort(\'' + c.key + '\')">' + c.label + (active ? '<span style="opacity:0.7">' + arrow + '</span>' : '') + '</th>';
+        }).join('');
+
+      var rowsHtml = players.map(function(p) {
+        var rank = rankMap[p.name];
+        var rankClass = rank === 1 ? '' : rank === 2 ? 'r2' : rank === 3 ? 'r3' : 'r4';
+        var avgStr = (p.avg >= 0 ? '+' : '') + p.avg.toFixed(1);
+        var avgColor = p.avg < 0 ? 'var(--green-accent)' : p.avg <= 5 ? 'var(--bogey)' : 'var(--red)';
+        var bestStr = fmtToPar(p.best);
+        var bestColor = p.best < 0 ? 'var(--green-accent)' : p.best === 0 ? 'var(--par-color)' : 'var(--text-muted)';
+
+        var formDots = getFormDots(p.name);
+        var onFire = isOnFire(p.name);
+        var badges = badgesMap[p.name] || [];
+
+        var dotsHtml = '';
+        if (formDots.length) {
+          dotsHtml = '<div class="form-dots">' +
+            formDots.map(function(d) { return '<span class="form-dot ' + d + '"></span>'; }).join('') +
+            (onFire ? '<span class="fire-tag">🔥</span>' : '') +
+            '</div>';
+        }
+
+        var badgesHtml = '';
+        if (badges.length) {
+          badgesHtml = '<div class="badge-strip">' +
+            badges.map(function(b) {
+              return '<span class="ach-badge" title="' + b.title + '">' + b.icon + '</span>';
+            }).join('') +
+            '</div>';
+        }
+
+        var nameHtml = isAdmin(p.name)
+          ? '<span class="admin-name">' + p.name + '</span>' + adminBadge(p.name, 12)
+          : p.name;
+
+        return '<tr class="lb-tr">' +
+          '<td class="lb-td">' +
+            '<div style="display:flex;align-items:center;gap:8px">' +
+              '<div class="lb-rank ' + rankClass + '" style="flex-shrink:0">' + rank + '</div>' +
+              '<div>' +
+                '<div style="font-weight:600;font-size:14px;line-height:1.2">' + nameHtml + '</div>' +
+                dotsHtml +
+                badgesHtml +
+              '</div>' +
+            '</div>' +
+          '</td>' +
+          '<td class="lb-td" style="color:var(--text-muted);font-size:12px">' + p.rounds + '</td>' +
+          '<td class="lb-td" style="color:var(--text-dim);font-size:12px">' + p.wins + '</td>' +
+          '<td class="lb-td" style="font-weight:800;font-size:15px;color:' + avgColor + '">' + avgStr + '</td>' +
+          '<td class="lb-td" style="font-size:13px;font-weight:600;color:' + bestColor + '">' + bestStr + '</td>' +
+        '</tr>';
+      }).join('');
+
+      // Form dot legend
+      var legendHtml =
+        '<div class="form-legend">' +
+          '<span style="font-weight:700;margin-right:2px">Last 3:</span>' +
+          '<span class="form-legend-item"><span class="form-dot under" style="width:7px;height:7px"></span> Under</span>' +
+          '<span class="form-legend-item"><span class="form-dot even" style="width:7px;height:7px"></span> Even</span>' +
+          '<span class="form-legend-item"><span class="form-dot over" style="width:7px;height:7px"></span> Over</span>' +
+        '</div>';
+
+      var lbHtml =
+        '<div class="leaderboard">' +
+          '<h3>Player Leaderboard <span style="font-size:10px;color:var(--text-muted);font-weight:500;margin-left:4px">tap column to sort</span></h3>' +
+          '<div style="overflow-x:auto;margin:0 -16px;padding:0 16px">' +
+            '<table class="lb-table"><thead><tr class="lb-thead-row">' + thHtml + '</tr></thead>' +
+            '<tbody>' + rowsHtml + '</tbody></table>' +
+          '</div>' +
+          legendHtml +
+        '</div>';
+
+      // Course Champions
+      var champCourseIds = Object.keys(courseChamps).sort(function(a, b) {
+        return (courseRoundCounts[b] || 0) - (courseRoundCounts[a] || 0);
+      });
+
+      var champHtml = '';
+      if (champCourseIds.length) {
+        champHtml += '<div class="section-title" style="margin-top:20px">&#127942; Course Champions</div>';
+        champHtml += '<div class="champ-grid">';
+        champCourseIds.forEach(function(cid) {
+          var champ = courseChamps[cid];
+          var course = getCourse(cid);
+          var courseName = course ? course.name : cid;
+          // Shorten long names
+          if (courseName.length > 18) courseName = courseName.replace('Golf Course', 'GC').replace('Golf Club', 'GC');
+          var tp = champ.bestToPar;
+          var scoreClass = tp < 0 ? 'under' : tp === 0 ? 'even' : 'over';
+          var scoreStr = fmtToPar(tp);
+          var champName = isAdmin(champ.player)
+            ? '<span class="admin-name">' + champ.player + '</span>'
+            : champ.player;
+          var dateStr = champ.date ? champ.date.replace(/^(\d{4})-(\d{2})-(\d{2})$/, function(_, y, m, d) {
+            var months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+            return months[parseInt(m,10)-1] + ' ' + parseInt(d,10) + ', ' + y;
+          }) : '';
+          champHtml +=
+            '<div class="champ-card">' +
+              '<div class="champ-trophy">&#127942; Record</div>' +
+              '<div class="champ-course">' + courseName + '</div>' +
+              '<div class="champ-score ' + scoreClass + '">' + scoreStr + '</div>' +
+              '<div class="champ-player">' + champName + '</div>' +
+              (dateStr ? '<div class="champ-date">' + dateStr + '</div>' : '') +
+            '</div>';
         });
+        champHtml += '</div>';
       }
-      lbHtml += '</div>';
-      document.getElementById('leaderboardSection').innerHTML = lbHtml;
+
+      document.getElementById('leaderboardSection').innerHTML = players.length
+        ? lbHtml + champHtml
+        : '<p style="color:var(--text-muted);font-size:13px;padding:12px 0">Complete a round with 9+ holes.</p>';
     }
-  });
+
+    renderLb();
+  }
+});
 </script>
 </body>
 </html>
