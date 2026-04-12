@@ -3,7 +3,7 @@
 <head>
 <style>html,body{background:#0a0f0d}</style>
 <script>
-(function(){var v='182';var k='app_v';var s=localStorage.getItem(k);if(s&&s!==v){localStorage.setItem(k,v);window.location.replace(window.location.pathname+'?_='+Date.now());return;}localStorage.setItem(k,v);})();
+(function(){var v='183';var k='app_v';var s=localStorage.getItem(k);if(s&&s!==v){localStorage.setItem(k,v);window.location.replace(window.location.pathname+'?_='+Date.now());return;}localStorage.setItem(k,v);})();
 </script>
 <meta charset="UTF-8">
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
@@ -15,7 +15,7 @@
 <link rel="manifest" href="manifest.json">
 <link rel="apple-touch-icon" href="icon-192.png">
 <title>Leaderboard - Westchester Golf</title>
-<link rel="stylesheet" href="shared.css?v=182">
+<link rel="stylesheet" href="shared.css?v=183">
 <style>
 /* ===== LEAGUE TABLE ===== */
 .lb-table { width: 100%; border-collapse: collapse; }
@@ -120,6 +120,66 @@
 .par-spec-score.over  { color: var(--bogey); }
 .par-spec-player { font-size: 11px; color: var(--text-dim); font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
+/* ===== PODIUM ===== */
+.podium-wrap {
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  gap: 8px;
+  margin-bottom: 20px;
+  padding: 0 4px;
+}
+.podium-slot {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  flex: 1;
+}
+.podium-avatar {
+  width: 48px; height: 48px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 18px; font-weight: 800;
+  margin-bottom: 6px;
+  position: relative;
+}
+.podium-avatar.p1 {
+  width: 58px; height: 58px; font-size: 22px;
+  background: linear-gradient(135deg, #f5d020, #d4af37);
+  color: #1a1a1a;
+  box-shadow: 0 0 18px rgba(212,175,55,0.35);
+}
+.podium-avatar.p2 {
+  background: linear-gradient(135deg, #bdbdbd, #9e9e9e);
+  color: #1a1a1a;
+}
+.podium-avatar.p3 {
+  background: linear-gradient(135deg, #cd7f32, #a0522d);
+  color: #fff;
+}
+.podium-crown {
+  position: absolute; top: -14px; font-size: 16px; line-height: 1;
+}
+.podium-name {
+  font-size: 11px; font-weight: 700; color: var(--text);
+  text-align: center; max-width: 80px;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  margin-bottom: 3px;
+}
+.podium-avg {
+  font-size: 13px; font-weight: 800; margin-bottom: 6px;
+}
+.podium-avg.under { color: var(--green-accent); }
+.podium-avg.even  { color: var(--par-color); }
+.podium-avg.over  { color: var(--bogey); }
+.podium-block {
+  width: 100%; border-radius: 6px 6px 0 0;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 18px; font-weight: 900; color: rgba(255,255,255,0.25);
+}
+.podium-block.p1 { height: 60px; background: linear-gradient(180deg, rgba(212,175,55,0.25), rgba(212,175,55,0.08)); border: 1px solid rgba(212,175,55,0.3); border-bottom: none; }
+.podium-block.p2 { height: 44px; background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.1); border-bottom: none; }
+.podium-block.p3 { height: 32px; background: rgba(205,127,50,0.12); border: 1px solid rgba(205,127,50,0.2); border-bottom: none; }
+
 /* ===== COURSE CHAMPIONS ===== */
 .champ-grid {
   display: grid;
@@ -193,9 +253,9 @@
 
 <nav class="bottom-nav" id="bottomNav"></nav>
 
-<script src="firebase-config.js?v=182"></script>
-<script src="shared.js?v=182"></script>
-<script src="firebase-sync.js?v=182"></script>
+<script src="firebase-config.js?v=183"></script>
+<script src="shared.js?v=183"></script>
+<script src="firebase-sync.js?v=183"></script>
 <script>
 requireAuth(function(user) {
   renderBottomNav('stats');
@@ -631,8 +691,34 @@ requireAuth(function(user) {
         parSpecHtml += '</div>';
       }
 
+      // Podium — top 3 by avg, only if 3+ players
+      var podiumHtml = '';
+      if (byAvg.length >= 3) {
+        function podiumSlot(p, pos) {
+          var posClass = 'p' + pos;
+          var initials = p.name.slice(0, 2).toUpperCase();
+          var avgStr = (p.avg >= 0 ? '+' : '') + p.avg.toFixed(1);
+          var avgClass = p.avg < 0 ? 'under' : p.avg === 0 ? 'even' : 'over';
+          var crown = pos === 1 ? '<span class="podium-crown">&#128081;</span>' : '';
+          return '<div class="podium-slot">' +
+            '<div class="podium-avatar ' + posClass + '">' + crown + initials + '</div>' +
+            '<div class="podium-name">' + p.name + '</div>' +
+            '<div class="podium-avg ' + avgClass + '">' + avgStr + '</div>' +
+            '<div class="podium-block ' + posClass + '">' + pos + '</div>' +
+          '</div>';
+        }
+        // Order: 2nd left, 1st center, 3rd right
+        podiumHtml =
+          '<div class="section-title" style="margin-bottom:16px">&#127942; Top 3 Podium</div>' +
+          '<div class="podium-wrap">' +
+            podiumSlot(byAvg[1], 2) +
+            podiumSlot(byAvg[0], 1) +
+            podiumSlot(byAvg[2], 3) +
+          '</div>';
+      }
+
       document.getElementById('leaderboardSection').innerHTML = players.length
-        ? monthlyHtml + lbHtml + champHtml + parSpecHtml
+        ? monthlyHtml + podiumHtml + lbHtml + champHtml + parSpecHtml
         : '<p style="color:var(--text-muted);font-size:13px;padding:12px 0">Complete a round with 9+ holes.</p>';
     }
 
