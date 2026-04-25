@@ -227,6 +227,17 @@ function updateGroupCurrentHole(code, uid, holeIndex) {
   return db.ref('activeRounds/' + code + '/currentHole/' + uid).set(holeIndex);
 }
 
+// Set/replace a temporary hole override on the live session.
+// override = { par, yards, hcp }. Visible to all players in real-time via the existing listener.
+function setHoleOverride(code, holeIndex, override) {
+  return db.ref('activeRounds/' + code + '/meta/holeOverrides/' + holeIndex).set(override);
+}
+
+// Remove an override (revert to original course hole)
+function clearHoleOverride(code, holeIndex) {
+  return db.ref('activeRounds/' + code + '/meta/holeOverrides/' + holeIndex).remove();
+}
+
 // Finish a group round (only creator should call this)
 function finishGroupRound(code) {
   return db.ref('activeRounds/' + code + '/meta/status').set('finished');
@@ -457,7 +468,8 @@ function groupDataToRound(data, code) {
     _teams: meta.teams || null,
     _teamScores: data.teamScores || null,
     _teamHole: data.teamHole || null,
-    _teamHoleConfirmed: data.teamHoleConfirmed || null
+    _teamHoleConfirmed: data.teamHoleConfirmed || null,
+    _holeOverrides: meta.holeOverrides || null
   };
 }
 

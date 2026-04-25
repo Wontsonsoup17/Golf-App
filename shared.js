@@ -893,6 +893,47 @@ function formatDiff(total, par) {
   return diff > 0 ? '+' + diff : diff.toString();
 }
 
+// ==================== TEMPORARY HOLE OVERRIDES ====================
+// Live-session-only overrides for when the course swaps in a temp hole.
+// Never mutates the COURSES array — applyHoleOverrides returns a clone.
+
+// Average hcp of other holes on the course with the same par. Falls back to
+// the replaced hole's existing hcp if no same-par siblings exist.
+function computeAutoHcp(course, newPar, replacedHoleIndex) {
+  if (!course || !course.holes) return 1;
+  var matching = course.holes.filter(function(h, i) {
+    return i !== replacedHoleIndex && h.par === newPar;
+  });
+  if (!matching.length) return course.holes[replacedHoleIndex].hcp;
+  var sum = matching.reduce(function(s, h) { return s + (h.hcp || 0); }, 0);
+  return Math.max(1, Math.round(sum / matching.length));
+}
+
+// Returns a CLONE of the course with overrides applied. Original course is
+// never mutated. overrides is an object keyed by hole index: { [i]: {par, yards, hcp} }
+function applyHoleOverrides(course, overrides) {
+  if (!course) return course;
+  if (!overrides || !Object.keys(overrides).length) return course;
+  var teeKeys = Object.keys(course.tees || {});
+  var cloned = Object.assign({}, course);
+  cloned.holes = course.holes.map(function(h, i) {
+    var o = overrides[i];
+    if (!o) return h;
+    var newHole = Object.assign({}, h);
+    newHole.par = o.par;
+    if (typeof o.hcp === 'number') newHole.hcp = o.hcp;
+    // Apply yards to every tee key so display is consistent regardless of selected tee
+    teeKeys.forEach(function(tk) { newHole[tk] = o.yards; });
+    // Temp holes have no published layout image
+    newHole.img = null;
+    newHole._isTemp = true;
+    return newHole;
+  });
+  // Recompute course total par so headers/totals reflect actual play
+  cloned.par = cloned.holes.reduce(function(s, h) { return s + h.par; }, 0);
+  return cloned;
+}
+
 // Create blank tracking data for a player (18 holes)
 function createPlayerTracking() {
   return {

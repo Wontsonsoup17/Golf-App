@@ -3,7 +3,7 @@
 <head>
 <style>html,body{background:#0a0f0d}</style>
 <script>
-(function(){var v='190';var k='app_v';var s=localStorage.getItem(k);if(s&&s!==v){localStorage.setItem(k,v);window.location.replace(window.location.pathname+'?_='+Date.now());return;}localStorage.setItem(k,v);})();
+(function(){var v='192';var k='app_v';var s=localStorage.getItem(k);if(s&&s!==v){localStorage.setItem(k,v);window.location.replace(window.location.pathname+'?_='+Date.now());return;}localStorage.setItem(k,v);})();
 </script>
 <meta charset="UTF-8">
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
@@ -15,7 +15,7 @@
 <link rel="manifest" href="manifest.json">
 <link rel="apple-touch-icon" href="icon-192.png">
 <title>Live Round - Westchester Golf</title>
-<link rel="stylesheet" href="shared.css?v=190">
+<link rel="stylesheet" href="shared.css?v=192">
 <style>
 /* ===== SCRAMBLE MODE ===== */
 .scramble-lobby { padding: 0; }
@@ -78,11 +78,11 @@
 </div>
 
 <nav class="bottom-nav" id="bottomNav"></nav>
-<div style="text-align:center;font-size:9px;color:#333;padding:4px;opacity:0.5">v106</div>
+<div style="text-align:center;font-size:9px;color:#333;padding:4px;opacity:0.5">v108</div>
 
-<script src="firebase-config.js?v=190"></script>
-<script src="shared.js?v=190"></script>
-<script src="firebase-sync.js?v=190"></script>
+<script src="firebase-config.js?v=192"></script>
+<script src="shared.js?v=192"></script>
+<script src="firebase-sync.js?v=192"></script>
 <script>
   // ==================== SCORE EFFECTS (emoji burst) ====================
   // Defined at script scope so both solo and group modes can access them
@@ -220,6 +220,131 @@
         '</div>' +
       '</div>';
     document.body.appendChild(overlay);
+  };
+
+  // ===================================================================
+  // TEMPORARY HOLE MODAL — admin-only, group sessions
+  // Lets the host swap any hole's par/yards for a course-built temp hole.
+  // Persists to Firebase under meta.holeOverrides; all clients see it live.
+  // ===================================================================
+  window.showTempHoleModal = function() {
+    if (!window._hpState) return;
+    if (document.getElementById('tempHoleModal')) return;
+    var state = window._hpState;
+    if (!state.groupCode || !state.isAdmin) return;
+
+    var baseCourse = state.baseCourse || state.course; // unaltered course for selection labels
+    var overrides = state.overrides || {};
+
+    // Hole selector options — show original par + a "(temp)" tag if overridden
+    var optionsHtml = '';
+    for (var i = 0; i < 18; i++) {
+      var origHole = baseCourse.holes[i];
+      var hasOverride = !!overrides[i];
+      var label = 'Hole ' + (i + 1) + ' &mdash; Par ' + origHole.par;
+      if (hasOverride) label += ' (temp: Par ' + overrides[i].par + ', ' + overrides[i].yards + 'y)';
+      optionsHtml += '<option value="' + i + '">' + label + '</option>';
+    }
+
+    var overlay = document.createElement('div');
+    overlay.id = 'tempHoleModal';
+    overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:10000;display:flex;align-items:center;justify-content:center;padding:20px';
+    overlay.onclick = function(e) { if (e.target === overlay) overlay.remove(); };
+    overlay.innerHTML =
+      '<div style="background:#121f14;border:1px solid rgba(245,166,35,0.3);border-radius:14px;padding:20px;width:100%;max-width:380px">' +
+        '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">' +
+          '<span style="font-size:15px;font-weight:800;color:#f5a623">Temporary Hole</span>' +
+          '<button onclick="document.getElementById(\'tempHoleModal\').remove()" style="background:none;border:none;color:#666;font-size:22px;line-height:1;cursor:pointer;padding:0">&times;</button>' +
+        '</div>' +
+        '<p style="font-size:12px;color:#7a9e86;margin-bottom:14px;line-height:1.4">Replace a course hole with the day&rsquo;s temp hole. All players see the change immediately. Reverts when the round ends.</p>' +
+
+        '<label style="display:block;font-size:11px;font-weight:700;color:#bbb;letter-spacing:0.5px;text-transform:uppercase;margin-bottom:6px">Replace which hole?</label>' +
+        '<select id="tempHoleSelect" onchange="onTempHoleSelectChange()" style="width:100%;padding:11px;background:#0a0f0d;border:1px solid #2a3a2e;border-radius:8px;color:#e8f5e9;font-size:14px;margin-bottom:14px">' + optionsHtml + '</select>' +
+
+        '<label style="display:block;font-size:11px;font-weight:700;color:#bbb;letter-spacing:0.5px;text-transform:uppercase;margin-bottom:6px">Par</label>' +
+        '<div id="tempParBtns" style="display:flex;gap:8px;margin-bottom:14px">' +
+          '<button data-par="3" onclick="setTempPar(3)" style="flex:1;padding:11px;background:rgba(255,255,255,0.05);border:1px solid #2a3a2e;border-radius:8px;color:#e8f5e9;font-size:14px;font-weight:700;cursor:pointer">Par 3</button>' +
+          '<button data-par="4" onclick="setTempPar(4)" style="flex:1;padding:11px;background:rgba(255,255,255,0.05);border:1px solid #2a3a2e;border-radius:8px;color:#e8f5e9;font-size:14px;font-weight:700;cursor:pointer">Par 4</button>' +
+          '<button data-par="5" onclick="setTempPar(5)" style="flex:1;padding:11px;background:rgba(255,255,255,0.05);border:1px solid #2a3a2e;border-radius:8px;color:#e8f5e9;font-size:14px;font-weight:700;cursor:pointer">Par 5</button>' +
+        '</div>' +
+
+        '<label style="display:block;font-size:11px;font-weight:700;color:#bbb;letter-spacing:0.5px;text-transform:uppercase;margin-bottom:6px">Total Yards</label>' +
+        '<input id="tempYards" type="number" inputmode="numeric" min="50" max="700" placeholder="e.g. 140" ' +
+          'style="width:100%;padding:11px;background:#0a0f0d;border:1px solid #2a3a2e;border-radius:8px;color:#e8f5e9;font-size:14px;margin-bottom:18px">' +
+
+        '<button id="tempHoleSaveBtn" onclick="saveTempHole()" style="width:100%;padding:13px;background:linear-gradient(135deg,#b8860b,#d4af37);color:#1a1a1a;border:none;border-radius:10px;font-size:14px;font-weight:800;cursor:pointer;margin-bottom:8px">Apply Temporary Hole</button>' +
+        '<button id="tempHoleRemoveBtn" onclick="removeTempHole()" style="display:none;width:100%;padding:11px;background:none;color:#ff5252;border:1px solid rgba(255,82,82,0.4);border-radius:10px;font-size:13px;font-weight:700;cursor:pointer">Remove Temp Hole</button>' +
+      '</div>';
+    document.body.appendChild(overlay);
+
+    // Pre-fill with the currently viewed hole
+    var initIdx = state.currentHole || 0;
+    document.getElementById('tempHoleSelect').value = initIdx;
+    onTempHoleSelectChange();
+  };
+
+  window._tempPar = null;
+  window.setTempPar = function(p) {
+    window._tempPar = p;
+    var btns = document.querySelectorAll('#tempParBtns button');
+    btns.forEach(function(b) {
+      var active = parseInt(b.getAttribute('data-par'), 10) === p;
+      b.style.background = active ? 'rgba(245,166,35,0.18)' : 'rgba(255,255,255,0.05)';
+      b.style.borderColor = active ? 'rgba(245,166,35,0.6)' : '#2a3a2e';
+      b.style.color = active ? '#f5a623' : '#e8f5e9';
+    });
+  };
+
+  window.onTempHoleSelectChange = function() {
+    var state = window._hpState;
+    if (!state) return;
+    var idx = parseInt(document.getElementById('tempHoleSelect').value, 10);
+    var overrides = state.overrides || {};
+    var existing = overrides[idx];
+    var removeBtn = document.getElementById('tempHoleRemoveBtn');
+    var saveBtn = document.getElementById('tempHoleSaveBtn');
+    if (existing) {
+      window.setTempPar(existing.par);
+      document.getElementById('tempYards').value = existing.yards;
+      removeBtn.style.display = 'block';
+      saveBtn.textContent = 'Update Temporary Hole';
+    } else {
+      var origPar = (state.baseCourse || state.course).holes[idx].par;
+      window.setTempPar(origPar);
+      document.getElementById('tempYards').value = '';
+      removeBtn.style.display = 'none';
+      saveBtn.textContent = 'Apply Temporary Hole';
+    }
+  };
+
+  window.saveTempHole = function() {
+    var state = window._hpState;
+    if (!state || !state.groupCode) return;
+    var idx = parseInt(document.getElementById('tempHoleSelect').value, 10);
+    var par = window._tempPar;
+    var yards = parseInt(document.getElementById('tempYards').value, 10);
+    if ([3, 4, 5].indexOf(par) === -1) { alert('Pick a par (3, 4, or 5).'); return; }
+    if (!yards || yards < 50 || yards > 700) { alert('Enter total yards (50–700).'); return; }
+    var hcp = computeAutoHcp(state.baseCourse || state.course, par, idx);
+    setHoleOverride(state.groupCode, idx, { par: par, yards: yards, hcp: hcp }).then(function() {
+      var modal = document.getElementById('tempHoleModal');
+      if (modal) modal.remove();
+    }).catch(function(e) {
+      alert('Failed to save: ' + (e && e.message ? e.message : 'unknown error'));
+    });
+  };
+
+  window.removeTempHole = function() {
+    var state = window._hpState;
+    if (!state || !state.groupCode) return;
+    var idx = parseInt(document.getElementById('tempHoleSelect').value, 10);
+    if (!confirm('Remove the temporary hole and restore Hole ' + (idx + 1) + ' to its original par/yards?')) return;
+    clearHoleOverride(state.groupCode, idx).then(function() {
+      var modal = document.getElementById('tempHoleModal');
+      if (modal) modal.remove();
+    }).catch(function(e) {
+      alert('Failed to remove: ' + (e && e.message ? e.message : 'unknown error'));
+    });
   };
 
   requireAuth(function(user) {
@@ -902,6 +1027,7 @@
 
     function startGroupListener() {
     var roundEndedHandled = false;
+    var prevOverridesJson = null;
     // Listen for real-time updates
     unsubscribe = listenToGroupRound(groupCode, function(data) {
       // Round deleted from Firebase (all players finished and cleanup ran)
@@ -923,7 +1049,7 @@
         // Save the round data with FINAL scores for all players
         (function() {
           var tempR = groupDataToRound(data, groupCode);
-          var endedCourse = getCourse(tempR.courseId);
+          var endedCourse = applyHoleOverrides(getCourse(tempR.courseId), tempR._holeOverrides);
           if (endedCourse) {
             var myName = tempR._uidToName[user.uid];
             var myHolesPlayed = myName ? tempR.scores[myName].filter(function(s) { return s > 0; }).length : 0;
@@ -995,7 +1121,8 @@
       }
 
       R = groupDataToRound(data, groupCode);
-      const course = getCourse(R.courseId);
+      const baseCourse = getCourse(R.courseId);
+      const course = applyHoleOverrides(baseCourse, R._holeOverrides);
       course_ref.current = course;
 
       if (!course) {
@@ -1013,6 +1140,10 @@
       document.getElementById('courseName').textContent = course.name;
       document.getElementById('courseSub').textContent = `${R.teeLabel} Tees  |  Par ${course.par}  |  ${formatDate(R.date)}`;
 
+      var newOverridesJson = JSON.stringify(R._holeOverrides || {});
+      var overridesChanged = prevOverridesJson !== null && newOverridesJson !== prevOverridesJson;
+      prevOverridesJson = newOverridesJson;
+
       if (!initialRenderDone) {
         // First load — set starting hole then fetch avatars then full render
         initialRenderDone = true;
@@ -1020,6 +1151,9 @@
         fetchPlayerAvatars(R._playerUids, function() {
           renderGroup();
         });
+      } else if (overridesChanged) {
+        // Admin added/removed/updated a temp hole — full re-render so par/yards/HCP update
+        renderGroup();
       } else {
         // Subsequent updates from other users — only update the players leaderboard
         updatePlayersLeaderboard();
@@ -1033,7 +1167,7 @@
 
     function handleScrambleData(data) {
       var status = data.meta.status;
-      var course = getCourse(data.meta.courseId);
+      var course = applyHoleOverrides(getCourse(data.meta.courseId), data.meta && data.meta.holeOverrides);
       course_ref.current = course;
 
       if (course) {
@@ -1569,9 +1703,13 @@
       const start = R._startingHole || 0;
       function playOrderPos(idx) { return (idx - start + 18) % 18; }
 
-      // Update hole picker state
+      // Update hole picker state — group mode includes admin context for temp-hole controls
       window._hpState = {
         course: course,
+        baseCourse: getCourse(R.courseId),
+        overrides: R._holeOverrides || {},
+        groupCode: groupCode,
+        isAdmin: isCreator,
         currentHole: currentHole,
         scored: Array.from({length: 18}, function(_, i) {
           return myName ? R.scores[myName][i] > 0 : false;
@@ -1609,6 +1747,15 @@
       }
       html += '</div>';
       html += '<button onclick="showHolePicker()" style="width:100%;padding:8px;margin:6px 0 2px;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.12);border-radius:8px;color:#bbb;font-size:13px;font-weight:600;cursor:pointer;letter-spacing:0.3px">&#8597; Jump to Hole</button>';
+
+      // Admin-only: Manage Temporary Hole — top-level button so it's discoverable
+      if (isCreator) {
+        var hasAnyOverride = R._holeOverrides && Object.keys(R._holeOverrides).length > 0;
+        var tempLabel = hasAnyOverride
+          ? '&#9881; Manage Temporary Hole &middot; ' + Object.keys(R._holeOverrides).length + ' active'
+          : '&#9881; Add Temporary Hole';
+        html += '<button onclick="showTempHoleModal()" style="width:100%;padding:9px;margin:4px 0 2px;background:rgba(245,166,35,0.10);border:1px solid rgba(245,166,35,0.40);border-radius:8px;color:#f5a623;font-size:13px;font-weight:700;cursor:pointer;letter-spacing:0.3px">' + tempLabel + '</button>';
+      }
 
       // Hole display
       html += `
