@@ -78,8 +78,50 @@ function createGroupRoundWithCode(uid, displayName, courseId, tee, teeLabel, dat
         var existing = snap.val();
         var status = existing.meta && existing.meta.status;
         if (status !== 'finished' && status !== 'ended') {
-          reject(new Error('That code is already in use. Try a different one.'));
-          return;
+          // The round is still 'active' or 'lobby'. Decide whether it's
+          // really live or just leftover state from an admin who closed
+          // their browser without ending the round.
+          var existingPlayers = existing.players ? Object.keys(existing.players) : [];
+          var anyScored = (function() {
+            var sBuckets = [existing.scores, existing.teamScores];
+            for (var b = 0; b < sBuckets.length; b++) {
+              var bucket = sBuckets[b]; if (!bucket) continue;
+              var keys = Object.keys(bucket);
+              for (var i = 0; i < keys.length; i++) {
+                var holes = bucket[keys[i]] || {};
+                var hk = Object.keys(holes);
+                for (var j = 0; j < hk.length; j++) {
+                  if ((holes[hk[j]] || 0) > 0) return true;
+                }
+              }
+            }
+            return false;
+          })();
+          var createdAt = (existing.meta && existing.meta.createdAt) || 0;
+          var ageMs = Date.now() - createdAt;
+          var STALE_MS = 6 * 60 * 60 * 1000; // 6 hours
+
+          // Treat as stale (free to overwrite) if any of:
+          //   - older than 6 hours
+          //   - only the host is in the round and no one has scored anything
+          var isStale = ageMs > STALE_MS || (existingPlayers.length <= 1 && !anyScored);
+
+          if (!isStale) {
+            var hostUid = existing.meta && existing.meta.createdBy;
+            var hostName = hostUid && existing.players && existing.players[hostUid] && existing.players[hostUid].name;
+            var courseName = typeof getCourse === 'function' ? ((getCourse(existing.meta.courseId) || {}).name) : null;
+            courseName = courseName || (existing.meta && existing.meta.courseId) || 'a course';
+            var ageMin = Math.max(1, Math.round(ageMs / 60000));
+            var ageStr = ageMin < 60 ? ageMin + ' min ago' : (Math.round(ageMin / 6) / 10) + ' hr ago';
+            reject(new Error(
+              'Code "' + code + '" is in use — ' + (hostName || 'someone') +
+              ' is hosting at ' + courseName +
+              ' (' + existingPlayers.length + ' player' + (existingPlayers.length !== 1 ? 's' : '') +
+              ', started ' + ageStr + '). Try a different code, or wait until they finish.'
+            ));
+            return;
+          }
+          // else: fall through and let the new round overwrite the stale data
         }
       }
 
