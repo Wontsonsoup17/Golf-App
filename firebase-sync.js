@@ -98,13 +98,23 @@ function createGroupRoundWithCode(uid, displayName, courseId, tee, teeLabel, dat
             return false;
           })();
           var createdAt = (existing.meta && existing.meta.createdAt) || 0;
+          // lastActivityAt is bumped on every score/tracking/hole-nav write
+          // (see bumpRoundActivity below). Older rounds without it fall back
+          // to createdAt, which preserves v193 behavior for legacy data.
+          var lastActivityAt = (existing.meta && existing.meta.lastActivityAt) || createdAt;
           var ageMs = Date.now() - createdAt;
-          var STALE_MS = 6 * 60 * 60 * 1000; // 6 hours
+          var idleMs = Date.now() - lastActivityAt;
+          var IDLE_MS = 15 * 60 * 1000; // 15 min of zero activity → reusable
+          var HARD_STALE_MS = 6 * 60 * 60 * 1000; // safety net for legacy data
 
           // Treat as stale (free to overwrite) if any of:
-          //   - older than 6 hours
+          //   - no live activity in 15 minutes (the real signal — players left)
           //   - only the host is in the round and no one has scored anything
-          var isStale = ageMs > STALE_MS || (existingPlayers.length <= 1 && !anyScored);
+          //   - older than 6 hours regardless (backstop)
+          var isStale =
+            idleMs > IDLE_MS ||
+            (existingPlayers.length <= 1 && !anyScored) ||
+            ageMs > HARD_STALE_MS;
 
           if (!isStale) {
             var hostUid = existing.meta && existing.meta.createdBy;
@@ -135,6 +145,7 @@ function createGroupRoundWithCode(uid, displayName, courseId, tee, teeLabel, dat
             date: date,
             createdBy: uid,
             createdAt: firebase.database.ServerValue.TIMESTAMP,
+            lastActivityAt: firebase.database.ServerValue.TIMESTAMP,
             status: 'lobby',
             gameType: 'scramble',
             startingHole: startingHole || 0,
@@ -162,6 +173,7 @@ function createGroupRoundWithCode(uid, displayName, courseId, tee, teeLabel, dat
             date: date,
             createdBy: uid,
             createdAt: firebase.database.ServerValue.TIMESTAMP,
+            lastActivityAt: firebase.database.ServerValue.TIMESTAMP,
             status: 'active',
             startingHole: startingHole || 0
           },
@@ -254,18 +266,30 @@ function listenToGroupRound(code, callback) {
   return () => ref.off('value', handler);
 }
 
+// Bump the round's last-activity timestamp. Used by code-reuse to tell
+// whether anyone is actually still playing. Fire-and-forget — we never
+// want a failure here to block a score write.
+function bumpRoundActivity(code) {
+  try {
+    db.ref('activeRounds/' + code + '/meta/lastActivityAt').set(firebase.database.ServerValue.TIMESTAMP).catch(function() {});
+  } catch (e) {}
+}
+
 // Update a single hole score for the current user
 function updateGroupScore(code, uid, holeIndex, score) {
+  bumpRoundActivity(code);
   return db.ref('activeRounds/' + code + '/scores/' + uid + '/' + holeIndex).set(score);
 }
 
 // Update tracking data for the current user on a specific hole
 function updateGroupTracking(code, uid, trackType, holeIndex, value) {
+  bumpRoundActivity(code);
   return db.ref('activeRounds/' + code + '/tracking/' + uid + '/' + trackType + '/' + holeIndex).set(value);
 }
 
 // Update current hole view for a user
 function updateGroupCurrentHole(code, uid, holeIndex) {
+  bumpRoundActivity(code);
   return db.ref('activeRounds/' + code + '/currentHole/' + uid).set(holeIndex);
 }
 
@@ -540,6 +564,7 @@ function setScrambleTeamName(code, teamKey, name) {
 
 // Update a team's score for a hole
 function updateScrambleScore(code, teamKey, holeIndex, score) {
+  bumpRoundActivity(code);
   return db.ref('activeRounds/' + code + '/teamScores/' + teamKey + '/' + holeIndex).set(score);
 }
 
@@ -550,6 +575,7 @@ function resetScrambleConfirmations(code, teamKey) {
 
 // Confirm hole score — advances teamHole when all team members confirm
 function confirmScrambleHole(code, teamKey, uid, allTeamUids) {
+  bumpRoundActivity(code);
   var base = 'activeRounds/' + code;
   return db.ref(base + '/teamHoleConfirmed/' + teamKey + '/' + uid).set(true).then(function() {
     return db.ref(base + '/teamHoleConfirmed/' + teamKey).once('value').then(function(snap) {
