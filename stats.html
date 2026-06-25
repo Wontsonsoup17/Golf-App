@@ -1,21 +1,21 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<style>html,body{background:#0a0f0d}</style>
+<style>html,body{background:#132017}</style>
 <script>
-(function(){var v='195';var k='app_v';var s=localStorage.getItem(k);if(s&&s!==v){localStorage.setItem(k,v);window.location.replace(window.location.pathname+'?_='+Date.now());return;}localStorage.setItem(k,v);})();
+(function(){var v='200';var k='app_v';var s=localStorage.getItem(k);if(s&&s!==v){localStorage.setItem(k,v);window.location.replace(window.location.pathname+'?_='+Date.now());return;}localStorage.setItem(k,v);})();
 </script>
 <meta charset="UTF-8">
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
 <meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="theme-color" content="#0a0f0d">
+<meta name="theme-color" content="#132017">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <link rel="manifest" href="manifest.json">
 <link rel="apple-touch-icon" href="icon-192.png">
-<title>Leaderboard - Westchester Golf</title>
-<link rel="stylesheet" href="shared.css?v=195">
+<title>Leaderboard - Golf Tracker</title>
+<link rel="stylesheet" href="shared.css?v=200">
 <style>
 /* ===== LEAGUE TABLE ===== */
 .lb-table { width: 100%; border-collapse: collapse; }
@@ -205,6 +205,7 @@ body { display: flex; flex-direction: column; }
 </style>
 </head>
 <body>
+<div class="user-header" id="userHeader"></div>
 
 <div class="header">
   <h1>Leaderboard</h1>
@@ -222,12 +223,13 @@ body { display: flex; flex-direction: column; }
 
 <nav class="bottom-nav" id="bottomNav"></nav>
 
-<script src="firebase-config.js?v=195"></script>
-<script src="shared.js?v=195"></script>
-<script src="firebase-sync.js?v=195"></script>
+<script src="firebase-config.js?v=200"></script>
+<script src="shared.js?v=200"></script>
+<script src="firebase-sync.js?v=200"></script>
 <script>
 requireAuth(function(user) {
   renderBottomNav('stats');
+  renderUserHeader(user);
   renderActiveRoundBanner();
   renderBroadcastBanner();
 
@@ -241,7 +243,7 @@ requireAuth(function(user) {
     if (!rounds.length) {
       document.getElementById('statGrid').innerHTML = '';
       document.getElementById('leaderboardSection').innerHTML =
-        '<div class="empty-state"><div class="icon">&#128202;</div><p>Play some rounds to see your stats!<br><a href="index.html">Get started</a></p></div>';
+        '<div class="empty-state"><div class="icon"><img src="images/ic-board.png" class="empty-logo" alt="Board"></div><p>Play some rounds to see your stats!<br><a href="index.html">Get started</a></p></div>';
       return;
     }
 

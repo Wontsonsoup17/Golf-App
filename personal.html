@@ -1,23 +1,24 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<style>html,body{background:#0a0f0d}</style>
+<style>html,body{background:#132017}</style>
 <script>
-(function(){var v='195';var k='app_v';var s=localStorage.getItem(k);if(s&&s!==v){localStorage.setItem(k,v);window.location.replace(window.location.pathname+'?_='+Date.now());return;}localStorage.setItem(k,v);})();
+(function(){var v='200';var k='app_v';var s=localStorage.getItem(k);if(s&&s!==v){localStorage.setItem(k,v);window.location.replace(window.location.pathname+'?_='+Date.now());return;}localStorage.setItem(k,v);})();
 </script>
 <meta charset="UTF-8">
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
 <meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="theme-color" content="#0a0f0d">
+<meta name="theme-color" content="#132017">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <link rel="manifest" href="manifest.json">
 <link rel="apple-touch-icon" href="icon-192.png">
-<title>My Stats - Westchester Golf</title>
-<link rel="stylesheet" href="shared.css?v=195">
+<title>My Stats - Golf Tracker</title>
+<link rel="stylesheet" href="shared.css?v=200">
 </head>
 <body>
+<div class="user-header" id="userHeader"></div>
 
 <div class="header">
   <h1>My Stats</h1>
@@ -38,12 +39,13 @@
 
 <nav class="bottom-nav" id="bottomNav"></nav>
 
-<script src="firebase-config.js?v=195"></script>
-<script src="shared.js?v=195"></script>
-<script src="firebase-sync.js?v=195"></script>
+<script src="firebase-config.js?v=200"></script>
+<script src="shared.js?v=200"></script>
+<script src="firebase-sync.js?v=200"></script>
 <script>
   requireAuth(function(user) {
     renderBottomNav('personal');
+    renderUserHeader(user);
     renderActiveRoundBanner();
     renderBroadcastBanner();
 
@@ -103,7 +105,7 @@
       if (!rounds.length) {
         document.getElementById('statGrid').innerHTML = '';
         document.getElementById('tipsSection').innerHTML = '';
-        document.getElementById('courseStatsSection').innerHTML = '<div class="empty-state"><div class="icon">&#128100;</div><p>No rounds yet.<br><a href="index.html">Play a round</a> to see your personal stats.</p></div>';
+        document.getElementById('courseStatsSection').innerHTML = '<div class="empty-state"><div class="icon"><img src="images/ic-personal.png" class="empty-logo" alt="Personal"></div><p>No rounds yet.<br><a href="index.html">Play a round</a> to see your personal stats.</p></div>';
         return;
       }
 
@@ -372,7 +374,7 @@
       ctx.lineTo(xPos(points.length - 1), mt + ch);
       ctx.lineTo(xPos(0), mt + ch);
       ctx.closePath();
-      ctx.fillStyle = 'rgba(0,230,118,0.08)';
+      ctx.fillStyle = 'rgba(201,162,75,0.08)';
       ctx.fill();
 
       // Draw dots

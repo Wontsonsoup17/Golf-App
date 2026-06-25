@@ -1,21 +1,21 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<style>html,body{background:#0a0f0d}</style>
+<style>html,body{background:#132017}</style>
 <script>
-(function(){var v='195';var k='app_v';var s=localStorage.getItem(k);if(s&&s!==v){localStorage.setItem(k,v);window.location.replace(window.location.pathname+'?_='+Date.now());return;}localStorage.setItem(k,v);})();
+(function(){var v='200';var k='app_v';var s=localStorage.getItem(k);if(s&&s!==v){localStorage.setItem(k,v);window.location.replace(window.location.pathname+'?_='+Date.now());return;}localStorage.setItem(k,v);})();
 </script>
 <meta charset="UTF-8">
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
 <meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="theme-color" content="#0a0f0d">
+<meta name="theme-color" content="#132017">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <link rel="manifest" href="manifest.json">
 <link rel="apple-touch-icon" href="icon-192.png">
-<title>Live Round - Westchester Golf</title>
-<link rel="stylesheet" href="shared.css?v=195">
+<title>Live Round - Golf Tracker</title>
+<link rel="stylesheet" href="shared.css?v=200">
 <style>
 /* ===== SCRAMBLE MODE ===== */
 .scramble-lobby { padding: 0; }
@@ -23,7 +23,7 @@
 .lobby-player-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
 .lobby-assign-btn { padding: 5px 10px; border-radius: 8px; font-size: 11px; font-weight: 700; border: 1px solid; cursor: pointer; background: none; }
 .scramble-card { background: var(--bg-card); border: 1px solid var(--border-light); border-radius: var(--radius); overflow: hidden; margin-bottom: 12px; }
-.scramble-hole-header { background: linear-gradient(135deg, rgba(0,230,118,0.12), rgba(0,230,118,0.04)); padding: 12px 16px; text-align: center; border-bottom: 1px solid var(--border); }
+.scramble-hole-header { background: linear-gradient(135deg, rgba(201,162,75,0.12), rgba(201,162,75,0.04)); padding: 12px 16px; text-align: center; border-bottom: 1px solid var(--border); }
 .scramble-hole-num { font-size: 22px; font-weight: 900; color: var(--text); }
 .scramble-hole-meta { font-size: 12px; color: var(--text-muted); margin-top: 2px; }
 .team-score-section { padding: 16px; }
@@ -43,11 +43,11 @@
 .confirm-section { padding: 14px 16px; border-top: 1px solid var(--border); }
 .confirm-row { display: flex; gap: 8px; margin-bottom: 12px; }
 .confirm-chip { flex: 1; padding: 10px 8px; border-radius: 10px; text-align: center; font-size: 12px; font-weight: 700; border: 1px solid; }
-.confirm-chip.done { background: rgba(0,230,118,0.12); border-color: rgba(0,230,118,0.3); color: var(--green-accent); }
+.confirm-chip.done { background: rgba(201,162,75,0.12); border-color: rgba(201,162,75,0.3); color: var(--green-accent); }
 .confirm-chip.waiting { background: rgba(255,255,255,0.04); border-color: var(--border); color: var(--text-muted); }
-.scramble-confirm-btn { width: 100%; padding: 14px; background: var(--green-accent); color: #0a0f0d; font-size: 15px; font-weight: 800; border: none; border-radius: 10px; cursor: pointer; -webkit-tap-highlight-color: transparent; }
+.scramble-confirm-btn { width: 100%; padding: 14px; background: var(--green-accent); color: #132017; font-size: 15px; font-weight: 800; border: none; border-radius: 10px; cursor: pointer; -webkit-tap-highlight-color: transparent; }
 .scramble-confirm-btn:disabled { background: #333; color: #666; cursor: not-allowed; }
-.scramble-confirm-btn.already { background: rgba(0,230,118,0.15); color: var(--green-accent); border: 1px solid rgba(0,230,118,0.3); }
+.scramble-confirm-btn.already { background: rgba(201,162,75,0.15); color: var(--green-accent); border: 1px solid rgba(201,162,75,0.3); }
 .scramble-lb { background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; margin-bottom: 80px; }
 .scramble-lb-header { padding: 10px 16px; font-size: 10px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; border-bottom: 1px solid var(--border); }
 .scramble-lb-row { display: flex; align-items: center; justify-content: space-between; padding: 12px 16px; border-bottom: 1px solid var(--border); }
@@ -57,6 +57,7 @@
 </style>
 </head>
 <body>
+<div class="user-header" id="userHeader"></div>
 
 <div class="header" id="pageHeader">
   <h1 id="courseName">Live Round</h1>
@@ -80,9 +81,9 @@
 <nav class="bottom-nav" id="bottomNav"></nav>
 <div style="text-align:center;font-size:9px;color:#333;padding:4px;opacity:0.5">v110</div>
 
-<script src="firebase-config.js?v=195"></script>
-<script src="shared.js?v=195"></script>
-<script src="firebase-sync.js?v=195"></script>
+<script src="firebase-config.js?v=200"></script>
+<script src="shared.js?v=200"></script>
+<script src="firebase-sync.js?v=200"></script>
 <script>
   // ==================== SCORE EFFECTS (emoji burst) ====================
   // Defined at script scope so both solo and group modes can access them
@@ -189,7 +190,7 @@
       if (isCur) {
         bg = 'rgba(212,175,55,0.25)'; border = '2px solid #d4af37'; color = '#d4af37';
       } else if (isScored) {
-        bg = 'rgba(0,230,118,0.12)'; border = '1px solid rgba(0,230,118,0.3)'; color = '#00e676';
+        bg = 'rgba(201,162,75,0.12)'; border = '1px solid rgba(201,162,75,0.3)'; color = '#00e676';
       } else {
         bg = 'rgba(255,255,255,0.05)'; border = '1px solid rgba(255,255,255,0.1)'; color = '#bbb';
       }
@@ -267,7 +268,7 @@
 
         '<label style="display:block;font-size:11px;font-weight:700;color:#bbb;letter-spacing:0.5px;text-transform:uppercase;margin-bottom:6px">Total Yards</label>' +
         '<input id="tempYards" type="number" inputmode="numeric" min="50" max="700" placeholder="e.g. 140" ' +
-          'style="width:100%;padding:11px;background:#0a0f0d;border:1px solid #2a3a2e;border-radius:8px;color:#e8f5e9;font-size:14px;margin-bottom:18px">' +
+          'style="width:100%;padding:11px;background:#132017;border:1px solid #2a3a2e;border-radius:8px;color:#e8f5e9;font-size:14px;margin-bottom:18px">' +
 
         '<button id="tempHoleSaveBtn" onclick="saveTempHole()" style="width:100%;padding:13px;background:linear-gradient(135deg,#b8860b,#d4af37);color:#1a1a1a;border:none;border-radius:10px;font-size:14px;font-weight:800;cursor:pointer;margin-bottom:8px">' + (existing ? 'Update Temporary Hole' : 'Apply Temporary Hole') + '</button>' +
         (existing ? '<button id="tempHoleRemoveBtn" onclick="removeTempHole()" style="width:100%;padding:11px;background:none;color:#ff5252;border:1px solid rgba(255,82,82,0.4);border-radius:10px;font-size:13px;font-weight:700;cursor:pointer">Remove Temp Hole</button>' : '') +
@@ -327,6 +328,7 @@
 
   requireAuth(function(user) {
     renderBottomNav('courses');
+    renderUserHeader(user);
     renderBroadcastBanner();
     renderRoundBroadcastListener();
 
@@ -372,7 +374,7 @@
         '.mulligan-item{margin-bottom:16px}.mulligan-item:last-child{margin-bottom:0}' +
         '.mulligan-label{font-size:12px;font-weight:700;color:#d4af37;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:8px}' +
         '.mulligan-options{display:flex;gap:6px}' +
-        '.mulligan-option{flex:1;padding:10px 6px;border-radius:8px;border:1px solid rgba(255,255,255,0.1);background:#0a0f0d;color:#999;font-size:11px;font-weight:600;cursor:pointer;text-align:center;transition:all 0.15s ease}' +
+        '.mulligan-option{flex:1;padding:10px 6px;border-radius:8px;border:1px solid rgba(255,255,255,0.1);background:#132017;color:#999;font-size:11px;font-weight:600;cursor:pointer;text-align:center;transition:all 0.15s ease}' +
         '.mulligan-option.selected{border-color:#d4af37;background:rgba(212,175,55,0.15);color:#d4af37}' +
         '@keyframes shake{0%,100%{transform:translateX(0)}20%,60%{transform:translateX(-4px)}40%,80%{transform:translateX(4px)}}';
       document.head.appendChild(style);
@@ -457,7 +459,7 @@
         '.drop-item{margin-bottom:16px}.drop-item:last-child{margin-bottom:0}' +
         '.drop-label{font-size:12px;font-weight:700;color:#e53935;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:8px}' +
         '.drop-options{display:flex;gap:6px}' +
-        '.drop-option{flex:1;padding:10px 6px;border-radius:8px;border:1px solid rgba(255,255,255,0.1);background:#0a0f0d;color:#999;font-size:11px;font-weight:600;cursor:pointer;text-align:center;transition:all 0.15s ease}' +
+        '.drop-option{flex:1;padding:10px 6px;border-radius:8px;border:1px solid rgba(255,255,255,0.1);background:#132017;color:#999;font-size:11px;font-weight:600;cursor:pointer;text-align:center;transition:all 0.15s ease}' +
         '.drop-option.selected{border-color:#e53935;background:rgba(229,57,53,0.15);color:#e53935}';
       document.head.appendChild(style);
     }
@@ -991,7 +993,7 @@
           '<div class="empty-state">' +
             '<div class="icon">&#9989;</div>' +
             '<p>You already finished this round.<br>Your scores have been saved.</p>' +
-            '<a href="history.html" style="display:inline-block;margin-top:14px;padding:12px 24px;background:var(--green-accent);color:#0a0f0d;border-radius:10px;font-weight:700;text-decoration:none">View History</a>' +
+            '<a href="history.html" style="display:inline-block;margin-top:14px;padding:12px 24px;background:var(--green-accent);color:#132017;border-radius:10px;font-weight:700;text-decoration:none">View History</a>' +
           '</div>';
         return;
       }
@@ -1261,7 +1263,7 @@
 
       if (isCreator) {
         var canStart = teamAuids.length === 2 && teamBuids.length === 2;
-        html += '<button onclick="startScramble()" ' + (canStart ? '' : 'disabled') + ' style="width:100%;padding:16px;background:' + (canStart ? 'var(--green-accent)' : 'rgba(255,255,255,0.06)') + ';color:' + (canStart ? '#0a0f0d' : '#555') + ';font-size:16px;font-weight:800;border:none;border-radius:12px;cursor:' + (canStart ? 'pointer' : 'not-allowed') + ';margin-bottom:12px">';
+        html += '<button onclick="startScramble()" ' + (canStart ? '' : 'disabled') + ' style="width:100%;padding:16px;background:' + (canStart ? 'var(--green-accent)' : 'rgba(255,255,255,0.06)') + ';color:' + (canStart ? '#132017' : '#555') + ';font-size:16px;font-weight:800;border:none;border-radius:12px;cursor:' + (canStart ? 'pointer' : 'not-allowed') + ';margin-bottom:12px">';
         html += canStart ? '🚀 Start Round' : 'Assign all 4 players to start';
         html += '</button>';
         html += '<button onclick="leaveGroupRound()" style="width:100%;padding:12px;background:none;border:1px solid var(--border);border-radius:10px;color:var(--text-muted);font-size:13px;cursor:pointer">Cancel Round</button>';
@@ -1387,7 +1389,7 @@
         var tName = teams[tk] ? (teams[tk].name || (tk === 'teamA' ? 'Team A' : 'Team B')) : tk;
         var tColor = tk === 'teamA' ? '#64b5f6' : '#ef9a9a';
         var isMe = tk === myTeamKey;
-        html += '<div class="scramble-lb-row" style="' + (isMe ? 'background:rgba(0,230,118,0.05)' : '') + '">';
+        html += '<div class="scramble-lb-row" style="' + (isMe ? 'background:rgba(201,162,75,0.05)' : '') + '">';
         html += '<div style="font-size:14px;font-weight:700;color:' + tColor + '">' + tName + (isMe ? ' (You)' : '') + '</div>';
         html += '<div style="text-align:right">';
         html += '<div style="font-size:18px;font-weight:900;color:' + toParColor + '">' + toParStr + '</div>';
@@ -1421,7 +1423,7 @@
           '<h3 style="font-size:18px;color:var(--text);margin-bottom:6px">Name Your Team</h3>' +
           '<p style="font-size:13px;color:var(--text-muted);margin-bottom:20px">First player to submit sets the name — choose wisely!</p>' +
           '<input type="text" id="teamNameInput" placeholder="Team name..." maxlength="20" style="width:100%;padding:12px;background:var(--bg);border:1px solid var(--border-light);border-radius:10px;color:var(--text);font-size:18px;font-weight:700;text-align:center;margin-bottom:12px" autocomplete="off">' +
-          '<button onclick="submitTeamName(\'' + teamKey + '\')" style="width:100%;padding:14px;background:var(--green-accent);color:#0a0f0d;font-size:15px;font-weight:800;border:none;border-radius:10px;cursor:pointer">Set Team Name</button>' +
+          '<button onclick="submitTeamName(\'' + teamKey + '\')" style="width:100%;padding:14px;background:var(--green-accent);color:#132017;font-size:15px;font-weight:800;border:none;border-radius:10px;cursor:pointer">Set Team Name</button>' +
         '</div>';
       document.body.appendChild(modal);
       setTimeout(function() { var inp = document.getElementById('teamNameInput'); if (inp) inp.focus(); }, 200);
@@ -1518,6 +1520,8 @@
     };
 
     window.scrambleEndForAll = function() {
+      var _sd = window._lastScrambleData;
+      if (_sd && _sd.meta && _sd.meta.createdBy !== user.uid) { alert('Only the host can end the round for everyone.'); return; }
       if (!confirm('End the round for all players? All scores will be saved.')) return;
       var data = window._lastScrambleData;
       if (data) saveScrambleRound(data);
@@ -1626,7 +1630,7 @@
         else if (diff > 0) { toPar = '+' + diff; toParColor = 'var(--bogey)'; }
 
         const borderTop = idx > 0 ? 'border-top:1px solid var(--border);' : '';
-        const meBg = isMe ? 'background:rgba(0,230,118,0.04);' : '';
+        const meBg = isMe ? 'background:rgba(201,162,75,0.04);' : '';
 
         lhtml += '<div style="padding:10px 14px;display:flex;align-items:center;justify-content:space-between;' + borderTop + meBg + '">';
         lhtml += '<div style="display:flex;align-items:center;gap:10px;min-width:0;flex:1">';

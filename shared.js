@@ -1,7 +1,7 @@
 // ==================== AUTO-UPDATE CHECK ====================
 // Forces a hard reload when a new version is deployed so users always
 // get fresh files. The popup is handled separately via checkUpdatePopup.
-var APP_VERSION = '190';
+var APP_VERSION = '200';
 (function() {
   var storedVersion = localStorage.getItem('app_version');
   if (storedVersion && storedVersion !== APP_VERSION) {
@@ -789,7 +789,7 @@ function playerAvatarHtml(uid, size) {
   if (url) {
     return '<img src="' + url + '" style="width:' + s + 'px;height:' + s + 'px;border-radius:50%;object-fit:cover;flex-shrink:0;vertical-align:middle">';
   }
-  return '';
+  return '<img src="images/golf-tracker-logo.png?v=2" style="width:' + s + 'px;height:' + s + 'px;border-radius:50%;object-fit:contain;background:#0d1812;flex-shrink:0;vertical-align:middle">';
 }
 
 // Get avatar by player name (needs nameToUid map from round data)
@@ -956,10 +956,10 @@ function renderUserHeader(user) {
   const avatarUrl = getUserAvatar(user.uid);
   const avatarContent = avatarUrl
     ? '<img src="' + avatarUrl + '" class="user-avatar-img">'
-    : initial;
+    : '<img src="images/golf-tracker-logo.png?v=2" class="user-avatar-img">';
 
   var isAdminUser = isAdmin(name);
-  var avatarClass = 'user-avatar' + (avatarUrl ? ' has-image' : '') + (isAdminUser ? ' admin-avatar' : '');
+  var avatarClass = 'user-avatar' + (avatarUrl ? ' has-image' : ' has-image logo-avatar') + (isAdminUser ? ' admin-avatar' : '');
   var nameHtml = isAdminUser ? '<span class="admin-name">' + name + '</span>' + adminBadge(name, 12) : name;
 
   // Header shows menu button + avatar+name on left, utility buttons on right
@@ -976,8 +976,6 @@ function renderUserHeader(user) {
       '</div>' +
     '</div>' +
     '<div class="header-actions" id="headerActions">' +
-      '<div class="header-action-btn" onclick="openNukeModal()" role="button" aria-label="Clear cache">\uD83D\uDCA3</div>' +
-      '<div class="header-action-btn" onclick="openSupportModal()" role="button" aria-label="Report issue">\u26A0\uFE0F</div>' +
     '</div>' +
     '<input type="file" id="avatarInput" accept="image/*" style="display:none" onchange="handleAvatarUpload(this)">';
 
@@ -989,7 +987,7 @@ function renderUserHeader(user) {
 
   var panelAvatarContent = avatarUrl
     ? '<img src="' + avatarUrl + '">'
-    : initial;
+    : '<img src="images/golf-tracker-logo.png?v=2">';
 
   var backdrop = document.createElement('div');
   backdrop.className = 'profile-backdrop';
@@ -1002,7 +1000,7 @@ function renderUserHeader(user) {
   panel.id = 'profilePanel';
   panel.innerHTML =
     '<div class="profile-panel-header">' +
-      '<div class="profile-panel-avatar' + (avatarUrl ? ' has-image' : '') + (isAdminUser ? ' admin-avatar' : '') + '">' +
+      '<div class="profile-panel-avatar' + (avatarUrl ? ' has-image' : ' has-image logo-avatar') + (isAdminUser ? ' admin-avatar' : '') + '">' +
         panelAvatarContent +
       '</div>' +
       '<div class="profile-panel-name">' + (isAdminUser ? '<span class="admin-name">' + name + '</span>' + adminBadge(name, 16) : name) + '</div>' +
@@ -1014,6 +1012,9 @@ function renderUserHeader(user) {
       '<button class="profile-menu-item" onclick="handleChangeUsernameModal()"><span class="menu-icon">&#9998;</span> Change Username</button>' +
       '<button class="profile-menu-item" onclick="handleChangePasswordModal()"><span class="menu-icon">&#128274;</span> Change Password</button>' +
       '<button class="profile-menu-item" onclick="handleSecurityQuestionModal()"><span class="menu-icon">&#128737;</span> Security Question</button>' +
+      '<div class="profile-menu-separator"></div>' +
+      '<button class="profile-menu-item" onclick="closeProfilePanel();openNukeModal()"><span class="menu-icon">&#128163;</span> Force Update</button>' +
+      '<button class="profile-menu-item" onclick="closeProfilePanel();openSupportModal()"><span class="menu-icon">&#9888;&#65039;</span> Support</button>' +
       '<div class="profile-menu-separator"></div>' +
       '<button class="profile-menu-item danger" onclick="signOut()"><span class="menu-icon">&#128682;</span> Sign Out</button>' +
     '</div>';
@@ -1353,11 +1354,11 @@ function renderBottomNav(activePage) {
   var groupCode = localStorage.getItem('active-group-code');
   var liveHref = groupCode ? 'live-game.html?group=' + groupCode : 'live-game.html';
   const pages = [
-    { id: 'courses',  label: 'Courses',  icon: '&#9971;',   href: 'index.html' },
-    { id: 'live',     label: 'Live',     icon: '&#127942;', href: liveHref },
-    { id: 'history',  label: 'History',  icon: '&#128203;', href: 'history.html' },
-    { id: 'stats',    label: 'Board',  icon: '&#128202;', href: 'stats.html' },
-    { id: 'personal', label: 'Personal', icon: '&#128100;', href: 'personal.html' }
+    { id: 'courses',  label: 'Courses',  icon: '<img src="images/ic-courses.png" class="nav-img" alt="">',   href: 'index.html' },
+    { id: 'live',     label: 'Live',     icon: '<img src="images/ic-live.png" class="nav-img" alt="">', href: liveHref },
+    { id: 'history',  label: 'History',  icon: '<img src="images/ic-history.png" class="nav-img" alt="">', href: 'history.html' },
+    { id: 'stats',    label: 'Board',  icon: '<img src="images/ic-board.png" class="nav-img" alt="">', href: 'stats.html' },
+    { id: 'personal', label: 'Personal', icon: '<img src="images/ic-personal.png" class="nav-img" alt="">', href: 'personal.html' }
   ];
   nav.innerHTML = pages.map(p => `
     <a href="${p.href}" class="${p.id === activePage ? 'active' : ''}">
