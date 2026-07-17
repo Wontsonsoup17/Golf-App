@@ -321,6 +321,38 @@ const COURSES = [
 
   // ==================== OTHER COURSES ====================
   {
+    id: 'van-cortlandt', name: 'Van Cortlandt Park',
+    address: '115 Van Cortlandt Park S, Bronx, NY 10471', phone: '(718) 543-4595', par: 70,
+    group: 'other',
+    link: 'https://www.golfnyc.com/van-cortlandt-scorecard/',
+    overview: '',
+    tees: {
+      black: { label: 'Black', yards: 6002, rating: 69.8, slope: 120 },
+      blue:  { label: 'Blue',  yards: 5558, rating: 67.3, slope: 118 },
+      red:   { label: 'Red',   yards: 4799, rating: 68.9, slope: 113 }
+    },
+    holes: [
+      { num:1,  par:4, black:370, blue:354, red:329, hcp:11 },
+      { num:2,  par:5, black:619, blue:559, red:454, hcp:1  },
+      { num:3,  par:3, black:172, blue:156, red:134, hcp:17 },
+      { num:4,  par:4, black:364, blue:350, red:320, hcp:5  },
+      { num:5,  par:4, black:345, blue:325, red:285, hcp:9  },
+      { num:6,  par:4, black:295, blue:279, red:236, hcp:13 },
+      { num:7,  par:3, black:222, blue:204, red:178, hcp:3  },
+      { num:8,  par:4, black:318, blue:304, red:257, hcp:15 },
+      { num:9,  par:4, black:391, blue:375, red:302, hcp:7  },
+      { num:10, par:5, black:475, blue:452, red:428, hcp:6  },
+      { num:11, par:3, black:174, blue:153, red:125, hcp:18 },
+      { num:12, par:5, black:572, blue:550, red:453, hcp:2  },
+      { num:13, par:3, black:172, blue:156, red:141, hcp:12 },
+      { num:14, par:4, black:391, blue:353, red:282, hcp:4  },
+      { num:15, par:4, black:302, blue:254, red:207, hcp:14 },
+      { num:16, par:4, black:292, blue:282, red:264, hcp:16 },
+      { num:17, par:3, black:190, blue:172, red:132, hcp:8  },
+      { num:18, par:4, black:338, blue:280, red:272, hcp:10 }
+    ]
+  },
+  {
     id: 'punta-borinquen', name: 'Punta Borinquen',
     address: 'Aguadilla, Puerto Rico', phone: '(939) 224-9315', par: 72,
     group: 'other',
